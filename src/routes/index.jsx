@@ -3,6 +3,7 @@ import MainLayout from "@layouts/MainLayout";
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
 import DashboardUser from "@pages/user/DashboardUser";
+import EventDetail from "@pages/user/EventDetail";
 import { createBrowserRouter } from "react-router-dom";
 
 const router = createBrowserRouter([
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/event/:id",
+        element: <EventDetail />,
       },
       {
         path: "/qr",
