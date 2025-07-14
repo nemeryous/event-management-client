@@ -44,14 +44,14 @@ const Login = () => {
               </label>
               <a
                 href="#"
-                className="text-sm font-medium text-blue-500 hover:text-blue-600"
+                className="text-secondary text-sm font-medium hover:underline"
               >
                 Quên mật khẩu?
               </a>
             </div>
             <button
               type="submit"
-              className="w-full transform rounded-xl bg-red-500 px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-105 hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/40 active:scale-95"
+              className="bg-primary w-full transform cursor-pointer rounded-xl px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-red-500/40 active:scale-95"
             >
               Đăng nhập
             </button>
@@ -61,7 +61,7 @@ const Login = () => {
               Chưa có tài khoản?{" "}
               <Link
                 to="/register"
-                className="font-medium text-blue-500 hover:text-blue-600 hover:underline"
+                className="text-secondary font-medium hover:underline"
               >
                 Đăng ký ngay
               </Link>

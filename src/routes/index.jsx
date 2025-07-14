@@ -2,6 +2,7 @@ import AuthLayout from "@layouts/AuthLayout";
 import MainLayout from "@layouts/MainLayout";
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
+import DashboardUser from "@pages/user/DashboardUser";
 import { createBrowserRouter } from "react-router-dom";
 
 const router = createBrowserRouter([
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/dashboard",
+        element: <DashboardUser />,
       },
       {
         path: "/event/:id",

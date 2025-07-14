@@ -52,19 +52,19 @@ const Register = () => {
             />
             <div className="flex items-center justify-between">
               <label className="flex items-center">
-                <CheckboxInput className="h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-500" />
+                <CheckboxInput className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-red-500" />
                 <span className="ml-2 text-sm text-gray-600">
                   Tôi đồng ý với{" "}
                   <Link
                     to="#"
-                    className="font-medium text-blue-500 hover:text-blue-600 hover:underline"
+                    className="text-secondary font-medium hover:underline"
                   >
                     Điều khoản
                   </Link>{" "}
                   &{" "}
                   <Link
                     to="#"
-                    className="font-medium text-blue-500 hover:text-blue-600 hover:underline"
+                    className="text-secondary font-medium hover:underline"
                   >
                     Chính sách
                   </Link>
@@ -73,7 +73,7 @@ const Register = () => {
             </div>
             <button
               type="submit"
-              className="w-full transform cursor-pointer rounded-xl bg-red-600 px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-103 hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/40 active:scale-95"
+              className="bg-primary w-full transform cursor-pointer rounded-xl px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-103 hover:shadow-lg hover:shadow-red-500/40 active:scale-95"
             >
               Đăng ký
             </button>
@@ -83,7 +83,7 @@ const Register = () => {
               Đã có tài khoản?{" "}
               <Link
                 to="/login"
-                className="font-medium text-blue-500 hover:text-blue-600 hover:underline"
+                className="text-secondary font-medium hover:underline"
               >
                 Đăng nhập
               </Link>
