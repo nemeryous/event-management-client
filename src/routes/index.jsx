@@ -7,6 +7,7 @@ import EventManagement from "@pages/admin/EventManagement";
 import EventDetail from "@pages/admin/EventDetail";
 import EventCreate from "@pages/admin/EventCreate";
 import Dashboard from "@pages/admin/Dashboard";
+import UserManagement from "@pages/admin/UserManagement";
 
 const router = createBrowserRouter([
   {
@@ -60,6 +61,10 @@ const router = createBrowserRouter([
       {
         path: "/admin/dashboard",
         element: <Dashboard />,
+      },
+      {
+        path: "/admin/users",
+        element: <UserManagement />,
       },
     ],
   },

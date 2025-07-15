@@ -23,6 +23,14 @@ export default function Header() {
           >
             Quản lý sự kiện
           </NavLink>
+          <NavLink
+            to="/admin/users"
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-lg font-semibold transition ${isActive ? "bg-[#ffd012] text-[#223b73]" : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"}`
+            }
+          >
+            Quản lý người dùng
+          </NavLink>
         </nav>
       </div>
     </header>
