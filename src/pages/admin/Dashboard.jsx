@@ -26,12 +26,18 @@ const events = [
 ];
 
 const barData = [
-  { month: "01/2025", value: 120 },
-  { month: "02/2025", value: 180 },
-  { month: "03/2025", value: 90 },
-  { month: "04/2025", value: 200 },
-  { month: "05/2025", value: 150 },
-  { month: "06/2025", value: 220 },
+  { month: "01/2024", value: 100 },
+  { month: "02/2024", value: 120 },
+  { month: "03/2024", value: 90 },
+  { month: "04/2024", value: 150 },
+  { month: "05/2024", value: 80 },
+  { month: "06/2024", value: 200 },
+  { month: "07/2025", value: 180 },
+  { month: "08/2025", value: 220 },
+  { month: "09/2025", value: 160 },
+  { month: "10/2025", value: 210 },
+  { month: "11/2025", value: 190 },
+  { month: "12/2025", value: 230 },
 ];
 
 const pieData = [
@@ -111,6 +117,14 @@ export default function Dashboard() {
     return true;
   });
 
+  // Lấy danh sách năm từ dữ liệu barData
+  const years = Array.from(new Set(barData.map(d => d.month.split("/")[1])));
+  const [selectedYear, setSelectedYear] = useState(years[years.length-1]);
+
+  // Dữ liệu bar chart chỉ lấy theo năm được chọn
+  const filteredBarData = barData.filter(d => d.month.split("/")[1] === selectedYear)
+    .map(d => ({ ...d, month: d.month.split("/")[0] })); // chỉ lấy tháng
+
   return (
     <div className="p-4 md:p-8 bg-[#f7f9fb] min-h-screen">
       {/* KPI Cards */}
@@ -126,6 +140,18 @@ export default function Dashboard() {
 
       {/* Global Filters */}
       <div className="flex flex-wrap gap-4 mb-6 items-center">
+        {/* Bộ lọc năm cho biểu đồ bar */}
+        <label className="font-semibold text-[#223b73]" htmlFor="year-filter">Năm:</label>
+        <select
+          id="year-filter"
+          className="rounded-lg border px-3 py-2 text-sm"
+          value={selectedYear}
+          onChange={e => setSelectedYear(e.target.value)}
+        >
+          {years.map(y => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
         <select
           className="rounded-lg border px-3 py-2 text-sm"
           value={timeRange}
@@ -163,8 +189,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left: Recent Events Table & Alerts */}
         <div className="lg:col-span-2 flex flex-col gap-8">
-          {/* Recent Events Table */}
-          <div className="bg-white rounded-xl shadow-md p-4 overflow-x-auto">
+          {/* Recent Events Table - Desktop */}
+          <div className="bg-white rounded-xl shadow-md p-4 overflow-x-auto hidden md:block">
             <div className="font-bold text-lg mb-4 flex items-center gap-2"><FiCalendar className="text-[#c52032]" /> Sự kiện gần đây</div>
             <table className="min-w-full text-sm">
               <thead>
@@ -185,7 +211,7 @@ export default function Dashboard() {
                     <td className="py-2">{ev.participants}</td>
                     <td className="py-2">{ev.rate}</td>
                     <td className="py-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor[ev.status]}`}>{ev.status === 'active' ? 'Đang diễn ra' : ev.status === 'upcoming' ? 'Sắp diễn ra' : 'Đã kết thúc'}</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${statusColor[ev.status]}`}>{ev.status === 'active' ? 'Đang diễn ra' : ev.status === 'upcoming' ? 'Sắp diễn ra' : 'Đã kết thúc'}</span>
                     </td>
                     <td className="py-2">
                       <button onClick={() => navigate(`/admin/events/${ev.id}`)} className="text-[#c52032] font-semibold hover:underline">Xem chi tiết</button>
@@ -194,6 +220,26 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Recent Events Card - Mobile */}
+          <div className="bg-white rounded-xl shadow-md p-4 md:hidden">
+            <div className="font-bold text-lg mb-4 flex items-center gap-2"><FiCalendar className="text-[#c52032]" /> Sự kiện gần đây</div>
+            <div className="flex flex-col gap-4">
+              {filteredEvents.map(ev => (
+                <div key={ev.id} className="border rounded-lg p-3 flex flex-col gap-1 shadow-sm">
+                  <div className="font-semibold text-[#223b73]">{ev.name}</div>
+                  <div className="text-xs text-gray-500">{ev.time}</div>
+                  <div className="flex gap-2 text-xs">
+                    <span>👥 {ev.participants}</span>
+                    <span>• {ev.rate}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${statusColor[ev.status]}`}>{ev.status === 'active' ? 'Đang diễn ra' : ev.status === 'upcoming' ? 'Sắp diễn ra' : 'Đã kết thúc'}</span>
+                    <button onClick={() => navigate(`/admin/events/${ev.id}`)} className="ml-auto text-[#c52032] font-semibold underline text-xs">Xem chi tiết</button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Alerts Panel */}
@@ -217,7 +263,7 @@ export default function Dashboard() {
             <div className="font-bold text-lg mb-4 flex items-center gap-2"><FiBarChart2 className="text-[#223b73]" /> Thống kê tham gia theo tháng</div>
             <div className="h-48">
               <ResponsiveBar
-                data={barData}
+                data={filteredBarData}
                 keys={["value"]}
                 indexBy="month"
                 margin={{ top: 10, right: 10, bottom: 40, left: 40 }}
@@ -238,14 +284,29 @@ export default function Dashboard() {
             <div className="h-48">
               <ResponsivePie
                 data={pieData}
-                margin={{ top: 10, right: 10, bottom: 40, left: 10 }}
+                margin={{ top: 10, right: 120, bottom: 40, left: 10 }}
                 innerRadius={0.5}
                 padAngle={2}
                 colors={({ id }) => id === 'Sắp diễn ra' ? '#ffd012' : id === 'Đang diễn ra' ? '#c52032' : '#223b73'}
                 enableArcLabels={true}
                 arcLabelsTextColor="#fff"
-                arcLinkLabelsTextColor="#223b73"
-                legends={[]}
+                enableArcLinkLabels={false}
+                legends={[
+                  {
+                    anchor: 'right',
+                    direction: 'column',
+                    justify: false,
+                    translateX: 100,
+                    translateY: 0,
+                    itemsSpacing: 8,
+                    itemWidth: 100,
+                    itemHeight: 24,
+                    itemTextColor: '#223b73',
+                    itemDirection: 'left-to-right',
+                    symbolSize: 18,
+                    symbolShape: 'circle',
+                  },
+                ]}
               />
             </div>
           </div>

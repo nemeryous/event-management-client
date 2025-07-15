@@ -1,5 +1,6 @@
 import AuthLayout from "@layouts/AuthLayout";
 import MainLayout from "@layouts/MainLayout";
+import AdminLayout from "@layouts/AdminLayout";
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
 import { createBrowserRouter } from "react-router-dom";
@@ -46,6 +47,11 @@ const router = createBrowserRouter([
         path: "/polls",
         element: <div>Polls</div>,
       },
+    ],
+  },
+  {
+    element: <AdminLayout />,
+    children: [
       {
         path: "/admin/events",
         element: <EventManagement />,
