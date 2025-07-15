@@ -2,6 +2,9 @@ import AuthLayout from "@layouts/AuthLayout";
 import MainLayout from "@layouts/MainLayout";
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
+import AttendantList from "../pages/admin/AttendantList.jsx";
+import NotFound from "../pages/NotFound.jsx";
+import AnswerQuestion from "../pages/AnswerQuestion.jsx";
 import { createBrowserRouter } from "react-router-dom";
 
 const router = createBrowserRouter([
@@ -36,8 +39,21 @@ const router = createBrowserRouter([
       {
         path: "/polls",
       },
+      {
+        path: "/attendants",
+        element: <AttendantList />,
+      },
+      {
+        path: "/answer-question",
+        element: <AnswerQuestion/>,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
+      }
     ],
   },
+
 ]);
 
 export default router;
