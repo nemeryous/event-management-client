@@ -1,8 +1,6 @@
 import Footer from "@components/Footer";
 import Header from "@components/Header";
 import QRPage from "@pages/qr/QRPage";
-import Footer from "@components/user/Footer";
-import Header from "@components/user/Header";
 import React from "react";
 import { Outlet } from "react-router-dom";
 

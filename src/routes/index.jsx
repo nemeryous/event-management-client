@@ -44,9 +44,6 @@ const router = createBrowserRouter([
         path: "/poll-analytics",
       },
       {
-        path: "/polls",
-      },
-      {
         path: "/attendants",
         element: <AttendantList />,
       },

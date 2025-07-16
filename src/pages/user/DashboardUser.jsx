@@ -1,3 +1,4 @@
+// import EventCard from "@components/user/EventCard";
 import EventCard from "@components/user/EventCard";
 import React, { useState } from "react";
 
