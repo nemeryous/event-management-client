@@ -2,6 +2,8 @@ import AuthLayout from "@layouts/AuthLayout";
 import MainLayout from "@layouts/MainLayout";
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
+import PollPage from "@pages/poll/PollPage";
+import QRPage from "@pages/qr/QRPage";
 import { createBrowserRouter } from "react-router-dom";
 
 const router = createBrowserRouter([
@@ -29,13 +31,15 @@ const router = createBrowserRouter([
       },
       {
         path: "/qr",
+        element: <QRPage /> 
       },
       {
         path: "/poll-analytics",
       },
       {
         path: "/polls",
-      },
+        element: <PollPage />,
+      },  
     ],
   },
 ]);
