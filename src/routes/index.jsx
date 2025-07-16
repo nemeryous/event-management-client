@@ -5,7 +5,10 @@ import Register from "@pages/auth/Register";
 import AttendantList from "../pages/admin/AttendantList.jsx";
 import NotFound from "../pages/NotFound.jsx";
 import AnswerQuestion from "../pages/AnswerQuestion.jsx";
+import PollPage from "@pages/poll/PollPage";
+import QRPage from "@pages/qr/QRPage";
 import { createBrowserRouter } from "react-router-dom";
+import DashboardUser from "@pages/user/DashboardUser.jsx";
 
 const router = createBrowserRouter([
   {
@@ -26,12 +29,14 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/dashboard",
+        element: <DashboardUser />,
       },
       {
         path: "/event/:id",
       },
       {
         path: "/qr",
+        element: <QRPage />,
       },
       {
         path: "/poll-analytics",
@@ -45,15 +50,18 @@ const router = createBrowserRouter([
       },
       {
         path: "/answer-question",
-        element: <AnswerQuestion/>,
+        element: <AnswerQuestion />,
       },
       {
         path: "*",
         element: <NotFound />,
-      }
+      },
+      {
+        path: "/poll",
+        element: <PollPage />,
+      },
     ],
   },
-
 ]);
 
 export default router;
