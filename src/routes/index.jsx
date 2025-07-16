@@ -10,6 +10,7 @@ import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
 import EventDetail from "@pages/user/EventDetail";
 import { createBrowserRouter } from "react-router-dom";
+import CreatePoll from "@pages/poll/CreatePoll.jsx";
 
 const router = createBrowserRouter([
   {
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
       {
         path: "/poll",
         element: <PollPage />,
+      },
+      {
+        path: "/create-poll",
+        element: <CreatePoll />,
       },
     ],
   },
