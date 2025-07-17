@@ -1,3 +1,4 @@
+import ButtonComponent from "@components/common/ButtonComponent";
 import TextInput from "@components/common/TextInput";
 import PollOption from "@components/poll/PollOption";
 import FormFieldUser from "@components/user/FormFieldUser";
@@ -87,7 +88,25 @@ const CreatePoll = () => {
                 🗳️ Các lựa chọn
               </h3>
               <div>
-                <PollOption />
+                <PollOption optionNumber={"1"} />
+                <PollOption optionNumber={"2"} />
+
+                <button
+                  type="button"
+                  className="bg-secondary mb-5 flex cursor-pointer items-center gap-2 rounded-3xl border-0 px-6 py-3 text-sm text-white transition-all duration-300 ease-in-out"
+                  onclick="addOption()"
+                >
+                  + Thêm lựa chọn
+                </button>
+                <div className="mt-7 flex justify-center gap-4 max-md:flex-row max-md:items-center">
+                  <ButtonComponent
+                    icon={"💾"}
+                    title={"Tạo bình chọn"}
+                    btnBackground={"#e53935"}
+                    btnColor={"white"}
+                    hoverColor={"#d32f2f"}
+                  />
+                </div>
               </div>
             </div>
           </form>

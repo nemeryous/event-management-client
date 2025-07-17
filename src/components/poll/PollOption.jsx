@@ -10,7 +10,7 @@ const PollOption = ({ optionNumber }) => {
       <div className="bg-secondary flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-white">
         {optionNumber}
       </div>
-      <div className="grid grid-cols-[2fr_1fr] gap-4 flex-1">
+      <div className="grid flex-1 grid-cols-[2fr_1fr] gap-4">
         <TextInputUser type={"text"} placeholder={"Nhập nội dung lựa chọn"} />
         <TextInputUser type={"url"} placeholder={"URL hình ảnh (tùy chọn)"} />
       </div>
