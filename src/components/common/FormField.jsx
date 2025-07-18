@@ -6,9 +6,10 @@ const FormField = ({
   label,
   name,
   type = "text",
+  error,
+  isValid,
   // eslint-disable-next-line no-unused-vars
   Component,
-  isValid,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -43,32 +44,39 @@ const FormField = ({
               placeholder=" "
               {...props}
             />
-            {isValid && (
-              <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
+
+            <div className="absolute top-1/2 right-4 -translate-y-1/2">
+              {error && (
                 <svg
-                  className="inline-block text-green-500"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 20 20"
+                  className="h-5 w-5 text-red-500"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
                   <path
-                    d="M7.629 14.571a1 1 0 0 1-1.414 0l-3.243-3.243a1 1 0 1 1 1.414-1.414l2.536 2.536 6.95-6.95a1 1 0 1 1 1.414 1.414l-7.657 7.657z"
-                    fill="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-              </span>
-            )}
-            <label
-              className={`pointer-events-none absolute left-4 text-gray-500 transition-all duration-300 ${
-                hasValue || isFocused || value
-                  ? "top-1 text-xs font-medium text-yellow-500"
-                  : "top-3 text-base"
-              }`}
-            >
-              {label}
-            </label>
+              )}
+              {!error && isValid && (
+                <svg
+                  className="h-5 w-5 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </div>
           </>
         )}
       />

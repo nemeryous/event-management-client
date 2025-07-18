@@ -6,7 +6,9 @@
       "@pages/*": ["src/pages/*"],
       "@hooks/*": ["src/hooks/*"],
       "@routes/*": ["src/routes/*"],
-      "@layouts/*": ["src/layouts/*"]
+      "@layouts/*": ["src/layouts/*"],
+      "@api/*": ["src/api/*"],
+      "@store/*": ["src/store/*"]
     }
   }
 }
