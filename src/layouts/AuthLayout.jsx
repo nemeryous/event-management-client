@@ -1,7 +1,16 @@
+import { Alert, Snackbar } from "@mui/material";
+import { closeSnackbar } from "@store/slices/snackbarSlice";
 import React, { Suspense } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
 
 const AuthLayout = () => {
+  const dispatch = useDispatch();
+
+  const { open, type, message } = useSelector((state) => {
+    return state.snackbar;
+  });
+
   return (
     <div>
       <Suspense fallback={<div>Loading...</div>}>
@@ -35,6 +44,20 @@ const AuthLayout = () => {
           </div>
           <Outlet />
         </div>
+        <Snackbar
+          open={open}
+          autoHideDuration={4000}
+          onClose={() => dispatch(closeSnackbar())}
+        >
+          <Alert
+            onClose={() => dispatch(closeSnackbar())}
+            severity={type}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {message}
+          </Alert>
+        </Snackbar>
       </Suspense>
     </div>
   );

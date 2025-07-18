@@ -1,6 +1,21 @@
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const canGoBack =
+    location.pathname !== "/dashboard" &&
+    window.history.state &&
+    window.history.state.idx > 0;
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <header class="animate-slideDown sticky top-0 z-10 bg-white shadow-md">
       <div class="mx-auto max-w-6xl px-5">
@@ -15,7 +30,17 @@ const Header = () => {
             alt="Logo"
             class="block h-auto w-[20vw] lg:hidden"
           />
-          <div class="ml-auto text-sm text-[#1e88e5]">Đăng xuất</div>
+          <button class="text-secondary ml-auto text-sm">Đăng xuất</button>
+          {canGoBack && (
+            <Link
+              to={"#"}
+              onClick={handleBack}
+              className="bg-secondary flex cursor-pointer items-center gap-2 rounded-3xl px-5 py-2 text-sm text-white shadow transition-all duration-300 ease-in-out hover:-translate-y-0.5"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} />
+              Quay lại
+            </Link>
+          )}
         </div>
       </div>
     </header>
