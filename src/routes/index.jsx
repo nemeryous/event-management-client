@@ -9,7 +9,6 @@ import AnswerQuestion from "../pages/AnswerQuestion.jsx";
 import PollPage from "@pages/poll/PollPage";
 import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
-import EventDetail from "@pages/user/EventDetail";
 import { createBrowserRouter } from "react-router-dom";
 import EventManagement from "@pages/admin/EventManagement";
 import EventDetail from "@pages/admin/EventDetail";
@@ -42,9 +41,6 @@ const router = createBrowserRouter([
       {
         path: "/event/:id",
         element: <EventDetail />,
-      },
-      {
-        path: "/event/:id",
       },
       {
         path: "/qr",
