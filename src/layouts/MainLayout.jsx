@@ -8,9 +8,11 @@ const MainLayout = () => {
     <div>
       <Header />
       <div className="mx-auto max-w-6xl px-5">
-        <Outlet />
+        <div style={{ padding: 24 }}>
+          <Outlet />
+        </div>
+        <Footer />
       </div>
-      <Footer />
     </div>
   );
 };
