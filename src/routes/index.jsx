@@ -4,7 +4,9 @@ import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
 import DashboardUser from "@pages/user/DashboardUser";
 import EventDetail from "@pages/user/EventDetail";
+import HomePage from "@pages/user/HomePage";
 import { createBrowserRouter } from "react-router-dom";
+import ProtectedRoute from "./ProtectedRoute";
 
 const router = createBrowserRouter([
   {
@@ -21,24 +23,33 @@ const router = createBrowserRouter([
     ],
   },
   {
-    element: <MainLayout />,
+    path: "/",
+    element: <HomePage />,
+  },
+  {
+    element: <ProtectedRoute />,
     children: [
       {
-        path: "/dashboard",
-        element: <DashboardUser />,
-      },
-      {
-        path: "/event/:id",
-        element: <EventDetail />,
-      },
-      {
-        path: "/qr",
-      },
-      {
-        path: "/poll-analytics",
-      },
-      {
-        path: "/polls",
+        element: <MainLayout />,
+        children: [
+          {
+            path: "/dashboard",
+            element: <DashboardUser />,
+          },
+          {
+            path: "/event/:id",
+            element: <EventDetail />,
+          },
+          {
+            path: "/qr",
+          },
+          {
+            path: "/poll-analytics",
+          },
+          {
+            path: "/polls",
+          },
+        ],
       },
     ],
   },

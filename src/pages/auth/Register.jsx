@@ -71,8 +71,6 @@ const Register = () => {
     }
   }, [isSuccess, data.message, dispatch, navigate]);
 
-  console.log(data, isLoading, errors);
-
   return (
     <div className="flex w-full items-center justify-center px-8 py-12 lg:w-1/2">
       <div className="w-full max-w-md">
@@ -137,27 +135,6 @@ const Register = () => {
               error={errors["confirm_password"]}
               isValid={isFieldValid("confirm_password")}
             />
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <CheckboxInput className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-red-500" />
-                <span className="ml-2 text-sm text-gray-600">
-                  Tôi đồng ý với{" "}
-                  <Link
-                    to="#"
-                    className="text-secondary font-medium hover:underline"
-                  >
-                    Điều khoản
-                  </Link>{" "}
-                  &{" "}
-                  <Link
-                    to="#"
-                    className="text-secondary font-medium hover:underline"
-                  >
-                    Chính sách
-                  </Link>
-                </span>
-              </label>
-            </div>
             <button
               type="submit"
               disabled={isLoading}
