@@ -12,6 +12,10 @@ const CreatePoll = () => {
     { id: "2", name: "Option 2" },
     { id: "3", name: "Option 3" },
   ];
+  const pollTypes = [
+    { id: "SINGLE_OPTION", name: "Chọn một (Single Choice)" },
+    { id: "MULTIPLE_OPTION", name: "Chọn nhiều (Multiple Choice)" },
+  ];
 
   return (
     <div className="px-0 py-10">
@@ -34,7 +38,7 @@ const CreatePoll = () => {
               <FormFieldUser
                 label={"Loại bình chọn *"}
                 Component={() => (
-                  <SelectInputUser options={options} name={"pollType"} />
+                  <SelectInputUser options={pollTypes} name={"pollType"} />
                 )}
               />
             </div>
@@ -77,7 +81,7 @@ const CreatePoll = () => {
             </div>
             <div className="col-span-full mb-[25px]">
               <FormFieldUser
-                label={"Tiêu đề bình chọn"}
+                label={"Trạng thái"}
                 Component={() => (
                   <SelectInputUser options={options} name={"status"} />
                 )}

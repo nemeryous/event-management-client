@@ -43,7 +43,7 @@ const router = createBrowserRouter([
         element: <EventDetail />,
       },
       {
-        path: "/qr",
+        path: "/qr/:id",
         element: <QRPage />,
       },
       {

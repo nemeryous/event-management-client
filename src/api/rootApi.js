@@ -14,8 +14,16 @@ export const rootApi = createApi({
           };
         },
       }),
+      getEvent: builder.query({
+        query: (id) => {
+          return {
+            url: `/attendants/get-qr-check/${id}`,
+            method: "GET",
+          };
+        },
+      }),
     };
   },
 });
 
-export const { useRegisterMutation } = rootApi;
+export const { useRegisterMutation, useGetEventQuery } = rootApi;
