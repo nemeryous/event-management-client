@@ -2,10 +2,15 @@ import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useLogoutMutation } from "@api/rootApi";
+import { clearToken } from "@store/slices/authSlice";
 
 const Header = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const [logout] = useLogoutMutation();
 
   const canGoBack =
     location.pathname !== "/dashboard" &&
@@ -14,6 +19,16 @@ const Header = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+    } catch {
+      // ignore error
+    }
+    dispatch(clearToken());
+    navigate("/login");
   };
 
   return (
@@ -30,7 +45,9 @@ const Header = () => {
             alt="Logo"
             class="block h-auto w-[20vw] lg:hidden"
           />
-          <button class="text-secondary ml-auto text-sm">Đăng xuất</button>
+          <button class="text-secondary ml-auto text-sm" onClick={handleLogout}>
+            Đăng xuất
+          </button>
           {canGoBack && (
             <Link
               to={"#"}

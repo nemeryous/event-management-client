@@ -1,5 +1,7 @@
 import { Controller } from "react-hook-form";
 import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const FormField = ({
   control,
@@ -45,41 +47,43 @@ const FormField = ({
               {...props}
             />
 
-            <div className="absolute top-1/2 right-4 -translate-y-1/2">
-              {error && (
-                <svg
-                  className="h-5 w-5 text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+            <label
+              className={`pointer-events-none absolute left-4 text-gray-500 transition-all duration-300 ${
+                hasValue || isFocused || value
+                  ? "top-1 text-xs font-medium text-yellow-500"
+                  : "top-3 text-base"
+              }`}
+            >
+              {label}{" "}
+              {!error && value !== "" && (
+                <FontAwesomeIcon
+                  icon={faCheck}
+                  className="ml-auto text-green-500"
+                />
               )}
-              {!error && isValid && (
-                <svg
-                  className="h-5 w-5 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              )}
-            </div>
+            </label>
           </>
         )}
       />
+
+      {error && (
+        <p className="mt-1 flex items-center text-sm text-red-500">
+          <svg
+            className="mr-1 h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          {error.message}
+        </p>
+      )}
     </div>
   );
 };

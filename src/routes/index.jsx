@@ -9,13 +9,14 @@ import AnswerQuestion from "../pages/AnswerQuestion.jsx";
 import PollPage from "@pages/poll/PollPage";
 import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
+import HomePage from "@pages/user/HomePage";
 import { createBrowserRouter } from "react-router-dom";
 import EventManagement from "@pages/admin/EventManagement";
-import EventDetail from "@pages/admin/EventDetail";
 import EventCreate from "@pages/admin/EventCreate";
 import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
 import CreatePoll from "@pages/poll/CreatePoll.jsx";
+import ProtectedRoute from "./ProtectedRoute";
 
 const router = createBrowserRouter([
   {
@@ -32,25 +33,32 @@ const router = createBrowserRouter([
     ],
   },
   {
-    element: <MainLayout />,
+    path: "/",
+    element: <HomePage />,
+  },
+  {
+    element: <ProtectedRoute />,
     children: [
       {
-        path: "/dashboard",
-        element: <DashboardUser />,
-      },
-      {
-        path: "/event/:id",
-        element: <EventDetail />,
-      },
-      {
-        path: "/qr/:id",
+        element: <MainLayout />,
+        children: [
+          {
+            path: "/dashboard",
+            element: <DashboardUser />,
+          },
+          {
+            path: "/event/:id",
+            element: <EventDetail />,
+          },
+          {
+            path: "/qr/:id",
         element: <QRPage />,
-      },
-      {
-        path: "/poll-analytics",
-      },
-      {
-        path: "/attendants",
+          },
+          {
+            path: "/poll-analytics",
+          },
+          {
+            path: "/attendants",
         element: <AttendantList />,
       },
       {
@@ -93,6 +101,8 @@ const router = createBrowserRouter([
       {
         path: "/admin/users",
         element: <UserManagement />,
+          },
+        ],
       },
     ],
   },
