@@ -16,15 +16,7 @@ export const rootApi = createApi({
           };
         },
       }),
-      getEventQR: builder.query({
-        query: (id) => {
-          return {
-            url: `/attendants/get-qr-check/${id}`,
-            method: "GET",
-            responseHandler: (response) => response.blob(),
-          };
-        },
-      }),
+
       login: builder.mutation({
         query: ({ email, password }) => {
           return {
@@ -61,5 +53,4 @@ export const {
   useGetAuthUserQuery,
   useRefreshTokenMutation,
   useLogoutMutation,
-  useGetEventQRQuery,
 } = rootApi;

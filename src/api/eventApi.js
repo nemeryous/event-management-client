@@ -5,8 +5,21 @@ export const eventApi = rootApi.injectEndpoints({
     getEvents: builder.query({
       query: () => "/events",
     }),
+    getEventQR: builder.query({
+      query: (id) => {
+        return {
+          url: `/attendants/get-qr-check/${id}`,
+          method: "GET",
+          responseHandler: (response) => response.blob(),
+        };
+      },
+    }),
+    getEventById: builder.query({
+      query: (id) => `/events/${id}`,
+    }),
   }),
+
   overrideExisting: false,
 });
 
-export const { useGetEventsQuery } = eventApi;
+export const { useGetEventsQuery, useGetEventQRQuery, useGetEventByIdQuery } = eventApi;

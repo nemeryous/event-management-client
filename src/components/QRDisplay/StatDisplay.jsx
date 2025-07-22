@@ -2,8 +2,23 @@ import React from "react";
 import EventInfo from "./EventInfo";
 import ButtonComponent from "@components/common/ButtonComponent";
 import StatCard from "./StatCard";
+import { useGetAttendantsByEventQuery } from "@api/attendantApi";
+import { useParams } from "react-router-dom";
+import { check } from "prettier";
 
-const StatDisplay = ({ isStat = false }) => {
+const StatDisplay = ({ attendants = [] }) => {
+  console.log(attendants);
+  const totalAttendants = attendants.length || 0;
+  const surveyCount = 0;
+
+  const checkedAttendants = attendants.filter(
+    (attendant) => attendant.checkedTime !== null,
+  ).length;
+
+  const participationRate = totalAttendants
+    ? `${Math.round((checkedAttendants / totalAttendants).toFixed(2) * 100)}%`
+    : "0%";
+  console.log(participationRate);
   return (
     <div className="flex items-center justify-between px-0 py-4">
       <div className="rounded-[20px] bg-white p-10 text-center shadow-[0_10px_30px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out">
@@ -15,13 +30,17 @@ const StatDisplay = ({ isStat = false }) => {
             Thống kê tham gia
           </h3>
           <div class="mt-[30px] grid grid-cols-2 gap-5">
-            <StatCard statLabel={"Đã tham gia"} statNumber={"42"} />
-            <StatCard statLabel={"Đã tham gia"} statNumber={"42"} />
-            <StatCard statLabel={"Đã tham gia"} statNumber={"42"} />
+            <StatCard statLabel={"Đã tham gia"} statNumber={totalAttendants} />
+            <StatCard statLabel={"Đã đăng kí"} statNumber={checkedAttendants} />
+            <StatCard
+              statLabel={"Tỉ lệ tham gia"}
+              statNumber={participationRate}
+            />
+            <StatCard statLabel={"Khảo sát"} statNumber={surveyCount} />
           </div>
         </div>
 
-        <EventInfo />
+        {/* <EventInfo /> */}
         <div className="mt-[30px] grid grid-cols-2 gap-[15px]">
           <ButtonComponent
             btnColor={"white"}
