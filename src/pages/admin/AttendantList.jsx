@@ -1,45 +1,30 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from "../../components/Header.jsx";
 import styles from './AttendantList.module.css';
+import { useGetAttendantsByEventQuery, useLazyGetUserByEmailQuery, useAddAttendantMutation, useDeleteAttendantMutation, useGetEventManagersByEventQuery, useAssignEventManagerMutation } from '../../api/rootApi';
 
-const initialParticipants = [
-  {
-    name: 'Nguyễn Văn An',
-    email: 'an.nguyen@email.com',
-    date: '2024-01-15',
-    isStaff: false,
-  },
-  {
-    name: 'Trần Thị Bình',
-    email: 'binh.tran@email.com',
-    date: '2024-01-16',
-    isStaff: false,
-  },
-  {
-    name: 'Lê Minh Cường',
-    email: 'cuong.le@email.com',
-    date: '2024-01-17',
-    isStaff: false,
-  },
-  {
-    name: 'Phạm Thu Dung',
-    email: 'dung.pham@email.com',
-    date: '2024-01-18',
-    isStaff: false,
-  },
-];
 
-function getInitials(name) {
-  return name
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase();
+function getInitials(email) {
+  if (!email) return "";
+  return email.charAt(0).toUpperCase();
 }
 
-function getAvatarClass(index) {
-  const classes = ['red', 'yellow', 'blue'];
-  return classes[index % classes.length];
+function getRandomColor() {
+  const colors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function getAvatarStyle(email) {
+  return {
+    backgroundColor: getRandomColor(),
+    color: 'white',
+    fontWeight: 'bold'
+  };
 }
 
 function getCurrentDate() {
@@ -51,47 +36,139 @@ function getCurrentDate() {
 }
 
 export default function AttendantList() {
-  const [participants, setParticipants] = useState(initialParticipants);
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get('eventId');
+  const { data: attendants = [], isLoading, error, refetch } = useGetAttendantsByEventQuery(eventId);
+  const { data: eventManagers = [] } = useGetEventManagersByEventQuery(eventId);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const nameInputRef = useRef(null);
+  const [triggerGetUserByEmail] = useLazyGetUserByEmailQuery();
+  const [errorMsg, setErrorMsg] = useState('');
+  const [addAttendant, { isLoading: isAdding }] = useAddAttendantMutation();
+  const [deleteAttendant] = useDeleteAttendantMutation();
+  const [assignEventManager, { isLoading: isAssigning }] = useAssignEventManagerMutation();
+  const [notify, setNotify] = useState({ message: '', type: '' });
+
+  useEffect(() => {
+    if (notify.message) {
+      const timer = setTimeout(() => setNotify({ message: '', type: '' }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notify]);
+
+  // Map attendants từ API sang participants cho UI cũ
+  const participants = attendants.map(a => {
+    // Đảm bảo so sánh userId là string để mapping đúng
+    const manager = eventManagers.find(m => String(m.user_id) === String(a.userId));
+    return {
+      name: a.userName,
+      email: a.userEmail,
+      date: '',
+      userId: a.userId,
+      role: manager ? manager.roleType : null, 
+    };
+  });
 
   const filtered = participants.filter(
     (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.email.toLowerCase().includes(search.toLowerCase())
+      (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
+      (p.email && p.email.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleDelete = (email) => {
-    if (window.confirm('Bạn có chắc muốn xóa người này khỏi danh sách?')) {
-      setParticipants((prev) => prev.filter((p) => p.email !== email));
+  const handleDelete = async (email) => {
+    if (!window.confirm('Bạn có chắc muốn xóa người này khỏi danh sách?')) return;
+    setErrorMsg('');
+    try {
+      // Tìm participant theo email để lấy userId
+      const participant = participants.find((p) => p.email === email);
+      if (!participant) {
+        setErrorMsg('Không tìm thấy người tham dự này!');
+        alert('Không tìm thấy người tham dự này!');
+        return;
+      }
+      const result = await deleteAttendant({ userId: participant.userId, eventId }).unwrap();
+      if (result?.message && result.message !== "Người dùng đã được xóa khỏi sự kiện!") {
+        setNotify({ message: result.message, type: 'error' });
+        setErrorMsg(result.message);
+        return;
+      }
+      setNotify({ message: result.message || "Xóa thành công!", type: 'success' });
+      refetch();
+    } catch (err) {
+      const msg = err?.data?.message || err?.error || "Có lỗi xảy ra khi xóa người tham dự!";
+      setNotify({ message: msg, type: 'error' });
+      setErrorMsg(msg);
     }
   };
 
-  const handleAddStaff = (email) => {
-    setParticipants((prev) =>
-      prev.map((p) =>
-        p.email === email ? { ...p, isStaff: true } : p
-      )
-    );
+  const handleAddStaff = async (email) => {
+    setErrorMsg('');
+    try {
+      // Find participant to get userId
+      const participant = participants.find((p) => p.email === email);
+      if (!participant) {
+        setNotify({ message: 'Không tìm thấy người tham dự này!', type: 'error' });
+        setErrorMsg('Không tìm thấy người tham dự này!');
+        return;
+      }
+  
+      // Call API to assign STAFF role
+      const result = await assignEventManager({
+        user_id: participant.userId,
+        event_id,
+        roleType: 'STAFF',
+      }).unwrap();
+  
+      if (result?.message && result.message !== "Thêm vai trò thành công!") {
+        setNotify({ message: result.message, type: 'error' });
+        setErrorMsg(result.message);
+        return;
+      }
+  
+      setNotify({ message: result.message || "Thêm vai trò STAFF thành công!", type: 'success' });
+      refetch(); 
+    } catch (err) {
+      const msg = err?.data?.message || err?.error || "Có lỗi xảy ra khi thêm vai trò STAFF!";
+      setNotify({ message: msg, type: 'error' });
+      setErrorMsg(msg);
+    }
   };
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
-    if (participants.some((p) => p.email.toLowerCase() === email.toLowerCase())) {
-      alert('Email này đã tồn tại trong danh sách!');
+    setErrorMsg('');
+    if (!email.trim()) {
+      setErrorMsg('Vui lòng nhập email!');
       return;
     }
-    setParticipants([
-      ...participants,
-      { name, email, date: getCurrentDate(), isStaff: false },
-    ]);
-    setModalOpen(false);
-    setName('');
-    setEmail('');
+    try {
+      // 1. Lấy userId từ email bằng RTK Query
+      const userRes = await triggerGetUserByEmail(email).unwrap();
+      if (!userRes.id) {
+        setErrorMsg('Không tìm thấy userId!');
+        return;
+      }
+      // 2. Gọi API thêm người tham dự
+      const result = await addAttendant({ userId: userRes.id, eventId }).unwrap();
+      if (result?.message && result.message !== "Người dùng đã được thêm vào sự kiện!") {
+        setNotify({ message: result.message, type: 'error' });
+        setErrorMsg(result.message);
+        return;
+      }
+      setNotify({ message: result.message || "Thêm thành công!", type: 'success' });
+      setModalOpen(false);
+      setEmail('');
+      refetch();
+    } catch (err) {
+      setNotify({
+        message: err?.data?.message || err?.error || "Có lỗi xảy ra khi thêm người tham dự!",
+        type: 'error',
+      });
+      setErrorMsg(err?.data?.message || err?.error || "Có lỗi xảy ra khi thêm người tham dự!");
+    }
   };
 
   const openModal = () => {
@@ -107,6 +184,31 @@ export default function AttendantList() {
 
   return (
     <>
+      {notify.message && (
+        <div
+          style={{
+            background: notify.type === 'success' ? '#d4edda' : '#f8d7da',
+            color: notify.type === 'success' ? '#155724' : '#721c24',
+            border: `1px solid ${notify.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
+            borderRadius: 8,
+            padding: '12px 20px',
+            margin: '16px 0',
+            textAlign: 'center',
+            fontWeight: 600,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            zIndex: 100,
+            position: 'relative'
+          }}
+        >
+          {notify.message}
+          <span
+            style={{ marginLeft: 16, cursor: 'pointer', fontWeight: 700 }}
+            onClick={() => setNotify({ message: '', type: '' })}
+          >
+            ×
+          </span>
+        </div>
+      )}
       <div className={styles.attendantContainer}>
         
         <div className={styles.attendantHeader}>
@@ -144,17 +246,20 @@ export default function AttendantList() {
             filtered.map((p, idx) => (
               <div className={styles.participantItem} key={p.email}>
                 <div className={styles.participantInfoRow}>
-                  <div className={styles.avatar + ' ' + getAvatarClass(idx)}>{getInitials(p.name)}</div>
+                  <div className={styles.avatar} style={getAvatarStyle(p.email)}>{getInitials(p.email)}</div>
                   <div className={styles.participantInfo}>
                     <div className={styles.participantName}>{p.name}</div>
                     <div className={styles.participantEmail}>{p.email}</div>
-                    <div className={styles.participantDate}>Tham gia: {p.date}</div>
                   </div>
                 </div>
                 <div className={styles.participantActions}>
-                  {p.isStaff ? (
+                  {p.role === 'MANAGE' && (
+                    <span className={styles.staffLabel} style={{ background: '#223B73' }}>MANAGE</span>
+                  )}
+                  {p.role === 'STAFF' && (
                     <span className={styles.staffLabel}>STAFF</span>
-                  ) : (
+                  )}
+                  {(!p.role) && (
                     <button 
                       className={styles.staffButton} 
                       onClick={() => handleAddStaff(p.email)}
@@ -196,13 +301,18 @@ export default function AttendantList() {
                     required
                     placeholder="Nhập địa chỉ email..."
                   />
+                  {errorMsg && (
+                    <div style={{ color: 'red', margin: '8px 0', textAlign: 'center' }}>
+                      {errorMsg}
+                    </div>
+                  )}
                 </div>
                 <div className={styles.formButtons}>
                   <button type="button" className={styles.cancelButton} onClick={closeModal}>
                     Hủy
                   </button>
-                  <button type="submit" className={styles.saveButton}>
-                    Lưu
+                  <button type="submit" className={styles.saveButton} disabled={isAdding}>
+                    {isAdding ? 'Đang lưu...' : 'Lưu'}
                   </button>
                 </div>
               </form>
