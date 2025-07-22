@@ -1,7 +1,13 @@
+import { useGetEventQuery } from "@api/rootApi";
 import QRDisplay from "@components/QRDisplay";
-import React from "react";
+import { useParams } from "react-router-dom";
 
 const QRPage = () => {
+  const eventId = useParams().id;
+
+  const { data = {}, isLoading, isError, error } = useGetEventQuery(eventId);
+  console.log(data);
+
   return (
     // main-content
     <main className="bg-gradient-to-br from-gray-100 to-blue-200 px-0 py-10">

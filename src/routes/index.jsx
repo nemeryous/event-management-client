@@ -10,9 +10,9 @@ import PollPage from "@pages/poll/PollPage";
 import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
 import HomePage from "@pages/user/HomePage";
+import HomePage from "@pages/user/HomePage";
 import { createBrowserRouter } from "react-router-dom";
 import EventManagement from "@pages/admin/EventManagement";
-import EventDetail from "@pages/admin/EventDetail";
 import EventCreate from "@pages/admin/EventCreate";
 import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
@@ -52,9 +52,9 @@ const router = createBrowserRouter([
             element: <EventDetail />,
           },
           {
-            path: "/qr",
-            element: <QRPage />,
-      },
+            path: "/qr/:id",
+        element: <QRPage />,
+          },
           {
             path: "/poll-analytics",
           },
