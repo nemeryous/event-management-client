@@ -42,7 +42,7 @@ const EventCard = ({ event }) => {
       <div className="absolute inset-0 z-10 bg-gradient-to-br from-blue-500/10 to-red-500/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
 
       <div
-        class={`relative flex h-30 items-center justify-center overflow-hidden text-4xl font-bold text-white ${getHeaderClass("upcoming")}`}
+        className={`relative flex h-30 items-center justify-center overflow-hidden text-4xl font-bold text-white ${getHeaderClass("upcoming")}`}
       >
         <div className="absolute -top-1/2 -left-1/2 h-full w-full rotate-45 transform bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         <span className="relative z-10">AI 2024</span>
