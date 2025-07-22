@@ -58,10 +58,6 @@ const router = createBrowserRouter([
             path: "/poll-analytics",
           },
           {
-            path: "/attendants",
-            element: <AttendantList />,
-          },
-          {
             path: "/answer-question",
             element: <AnswerQuestion />,
           },
@@ -101,6 +97,10 @@ const router = createBrowserRouter([
           {
             path: "/admin/users",
             element: <UserManagement />,
+          },
+          {
+            path: "/admin/attendants",
+            element: <AttendantList />,
           },
         ],
       },

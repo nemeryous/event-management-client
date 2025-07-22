@@ -1,10 +1,19 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { rootApi } from '../api/rootApi';
+import { configureStore } from "@reduxjs/toolkit";
+import { rootApi } from "@api/rootApi";
+import snackbarReducer from "@store/slices/snackbarSlice";
+import authReducer from "@store/slices/authSlice";
 
-export const store = configureStore({
+const store = configureStore({
   reducer: {
+    snackbar: snackbarReducer,
+    auth: authReducer,
     [rootApi.reducerPath]: rootApi.reducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(rootApi.middleware),
+  middleware: (getDefaultMiddleware) => {
+    return getDefaultMiddleware().concat(rootApi.middleware);
+  },
+  // eslint-disable-next-line no-undef
+  devTools: process.env.NODE_ENV !== "production",
 });
+
+export default store;

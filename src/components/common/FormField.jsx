@@ -1,14 +1,17 @@
 import { Controller } from "react-hook-form";
 import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const FormField = ({
   control,
   label,
   name,
   type = "text",
+  error,
+  isValid,
   // eslint-disable-next-line no-unused-vars
   Component,
-  isValid,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -43,23 +46,7 @@ const FormField = ({
               placeholder=" "
               {...props}
             />
-            {isValid && (
-              <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
-                <svg
-                  className="inline-block text-green-500"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M7.629 14.571a1 1 0 0 1-1.414 0l-3.243-3.243a1 1 0 1 1 1.414-1.414l2.536 2.536 6.95-6.95a1 1 0 1 1 1.414 1.414l-7.657 7.657z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </span>
-            )}
+
             <label
               className={`pointer-events-none absolute left-4 text-gray-500 transition-all duration-300 ${
                 hasValue || isFocused || value
@@ -67,11 +54,36 @@ const FormField = ({
                   : "top-3 text-base"
               }`}
             >
-              {label}
+              {label}{" "}
+              {!error && value !== "" && (
+                <FontAwesomeIcon
+                  icon={faCheck}
+                  className="ml-auto text-green-500"
+                />
+              )}
             </label>
           </>
         )}
       />
+
+      {error && (
+        <p className="mt-1 flex items-center text-sm text-red-500">
+          <svg
+            className="mr-1 h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          {error.message}
+        </p>
+      )}
     </div>
   );
 };
