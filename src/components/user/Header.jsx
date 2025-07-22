@@ -32,20 +32,23 @@ const Header = () => {
   };
 
   return (
-    <header class="animate-slideDown sticky top-0 z-10 bg-white shadow-md">
-      <div class="mx-auto max-w-6xl px-5">
-        <div class="flex items-center py-4">
+    <header className="animate-slideDown sticky top-0 z-10 bg-white shadow-md">
+      <div className="mx-auto max-w-6xl px-5">
+        <div className="flex items-center py-4">
           <img
             src="/vku-text-logo.svg"
             alt="Logo"
-            class="hidden h-auto w-[30vw] lg:block"
+            className="hidden h-auto w-[30vw] lg:block"
           />
           <img
             src="/mini-logo.png"
             alt="Logo"
-            class="block h-auto w-[20vw] lg:hidden"
+            className="block h-auto w-[20vw] lg:hidden"
           />
-          <button class="text-secondary ml-auto text-sm" onClick={handleLogout}>
+          <button
+            className="text-secondary ml-auto text-sm"
+            onClick={handleLogout}
+          >
             Đăng xuất
           </button>
           {canGoBack && (

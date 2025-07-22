@@ -18,6 +18,7 @@ export const rootApi = createApi({
       return headers;
     },
   }),
+  tagTypes: ["Auth"],
   endpoints: (builder) => {
     return {
       register: builder.mutation({
@@ -40,12 +41,14 @@ export const rootApi = createApi({
       }),
       getAuthUser: builder.query({
         query: () => "/auth/auth-user",
+        providesTags: ["Auth"],
       }),
       refreshToken: builder.mutation({
         query: () => ({
           url: "/auth/refresh-token",
           method: "POST",
         }),
+        invalidatesTags: ["Auth"],
       }),
       logout: builder.mutation({
         query: () => ({
@@ -57,5 +60,10 @@ export const rootApi = createApi({
   },
 });
 
-export const { useRegisterMutation, useLoginMutation, useGetAuthUserQuery, useRefreshTokenMutation, useLogoutMutation } =
-  rootApi;
+export const {
+  useRegisterMutation,
+  useLoginMutation,
+  useGetAuthUserQuery,
+  useRefreshTokenMutation,
+  useLogoutMutation,
+} = rootApi;

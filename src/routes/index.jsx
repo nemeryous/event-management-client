@@ -34,15 +34,15 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/",
-    element: <HomePage />,
-  },
-  {
     element: <ProtectedRoute />,
     children: [
       {
         element: <MainLayout />,
         children: [
+          {
+            path: "/",
+            element: <HomePage />,
+          },
           {
             path: "/dashboard",
             element: <DashboardUser />,
