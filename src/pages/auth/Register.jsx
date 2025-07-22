@@ -1,5 +1,4 @@
-import { useRegisterMutation } from "@api/rootApi";
-import CheckboxInput from "@components/common/CheckboxInput";
+import { useRegisterMutation } from "@api/authApi";
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
 import React, { useEffect } from "react";

@@ -38,7 +38,7 @@ const EventCard = ({ event }) => {
   };
 
   return (
-    <div class="relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+    <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
       <div className="absolute inset-0 z-10 bg-gradient-to-br from-blue-500/10 to-red-500/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
 
       <div
