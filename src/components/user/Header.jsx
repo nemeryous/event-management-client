@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useLogoutMutation } from "@api/rootApi";
+import { useLogoutMutation } from "@api/authApi";
 import { clearToken } from "@store/slices/authSlice";
 
 const Header = () => {
@@ -32,7 +32,7 @@ const Header = () => {
   };
 
   return (
-    <header className="animate-slideDown sticky top-0 z-10 bg-white shadow-md">
+    <header className="sticky top-0 z-10 bg-white shadow-md">
       <div className="mx-auto max-w-6xl px-5">
         <div className="flex items-center py-4">
           <img
@@ -46,7 +46,7 @@ const Header = () => {
             className="block h-auto w-[20vw] lg:hidden"
           />
           <button
-            className="text-secondary ml-auto text-sm"
+            className="text-secondary ml-auto cursor-pointer text-sm hover:-translate-y-0.5"
             onClick={handleLogout}
           >
             Đăng xuất

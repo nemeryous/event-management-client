@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
-import { useGetAuthUserQuery, useRefreshTokenMutation } from "@api/rootApi";
+import { useGetAuthUserQuery, useRefreshTokenMutation } from "@api/authApi";
 import { setUser, setToken, clearToken } from "@store/slices/authSlice";
 
 const ProtectedRoute = () => {

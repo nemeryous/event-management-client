@@ -1,8 +1,11 @@
 // import EventCard from "@components/user/EventCard";
 import EventCard from "@components/user/EventCard";
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 
 const DashboardUser = () => {
+  const user = useSelector((state) => state.auth.user);
+
   const tabs = [
     { id: "upcoming", label: "Sắp diễn ra" },
     { id: "ongoing", label: "Đang diễn ra" },
@@ -17,7 +20,7 @@ const DashboardUser = () => {
   return (
     <div className="my-5 rounded-2xl bg-white p-7 shadow">
       <h2 className="text-secondary mb-5 text-2xl md:text-3xl">
-        Chào mừng, Trần Phước Anh
+        Chào mừng, {user?.name || "Người dùng"}!
       </h2>
 
       <nav className="mb-8 flex overflow-hidden rounded-xl shadow-md">
