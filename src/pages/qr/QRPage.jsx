@@ -1,16 +1,17 @@
-import { useGetEventQuery } from "@api/rootApi";
+import { useGetEventQRQuery } from "@api/rootApi";
 import QRDisplay from "@components/QRDisplay";
+import StatDisplay from "@components/QRDisplay/StatDisplay";
 import { useParams } from "react-router-dom";
 
 const QRPage = () => {
   const eventId = useParams().id;
 
-  const { data = {}, isLoading, isError, error } = useGetEventQuery(eventId);
-  console.log(data);
+  const { data = {}, isLoading, isError, error } = useGetEventQRQuery(eventId);
+  console.log({ data, isLoading, isError, error });
 
   return (
     // main-content
-    <main className="bg-gradient-to-br from-gray-100 to-blue-200 px-0 py-10">
+    <main className="w-full bg-gradient-to-br from-gray-100 to-blue-200 px-0 py-10">
       <div className="mx-auto my-0 max-w-[1200px] px-5 py-0">
         <div className="mb-[30px] text-center">
           <h1 className="mb-[10px] text-[2.5rem] font-bold text-[#1e88e5]">
@@ -22,8 +23,8 @@ const QRPage = () => {
         </div>
         {/* QR container */}
         <div className="mt-10 grid grid-cols-2 gap-10">
-          <QRDisplay />
-          <QRDisplay isStat={true} />
+          <QRDisplay qrData={data} />
+          <StatDisplay />
         </div>
       </div>
     </main>

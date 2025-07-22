@@ -18,9 +18,9 @@ const MainLayout = () => {
     <div>
       <Suspense fallback={<div>Loading...</div>}>
         <Header />
-        <div className="mx-auto max-w-6xl px-5">
-          <Outlet />
-        </div>
+        {/* <div className="mx-auto max-w-6xl px-5"> */}
+        <Outlet />
+        {/* </div> */}
         <Footer />
       </Suspense>
       <Snackbar

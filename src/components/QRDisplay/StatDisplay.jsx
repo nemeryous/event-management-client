@@ -1,36 +1,24 @@
-import React, { useMemo } from "react";
+import React from "react";
 import EventInfo from "./EventInfo";
 import ButtonComponent from "@components/common/ButtonComponent";
 import StatCard from "./StatCard";
 
-const QRDisplay = ({ qrData }) => {
-
-  const imageUrl = useMemo(() => {
-    if (!qrData || !(qrData instanceof Blob)) {
-      return null;
-    }
-
-    try {
-      return URL.createObjectURL(qrData);
-    } catch (error) {
-      console.error("Failed to create object URL", error);
-      return null;
-    }
-  }, [qrData]);
-
+const StatDisplay = ({ isStat = false }) => {
   return (
     <div className="flex items-center justify-between px-0 py-4">
       <div className="rounded-[20px] bg-white p-10 text-center shadow-[0_10px_30px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out">
-        <div className="relative mx-auto mb-5 flex h-[300px] w-[300px] items-center justify-center overflow-hidden rounded-[15px] border-[4px] border-yellow-400 bg-blue-600 text-[1.5rem] font-bold text-white">
-          {!imageUrl ? (
-            <p className="text-xl text-white">Đang tải mã QR...</p>
-          ) : (
-            <img
-              src={imageUrl}
-              alt="QR Code"
-              className="h-full w-full object-contain"
-            />
-          )}
+        <div className="mb-[30px] rounded-2xl bg-[#f8f9fa] p-[30px]">
+          <h3 className="mb-5 flex items-center gap-[10px] text-[1.3rem] font-bold text-[#1e88e5]">
+            <span class="flex h-5 w-5 items-center justify-center text-[#1e88e5]">
+              📊
+            </span>
+            Thống kê tham gia
+          </h3>
+          <div class="mt-[30px] grid grid-cols-2 gap-5">
+            <StatCard statLabel={"Đã tham gia"} statNumber={"42"} />
+            <StatCard statLabel={"Đã tham gia"} statNumber={"42"} />
+            <StatCard statLabel={"Đã tham gia"} statNumber={"42"} />
+          </div>
         </div>
 
         <EventInfo />
@@ -38,24 +26,24 @@ const QRDisplay = ({ qrData }) => {
           <ButtonComponent
             btnColor={"white"}
             btnBackground={"primary"}
-            icon={"📱"}
-            title={"Tải mã QR"}
+            icon={"👥"}
+            title={"Danh sách"}
             hoverColor={"#c62828"}
             hoverRgba={"229, 57, 53, 0.4"}
           />
           <ButtonComponent
             btnColor={"white"}
             btnBackground={"secondary"}
-            icon={"🔄"}
-            title={"Làm mới mã QR"}
+            icon={"📋"}
+            title={"Quản lý khảo sát"}
             hoverColor={"#c62828"}
             hoverRgba={"229, 57, 53, 0.4"}
           />
           <ButtonComponent
             btnColor={"white"}
             btnBackground={"accent"}
-            icon={"📋"}
-            title={"Sao chép liên kết"}
+            icon={"📊"}
+            title={"Báo cáo chi tiết"}
             hoverColor={"#c62828"}
             hoverRgba={"229, 57, 53, 0.4"}
           />
@@ -65,4 +53,4 @@ const QRDisplay = ({ qrData }) => {
   );
 };
 
-export default QRDisplay;
+export default StatDisplay;

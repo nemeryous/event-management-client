@@ -30,11 +30,12 @@ export const rootApi = createApi({
           };
         },
       }),
-      getEvent: builder.query({
+      getEventQR: builder.query({
         query: (id) => {
           return {
             url: `/attendants/get-qr-check/${id}`,
             method: "GET",
+            responseHandler: (response) => response.blob(),
           };
         },
       }),
@@ -74,5 +75,5 @@ export const {
   useGetAuthUserQuery,
   useRefreshTokenMutation,
   useLogoutMutation,
-  useGetEventQuery,
+  useGetEventQRQuery,
 } = rootApi;
