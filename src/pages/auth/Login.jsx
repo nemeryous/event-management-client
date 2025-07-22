@@ -1,12 +1,67 @@
-import CheckboxInput from "@components/common/CheckboxInput";
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useDispatch } from "react-redux";
+import { useLoginMutation } from "@api/rootApi";
+import { openSnackbar } from "@store/slices/snackbarSlice";
+import { setToken } from "@store/slices/authSlice";
+import ErrorMessage from "@components/user/ErrorMessage";
+import { CircularProgress } from "@mui/material";
 
 const Login = () => {
-  const { control } = useForm();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [login, { data = {}, isLoading, error, isError, isSuccess }] =
+    useLoginMutation();
+
+  const formSchema = yup.object().shape({
+    email: yup
+      .string()
+      .email("Định dạng email không hợp lệ")
+      .required("Email là bắt buộc"),
+    password: yup
+      .string()
+      .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
+      .required("Mật khẩu là bắt buộc"),
+  });
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, touchedFields },
+  } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    resolver: yupResolver(formSchema),
+  });
+
+  const isFieldValid = (fieldName) => {
+    return touchedFields[fieldName] && !errors[fieldName];
+  };
+
+  function onSubmit(formData) {
+    login(formData);
+  }
+
+  useEffect(() => {
+    console.log(data);
+    if (isError) {
+      dispatch(openSnackbar({ message: error?.data?.message, type: "error" }));
+    }
+
+    if (isSuccess) {
+      dispatch(openSnackbar({ message: "Đăng nhập thành công" }));
+      dispatch(setToken(data));
+      navigate("/dashboard");
+    }
+  }, [isError, isSuccess, data, error?.data?.message, dispatch, navigate]);
 
   return (
     <div className="flex w-full items-center justify-center px-8 py-12 lg:w-1/2">
@@ -20,13 +75,18 @@ const Login = () => {
           <div className="mb-8 text-center">
             <h2 className="mb-2 text-2xl font-bold text-gray-900">Đăng nhập</h2>
           </div>
-          <form className="space-y-6">
+          {isError && error && error.data && error.data.message && (
+            <ErrorMessage message={error.data.message} />
+          )}
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <FormField
               control={control}
               label="Email"
               name="email"
               type="email"
               Component={TextInput}
+              error={errors["email"]}
+              isValid={isFieldValid("email")}
             />
             <FormField
               control={control}
@@ -34,14 +94,10 @@ const Login = () => {
               name="password"
               type="password"
               Component={TextInput}
+              error={errors["password"]}
+              isValid={isFieldValid("password")}
             />
             <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <CheckboxInput className="h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-500" />
-                <span className="ml-2 text-sm text-gray-600">
-                  Ghi nhớ đăng nhập
-                </span>
-              </label>
               <a
                 href="#"
                 className="text-secondary text-sm font-medium hover:underline"
@@ -53,6 +109,7 @@ const Login = () => {
               type="submit"
               className="bg-primary w-full transform cursor-pointer rounded-xl px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-red-500/40 active:scale-95"
             >
+              {isLoading && <CircularProgress size={20} className="mr-1" />}
               Đăng nhập
             </button>
           </form>

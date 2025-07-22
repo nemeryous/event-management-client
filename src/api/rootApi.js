@@ -2,7 +2,22 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const rootApi = createApi({
   reducerPath: "api",
-  baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_BASE_URL }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: import.meta.env.VITE_BASE_URL,
+    credentials: "include",
+    prepareHeaders: (headers, { getState }) => {
+      const token = getState().auth.accessToken;
+      const tokenType = getState().auth.tokenType;
+
+      if (token) {
+        headers.set("Authorization", `${tokenType} ${token}`);
+      }
+
+      headers.set("Content-Type", "application/json");
+
+      return headers;
+    },
+  }),
   endpoints: (builder) => {
     return {
       register: builder.mutation({
@@ -14,8 +29,33 @@ export const rootApi = createApi({
           };
         },
       }),
+      login: builder.mutation({
+        query: ({ email, password }) => {
+          return {
+            url: "/auth/login",
+            body: { email, password },
+            method: "POST",
+          };
+        },
+      }),
+      getAuthUser: builder.query({
+        query: () => "/auth/auth-user",
+      }),
+      refreshToken: builder.mutation({
+        query: () => ({
+          url: "/auth/refresh-token",
+          method: "POST",
+        }),
+      }),
+      logout: builder.mutation({
+        query: () => ({
+          url: "/auth/logout",
+          method: "POST",
+        }),
+      }),
     };
   },
 });
 
-export const { useRegisterMutation } = rootApi;
+export const { useRegisterMutation, useLoginMutation, useGetAuthUserQuery, useRefreshTokenMutation, useLogoutMutation } =
+  rootApi;
