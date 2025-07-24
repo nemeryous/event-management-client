@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Header from "../../components/Header.jsx";
 import styles from './AttendantList.module.css';
-import { useGetAttendantsByEventQuery, useLazyGetUserByEmailQuery, useAddAttendantMutation, useDeleteAttendantMutation, useGetEventManagersByEventQuery, useAssignEventManagerMutation } from '../../api/rootApi';
+import { useGetAttendantsByEventQuery, useLazyGetUserByEmailQuery, useAddAttendantMutation, useDeleteAttendantMutation, useGetEventManagersByEventQuery, useAssignEventManagerMutation } from '../../api/attendantApi';
 
 
 function getInitials(email) {
@@ -59,9 +59,7 @@ export default function AttendantList() {
     }
   }, [notify]);
 
-  // Map attendants từ API sang participants cho UI cũ
   const participants = attendants.map(a => {
-    // Đảm bảo so sánh userId là string để mapping đúng
     const manager = eventManagers.find(m => String(m.user_id) === String(a.userId));
     return {
       name: a.userName,
@@ -82,7 +80,6 @@ export default function AttendantList() {
     if (!window.confirm('Bạn có chắc muốn xóa người này khỏi danh sách?')) return;
     setErrorMsg('');
     try {
-      // Tìm participant theo email để lấy userId
       const participant = participants.find((p) => p.email === email);
       if (!participant) {
         setErrorMsg('Không tìm thấy người tham dự này!');
@@ -107,7 +104,6 @@ export default function AttendantList() {
   const handleAddStaff = async (email) => {
     setErrorMsg('');
     try {
-      // Find participant to get userId
       const participant = participants.find((p) => p.email === email);
       if (!participant) {
         setNotify({ message: 'Không tìm thấy người tham dự này!', type: 'error' });
@@ -115,10 +111,10 @@ export default function AttendantList() {
         return;
       }
   
-      // Call API to assign STAFF role
+      const parsedEventId = parseInt(eventId, 10);
       const result = await assignEventManager({
         user_id: participant.userId,
-        event_id,
+        event_id: parsedEventId,
         roleType: 'STAFF',
       }).unwrap();
   
@@ -145,13 +141,11 @@ export default function AttendantList() {
       return;
     }
     try {
-      // 1. Lấy userId từ email bằng RTK Query
       const userRes = await triggerGetUserByEmail(email).unwrap();
       if (!userRes.id) {
         setErrorMsg('Không tìm thấy userId!');
         return;
       }
-      // 2. Gọi API thêm người tham dự
       const result = await addAttendant({ userId: userRes.id, eventId }).unwrap();
       if (result?.message && result.message !== "Người dùng đã được thêm vào sự kiện!") {
         setNotify({ message: result.message, type: 'error' });
