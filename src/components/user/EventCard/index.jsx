@@ -6,8 +6,47 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FallbackImage } from "./FallbackBanner";
+import { useDispatch } from "react-redux";
+import { useJoinEventMutation } from "@api/eventApi";
+import { openSnackbar } from "@store/slices/snackbarSlice";
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, isManageMode = false }) => {
+  const dispatch = useDispatch();
+
+  const [
+    joinEvent,
+    { isLoading: isJoining, error: joinError, isSuccess: isJoined },
+  ] = useJoinEventMutation();
+
+  const handleJoinEvent = async (qrJoinToken) => {
+    try {
+      await joinEvent(qrJoinToken).unwrap();
+    } catch {
+      // ignore error
+    }
+  };
+
+  if (isJoining) {
+    dispatch(
+      openSnackbar({ message: "Đang tham gia sự kiện...", type: "info" }),
+    );
+  }
+
+  if (isJoined) {
+    dispatch(
+      openSnackbar({ message: "Tham gia sự kiện thành công", type: "success" }),
+    );
+  }
+
+  if (joinError) {
+    dispatch(
+      openSnackbar({
+        message: joinError?.data?.message || "Không thể tham gia sự kiện",
+        type: "error",
+      }),
+    );
+  }
+
   const getBadgeText = (status) => {
     switch (status) {
       case "UPCOMING":
@@ -38,10 +77,6 @@ const EventCard = ({ event }) => {
     }
   };
 
-  const handleRegister = (eventName) => {
-    alert(`Đăng ký sự kiện: ${eventName}`);
-  };
-
   const [imageState, setImageState] = useState({
     loaded: false,
     error: false,
@@ -70,7 +105,8 @@ const EventCard = ({ event }) => {
   }, [event.banner]);
 
   const isEventPassed = new Date(event.startTime) < new Date();
-  const canRegister = event.status === "UPCOMING" && !isEventPassed;
+  const canRegister =
+    event.status === "UPCOMING" && !isEventPassed && !event.isRegistered;
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
@@ -119,9 +155,12 @@ const EventCard = ({ event }) => {
       </div>
 
       <div className="relative z-20 p-6">
-        <h3 className="mb-4 line-clamp-2 cursor-default text-xl font-bold text-blue-600 transition-colors duration-300 group-hover:text-red-600">
+        <Link
+          to={`/events/${event.id}`}
+          className="mb-4 line-clamp-2 cursor-pointer text-xl font-bold text-blue-600 transition-colors duration-300 group-hover:text-red-600"
+        >
           {event.title}
-        </h3>
+        </Link>
 
         <div className="mb-5 space-y-1 text-gray-600">
           <div className="flex cursor-default items-center gap-3 rounded-lg p-2 transition-all duration-300 hover:bg-gray-50 hover:pl-4">
@@ -162,29 +201,45 @@ const EventCard = ({ event }) => {
           >
             <div className="absolute inset-0 scale-0 rounded-full bg-white/30 transition-transform duration-300 group-hover/btn:scale-100"></div>
             <span className="relative z-10 flex items-center justify-center">
-              <span>Xem chi tiết</span>
+              <span className="text-center">Xem chi tiết</span>
             </span>
           </Link>
 
-          <button
-            className={`group/btn relative flex-1 cursor-pointer overflow-hidden rounded-full px-5 py-3 text-sm font-bold transition-all duration-300 hover:-translate-y-1 focus:ring-2 focus:ring-offset-2 focus:outline-none ${
-              canRegister
-                ? "bg-yellow-400 text-gray-900 hover:bg-yellow-500 hover:shadow-lg hover:shadow-yellow-400/40 focus:ring-yellow-500"
-                : "cursor-not-allowed bg-gray-300 text-gray-500"
-            }`}
-            onClick={() => handleRegister}
-            disabled={event.isRegistered}
-          >
-            <div
-              className={`absolute inset-0 scale-0 rounded-full bg-white/30 transition-transform duration-300 ${!event.isRegistered ? "group-hover/btn:scale-100" : ""}`}
-            ></div>
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <span>Đăng ký</span>
-              <span className="transition-transform duration-300 group-hover/btn:scale-110">
-                ✨
+          {isManageMode ? (
+            <Link
+              to="/manage-event"
+              className={`group/btn relative flex-1 cursor-pointer overflow-hidden rounded-full bg-blue-500 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/40 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none`}
+            >
+              <div
+                className={`absolute inset-0 scale-0 rounded-full bg-white/30 transition-transform duration-300 group-hover/btn:scale-100`}
+              ></div>
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <span>Quản lý</span>
+                <span className="transition-transform duration-300 group-hover/btn:scale-110">
+                  ⚙️
+                </span>
               </span>
-            </span>
-          </button>
+            </Link>
+          ) : (
+            <button
+              className={`group/btn relative flex-1 cursor-pointer overflow-hidden rounded-full px-5 py-3 text-sm font-bold transition-all duration-300 hover:-translate-y-1 focus:ring-2 focus:ring-offset-2 focus:outline-none ${
+                canRegister
+                  ? "bg-yellow-400 text-gray-900 hover:bg-yellow-500 hover:shadow-lg hover:shadow-yellow-400/40 focus:ring-yellow-500"
+                  : "cursor-not-allowed bg-gray-300 text-gray-500"
+              }`}
+              onClick={() => handleJoinEvent(event.qrJoinToken)}
+              disabled={event.isRegistered}
+            >
+              <div
+                className={`absolute inset-0 scale-0 rounded-full bg-white/30 transition-transform duration-300 ${
+                  !event.isRegistered ? "group-hover/btn:scale-100" : ""
+                }`}
+              ></div>
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <span>{event.isRegistered ? "Đã đăng ký" : "Đăng ký"}</span>
+              </span>
+            </button>
+          )}
         </div>
 
         {!canRegister && event.status === "UPCOMING" && isEventPassed && (

@@ -23,9 +23,48 @@ export const eventApi = rootApi.injectEndpoints({
 
         return `/events?${params.toString()}`;
       },
+      providesTags: ["Events"],
     }),
     getAllEvents: builder.query({
-      query: () => "/all",
+      query: () => "/events/all",
+      providesTags: ["AllEvents"],
+    }),
+    getManagedEvents: builder.query({
+      query: ({
+        page = 0,
+        size = 6,
+        sortBy = "startTime",
+        sortDir = "asc",
+      }) => {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          size: size.toString(),
+          sortBy,
+          sortDir,
+        });
+        return `/events/managed?${params.toString()}`;
+      },
+      providesTags: ["ManagedEvents"],
+    }),
+    getAllManagedEvents: builder.query({
+      query: () => "/events/managed/all",
+      providesTags: ["AllManagedEvents"],
+    }),
+    getEventById: builder.query({
+      query: (id) => `/events/${id}`,
+      providesTags: (result, error, id) => [{ type: "Events", id }],
+    }),
+    joinEvent: builder.mutation({
+      query: (eventToken) => ({
+        url: `/events/join/${eventToken}`,
+        method: "POST",
+        invalidatesTags: [
+          "Events",
+          "AllEvents",
+          "ManagedEvents",
+          "AllManagedEvents",
+        ],
+      }),
     }),
   }),
   overrideExisting: false,
@@ -33,6 +72,9 @@ export const eventApi = rootApi.injectEndpoints({
 
 export const {
   useGetEventsQuery,
-  useGetEventBannerQuery,
   useGetAllEventsQuery,
+  useGetManagedEventsQuery,
+  useGetAllManagedEventsQuery,
+  useGetEventByIdQuery,
+  useJoinEventMutation,
 } = eventApi;

@@ -7,6 +7,7 @@ import EventDetail from "@pages/user/EventDetail";
 import HomePage from "@pages/user/HomePage";
 import { createBrowserRouter } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
+import EventManagement from "@components/user/EventManagement";
 
 const router = createBrowserRouter([
   {
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
           },
           {
             path: "/polls",
+          },
+          {
+            path: "/manage-event",
+            element: <EventManagement />,
           },
         ],
       },

@@ -29,3 +29,45 @@ export const getTimeUntilEvent = (eventStartTime) => {
     return "Đã qua";
   }
 };
+
+export const formatDateTime = (dateTimeString) => {
+  const date = new Date(dateTimeString);
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+
+export const getStatusText = (status) => {
+  const statusMap = {
+    UPCOMING: "Sắp diễn ra",
+    ONGOING: "Đang diễn ra",
+    COMPLETED: "Đã kết thúc",
+    CANCELLED: "Đã hủy",
+  };
+  return statusMap[status] || "Không xác định";
+};
+
+export const getStatusColor = (status) => {
+  const colorMap = {
+    UPCOMING: "bg-blue-100 text-blue-800",
+    ONGOING: "bg-green-100 text-green-800",
+    COMPLETED: "bg-gray-100 text-gray-800",
+    CANCELLED: "bg-red-100 text-red-800",
+  };
+  return colorMap[status] || "bg-gray-100 text-gray-800";
+};
+
+export const formatJoinedTime = (joinedAt) => {
+  const date = new Date(joinedAt);
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};

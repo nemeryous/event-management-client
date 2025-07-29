@@ -1,4 +1,9 @@
-import { useGetAllEventsQuery, useGetEventsQuery } from "@api/eventApi";
+import {
+  useGetAllEventsQuery,
+  useGetAllManagedEventsQuery,
+  useGetEventsQuery,
+  useGetManagedEventsQuery,
+} from "@api/eventApi";
 import EventCard from "@components/user/EventCard";
 import { EVENT_STATUS } from "@utils/constants";
 import React, { useMemo, useState } from "react";
@@ -6,11 +11,9 @@ import { useSelector } from "react-redux";
 
 const DashboardUser = () => {
   const user = useSelector((state) => state.auth.user);
-
   const [activeTab, setActiveTab] = useState("UPCOMING");
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("date");
-  // const [sortDir, setSortDir] = useState("asc");
   const sortDir = "asc";
 
   const tabs = Object.entries(EVENT_STATUS).map(([id, label]) => ({
@@ -18,31 +21,65 @@ const DashboardUser = () => {
     label,
   }));
 
+  const isManageTab = activeTab === "MANAGE";
+
   const {
     data: paginatedData,
-    isLoading,
-    error,
-  } = useGetEventsQuery({
-    page: currentPage,
-    size: 6,
-    sortBy: sortBy === "date" ? "startTime" : "name",
-    sortDir,
-    status: activeTab,
-  });
+    isLoading: isLoadingNormal,
+    error: errorNormal,
+  } = useGetEventsQuery(
+    {
+      page: currentPage,
+      size: 6,
+      sortBy: sortBy === "date" ? "startTime" : "name",
+      sortDir,
+      status: activeTab,
+    },
+    {
+      skip: isManageTab,
+    },
+  );
+
+  const {
+    data: manageData,
+    isLoading: isLoadingManage,
+    error: errorManage,
+  } = useGetManagedEventsQuery(
+    {
+      page: currentPage,
+      size: 6,
+      sortBy: sortBy === "date" ? "startTime" : "name",
+      sortDir,
+    },
+    {
+      skip: !isManageTab,
+    },
+  );
 
   const { data: allEvents } = useGetAllEventsQuery();
+  const { data: allManagedEvents } = useGetAllManagedEventsQuery();
+
+  const currentData = isManageTab ? manageData : paginatedData;
+  const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
+  const error = isManageTab ? errorManage : errorNormal;
 
   const tabCounts = useMemo(() => {
-    if (!allEvents) return {};
+    if (!allEvents && !allManagedEvents) return {};
 
     const counts = {};
     tabs.forEach((tab) => {
-      counts[tab.id] = allEvents.filter(
-        (event) => event.status === tab.id,
-      ).length;
+      if (tab.id === "MANAGE") {
+        counts[tab.id] =
+          allManagedEvents?.totalElements ||
+          allManagedEvents?.content?.length ||
+          0;
+      } else {
+        counts[tab.id] =
+          allEvents?.filter((event) => event.status === tab.id).length || 0;
+      }
     });
     return counts;
-  }, [allEvents, tabs]);
+  }, [allEvents, allManagedEvents, tabs]);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -57,6 +94,8 @@ const DashboardUser = () => {
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
+
+  console.log(currentData);
 
   if (isLoading) {
     return (
@@ -84,7 +123,9 @@ const DashboardUser = () => {
         Chào mừng, {user?.name || "Người dùng"}! 👋
       </h2>
       <p className="mb-8 text-gray-600">
-        Khám phá và tham gia các sự kiện thú vị của chúng tôi
+        {isManageTab
+          ? "Quản lý các sự kiện của bạn"
+          : "Khám phá và tham gia các sự kiện thú vị của chúng tôi"}
       </p>
 
       <nav className="mb-8 flex overflow-hidden rounded-xl shadow-md">
@@ -122,9 +163,9 @@ const DashboardUser = () => {
           <p className="text-gray-600">
             Tìm thấy{" "}
             <span className="font-semibold text-gray-900">
-              {paginatedData?.totalElements || 0}
+              {currentData?.totalElements || 0}
             </span>{" "}
-            sự kiện
+            {isManageTab ? "sự kiện quản lý" : "sự kiện"}
           </p>
 
           <div className="flex items-center gap-2">
@@ -141,49 +182,56 @@ const DashboardUser = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {paginatedData?.content?.map((event, index) => (
+          {currentData?.content?.map((event, index) => (
             <div
               key={event.id}
               className="animate-slideInUp"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <EventCard event={event} />
+              <EventCard event={event} isManageMode={isManageTab} />
             </div>
           ))}
         </div>
 
-        {paginatedData?.content?.length === 0 && (
+        {currentData?.content?.length === 0 && (
           <div className="py-12 text-center text-gray-500">
-            <div className="mb-4 text-6xl">📅</div>
-            <p className="text-lg font-medium">Không có sự kiện nào</p>
-            <p className="text-sm">Hãy quay lại sau để xem các sự kiện mới</p>
+            <div className="mb-4 text-6xl">{isManageTab ? "🛠️" : "📅"}</div>
+            <p className="text-lg font-medium">
+              {isManageTab
+                ? "Bạn chưa có sự kiện nào để quản lý"
+                : "Không có sự kiện nào"}
+            </p>
+            <p className="text-sm">
+              {isManageTab
+                ? "Vui lòng liên hệ với quản trị viên để tạo sự kiện"
+                : "Hãy quay lại sau để xem các sự kiện mới"}
+            </p>
           </div>
         )}
       </div>
 
-      {paginatedData && paginatedData.totalPages > 1 && (
+      {currentData && currentData.totalPages > 1 && (
         <div className="mt-8 flex justify-center">
           <div className="flex items-center gap-2">
             <button
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-              disabled={paginatedData.first}
+              disabled={currentData.first}
               onClick={() => handlePageChange(currentPage - 1)}
             >
               Trước
             </button>
 
-            {/* Page numbers */}
             <div className="flex items-center gap-1">
               {Array.from(
-                { length: Math.min(5, paginatedData.totalPages) },
+                { length: Math.min(5, currentData.totalPages) },
                 (_, i) => {
                   let pageNum;
-                  if (paginatedData.totalPages <= 5) {
+                  if (currentData.totalPages <= 5) {
                     pageNum = i;
                   } else if (currentPage < 3) {
                     pageNum = i;
-                  } else if (currentPage > paginatedData.totalPages - 4) {
-                    pageNum = paginatedData.totalPages - 5 + i;
+                  } else if (currentPage > currentData.totalPages - 4) {
+                    pageNum = currentData.totalPages - 5 + i;
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
@@ -207,7 +255,7 @@ const DashboardUser = () => {
 
             <button
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-              disabled={paginatedData.last}
+              disabled={currentData.last}
               onClick={() => handlePageChange(currentPage + 1)}
             >
               Sau

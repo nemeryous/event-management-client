@@ -8,7 +8,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLogoutMutation } from "@api/authApi";
 import { clearToken } from "@store/slices/authSlice";
 
@@ -20,6 +20,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { email } = useSelector((state) => state.auth.user || {});
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,15 +96,6 @@ const Header = () => {
                   className="block h-8 w-auto sm:h-10 lg:hidden"
                 />
               </Link>
-
-              {/* {canGoBack && (
-                <div className="hidden items-center text-gray-400 sm:flex">
-                  <span className="mx-2">/</span>
-                  <span className="text-sm capitalize">
-                    {location.pathname.split("/")[1] || "Page"}
-                  </span>
-                </div>
-              )} */}
             </div>
 
             <div className="hidden items-center space-x-4 sm:flex">
@@ -134,7 +126,7 @@ const Header = () => {
                       <p className="text-sm font-medium text-gray-800">
                         Tài khoản của tôi
                       </p>
-                      <p className="text-xs text-gray-500">user@vku.edu.vn</p>
+                      <p className="text-xs text-gray-500">{email}</p>
                     </div>
                     <button
                       onClick={handleLogout}
@@ -185,7 +177,7 @@ const Header = () => {
                   <p className="text-sm font-medium text-gray-800">
                     Tài khoản của tôi
                   </p>
-                  <p className="text-xs text-gray-500">user@vku.edu.vn</p>
+                  <p className="text-xs text-gray-500">{email}</p>
                 </div>
               </div>
 

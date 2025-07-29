@@ -6,273 +6,264 @@ import {
   faPhone,
   faPlay,
   faZ,
+  faArrowUp,
+  faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const Footer = () => {
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <footer className="bg-[linear-gradient(135deg,#1e88e5_0%,#0d47a1_10 bg-secondary relative overflow-hidden py-5 pt-10 text-white">
-      <div className="absolute top-0 right-0 left-0 h-1 bg-[linear-gradient(90deg,#fbc02d,#e53935,#43a047,#1e88e5)]"></div>
-      <div className="mx-auto max-w-6xl px-5">
-        <div className="mb-7 grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-7 lg:grid-cols-4 lg:gap-10">
-          <div className="text-center md:text-start">
-            <div className="mb-5 flex items-center gap-4">
-              <img
-                src="/mini-logo.png"
-                alt="VKU Logo"
-                className="h-auto w-[5vw] p-1"
-              />
+    <footer className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white">
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-10 left-10 h-20 w-20 animate-pulse rounded-full bg-blue-400 blur-xl"></div>
+        <div className="absolute top-32 right-20 h-16 w-16 animate-pulse rounded-full bg-purple-400 blur-xl delay-1000"></div>
+        <div className="absolute bottom-20 left-1/4 h-24 w-24 animate-pulse rounded-full bg-cyan-400 blur-xl delay-2000"></div>
+        <div className="absolute right-1/3 bottom-32 h-12 w-12 animate-pulse rounded-full bg-pink-400 blur-xl delay-3000"></div>
+      </div>
+
+      <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-yellow-400 via-green-500 via-red-500 to-blue-500">
+        <div className="h-full w-full animate-pulse bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-16">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-6">
+            <div className="group">
+              <div className="mb-6 flex items-center gap-4">
+                <div className="relative">
+                  <img
+                    src="/mini-logo.png"
+                    alt="VKU Logo"
+                    className="h-16 w-16 rounded-xl bg-white/10 p-2 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 blur transition-opacity duration-300 group-hover:opacity-50"></div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-2xl font-bold text-transparent">
+                  VKU
+                </div>
+              </div>
+
+              <p className="text-sm leading-relaxed text-blue-100/80">
+                Đào tạo nguồn nhân lực chất lượng cao trong lĩnh vực CNTT, hướng
+                tới sự phát triển bền vững và hội nhập quốc tế.
+              </p>
+
+              <div className="h-1 w-12 rounded-full bg-gradient-to-r from-blue-400 to-purple-400"></div>
             </div>
-            <p className="text-sm leading-normal text-blue-200">
-              Đào tạo nguồn nhân lực chất lượng cao trong lĩnh vực CNTT, hướng
-              tới sự phát triển bền vững và hội nhập quốc tế.
-            </p>
-            <div className="bg-accent absolute bottom-0 left-0 h-0.5 w-7"></div>
           </div>
 
-          <div className="text-center md:text-start">
-            <h3 className="text-accent relative mb-4 pb-2 text-lg">
+          <div className="space-y-6">
+            <h3 className="relative text-xl font-semibold text-blue-200">
               Liên kết nhanh
-              <div className="bg-accent absolute bottom-0 left-0 h-0.5 w-7"></div>
+              <div className="absolute -bottom-2 left-0 h-0.5 w-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-400"></div>
             </h3>
-            <ul className="list-none">
-              <li className="group mb-2">
+
+            <nav className="space-y-3">
+              {[
+                "Trang chủ",
+                "Giới thiệu",
+                "Tin tức & Sự kiện",
+                "Thư viện",
+                "Hỏi đáp",
+                "Liên hệ",
+              ].map((item, index) => (
                 <a
+                  key={index}
                   href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
+                  className="group flex items-center gap-3 text-blue-100/70 transition-all duration-300 hover:translate-x-2 hover:text-blue-200"
                 >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Trang chủ
+                  <FontAwesomeIcon
+                    icon={faChevronRight}
+                    className="h-3 w-3 text-blue-400 opacity-0 transition-all duration-300 group-hover:opacity-100"
+                  />
+                  <span className="relative">
+                    {item}
+                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300 group-hover:w-full"></span>
+                  </span>
                 </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Giới thiệu
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Tin tức & Sự kiện
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Thư viện
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Hỏi đáp
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Liên hệ
-                </a>
-              </li>
-            </ul>
+              ))}
+            </nav>
           </div>
 
-          <div className="text-center md:text-start">
-            <h3 className="text-accent relative mb-4 pb-2 text-lg">
+          {/* Training section */}
+          <div className="space-y-6">
+            <h3 className="relative text-xl font-semibold text-blue-200">
               Đào tạo
-              <div className="bg-accent absolute bottom-0 left-0 h-0.5 w-7"></div>
+              <div className="absolute -bottom-2 left-0 h-0.5 w-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-400"></div>
             </h3>
-            <ul className="list-none">
-              <li className="group mb-2">
+
+            <nav className="space-y-3">
+              {[
+                "Tuyển sinh",
+                "Chương trình đào tạo",
+                "Đào tạo đại học",
+                "Đào tạo sau đại học",
+                "Đào tạo liên tục",
+                "Hợp tác quốc tế",
+              ].map((item, index) => (
                 <a
+                  key={index}
                   href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
+                  className="group flex items-center gap-3 text-blue-100/70 transition-all duration-300 hover:translate-x-2 hover:text-blue-200"
                 >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Tuyển sinh
+                  <FontAwesomeIcon
+                    icon={faChevronRight}
+                    className="h-3 w-3 text-blue-400 opacity-0 transition-all duration-300 group-hover:opacity-100"
+                  />
+                  <span className="relative">
+                    {item}
+                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300 group-hover:w-full"></span>
+                  </span>
                 </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Chương trình đào tạo
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Đào tạo đại học
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Đào tạo sau đại học
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Đào tạo liên tục
-                </a>
-              </li>
-              <li className="group mb-2">
-                <a
-                  href="#"
-                  className="hover:text-accent flex items-center gap-2 text-sm text-blue-200 no-underline duration-300 group-hover:translate-x-1"
-                >
-                  <div className="opacity-0 duration-300 group-hover:opacity-100">
-                    →
-                  </div>
-                  Hợp tác quốc tế
-                </a>
-              </li>
-            </ul>
+              ))}
+            </nav>
           </div>
 
-          <div className="text-center md:text-start">
-            <h3 className="text-accent relative mb-4 pb-2 text-lg">
+          <div className="space-y-6">
+            <h3 className="relative text-xl font-semibold text-blue-200">
               Thông tin liên hệ
-              <div className="bg-accent absolute bottom-0 left-0 h-0.5 w-7"></div>
+              <div className="absolute -bottom-2 left-0 h-0.5 w-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-400"></div>
             </h3>
-            <ul className="list-none">
-              <li className="mb-3 flex items-center gap-2 text-sm text-blue-200">
-                <div className="bg-accent flex size-5 shrink-0 items-center justify-center rounded-full text-xs">
-                  <FontAwesomeIcon icon={faLocationDot} />
-                </div>
-                <div>470 Trần Đại Nghĩa, Hòa Quý, Ngũ Hành Sơn, Đà Nẵng</div>
-              </li>
-              <li className="mb-3 flex items-center gap-2 text-sm text-blue-200">
-                <div className="bg-accent flex size-5 shrink-0 items-center justify-center rounded-full text-xs">
-                  <FontAwesomeIcon icon={faPhone} />
-                </div>
-                <div>(0236) 3667 117</div>
-              </li>
-              <li className="mb-3 flex items-center gap-2 text-sm text-blue-200">
-                <div className="bg-accent flex size-5 shrink-0 items-center justify-center rounded-full text-xs">
-                  <FontAwesomeIcon icon={faInbox} />
-                </div>
-                <div>info@vku.udn.vn</div>
-              </li>
-              <li className="mb-3 flex items-center gap-2 text-sm text-blue-200">
-                <div className="bg-accent flex size-5 shrink-0 items-center justify-center rounded-full text-xs">
-                  <FontAwesomeIcon icon={faGlobe} />
-                </div>
-                <div>www.vku.udn.vn</div>
-              </li>
-            </ul>
 
-            <div className="mt-5 flex gap-4">
-              <a
-                className="hover:bg-accent flex size-10 items-center justify-center rounded-full bg-black text-lg text-white no-underline opacity-20 duration-300 ease-in-out hover:-translate-y-1 hover:text-[#333] hover:opacity-100"
-                href="#"
-                title="Facebook"
-              >
-                <FontAwesomeIcon icon={faFacebookF} />
-              </a>
-              <a
-                className="hover:bg-accent flex size-10 items-center justify-center rounded-full bg-black text-lg text-white no-underline opacity-20 duration-300 ease-in-out hover:-translate-y-1 hover:text-[#333] hover:opacity-100"
-                href="#"
-                title="YouTube"
-              >
-                <FontAwesomeIcon icon={faPlay} />
-              </a>
-              <a
-                className="hover:bg-accent flex size-10 items-center justify-center rounded-full bg-black text-lg text-white no-underline opacity-20 duration-300 ease-in-out hover:-translate-y-1 hover:text-[#333] hover:opacity-100"
-                href="#"
-                title="LinkedIn"
-              >
-                <FontAwesomeIcon icon={faLinkedinIn} />
-              </a>
-              <a
-                className="hover:bg-accent flex size-10 items-center justify-center rounded-full bg-black text-lg text-white no-underline opacity-20 duration-300 ease-in-out hover:-translate-y-1 hover:text-[#333] hover:opacity-100"
-                href="#"
-                title="Zalo"
-              >
-                <FontAwesomeIcon icon={faZ} />
-              </a>
+            <div className="space-y-4">
+              {[
+                {
+                  icon: faLocationDot,
+                  text: "470 Trần Đại Nghĩa, Hòa Quý, Ngũ Hành Sơn, Đà Nẵng",
+                  color: "from-red-400 to-pink-400",
+                },
+                {
+                  icon: faPhone,
+                  text: "(0236) 3667 117",
+                  color: "from-green-400 to-emerald-400",
+                },
+                {
+                  icon: faInbox,
+                  text: "info@vku.udn.vn",
+                  color: "from-blue-400 to-cyan-400",
+                },
+                {
+                  icon: faGlobe,
+                  text: "www.vku.udn.vn",
+                  color: "from-purple-400 to-indigo-400",
+                },
+              ].map((contact, index) => (
+                <div
+                  key={index}
+                  className="group flex items-start gap-3 text-blue-100/80"
+                >
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${contact.color} shadow-lg transition-transform duration-300 group-hover:scale-110`}
+                  >
+                    <FontAwesomeIcon
+                      icon={contact.icon}
+                      className="h-4 w-4 text-white"
+                    />
+                  </div>
+                  <span className="text-sm leading-relaxed transition-colors duration-300 group-hover:text-blue-100">
+                    {contact.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4">
+              <p className="mb-4 font-medium text-blue-200">
+                Kết nối với chúng tôi
+              </p>
+              <div className="flex gap-3">
+                {[
+                  {
+                    icon: faFacebookF,
+                    color: "from-blue-500 to-blue-600",
+                    name: "Facebook",
+                  },
+                  {
+                    icon: faPlay,
+                    color: "from-red-500 to-red-600",
+                    name: "YouTube",
+                  },
+                  {
+                    icon: faLinkedinIn,
+                    color: "from-blue-600 to-blue-700",
+                    name: "LinkedIn",
+                  },
+                  {
+                    icon: faZ,
+                    color: "from-cyan-500 to-cyan-600",
+                    name: "Zalo",
+                  },
+                ].map((social, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    title={social.name}
+                    className={`group relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${social.color} shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-110 hover:shadow-xl`}
+                  >
+                    <FontAwesomeIcon
+                      icon={social.icon}
+                      className="h-5 w-5 text-white"
+                    />
+                    <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="boder flex flex-col flex-wrap items-center justify-between gap-4 border-t pt-5 text-center lg:flex-row">
-          <p className="text-sm text-blue-200">
-            &copy; 2024 Trường Đại học Công nghệ Thông tin và Truyền thông Việt
-            - Hàn. Tất cả quyền được bảo lưu.
-          </p>
-          <div className="flex justify-center gap-5 text-wrap">
-            <a
-              href="#"
-              className="hover:text-accent text-sm text-blue-200 no-underline duration-300 ease-in-out"
-            >
-              Chính sách bảo mật
-            </a>
-            <a
-              href="#"
-              className="hover:text-accent text-sm text-blue-200 no-underline duration-300 ease-in-out"
-            >
-              Điều khoản sử dụng
-            </a>
-            <a
-              href="#"
-              className="hover:text-accent text-sm text-blue-200 no-underline duration-300 ease-in-out"
-            >
-              Sitemap
-            </a>
+        <div className="mt-16 border-t border-white/10 pt-8">
+          <div className="flex flex-col items-center justify-between gap-6 lg:flex-row">
+            <p className="text-center text-sm text-blue-100/70">
+              &copy; 2024 Trường Đại học Công nghệ Thông tin và Truyền thông
+              Việt - Hàn.
+              <span className="block lg:inline">
+                {" "}
+                Tất cả quyền được bảo lưu.
+              </span>
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-6">
+              {["Chính sách bảo mật", "Điều khoản sử dụng", "Sitemap"].map(
+                (item, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    className="relative text-sm text-blue-100/70 transition-all duration-300 hover:text-blue-200"
+                  >
+                    {item}
+                    <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gradient-to-r from-blue-400 to-purple-400 transition-all duration-300 hover:w-full"></span>
+                  </a>
+                ),
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed right-8 bottom-8 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
+        >
+          <FontAwesomeIcon icon={faArrowUp} className="h-5 w-5 text-white" />
+        </button>
+      )}
     </footer>
   );
 };
