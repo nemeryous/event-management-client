@@ -207,7 +207,7 @@ const EventCard = ({ event, isManageMode = false }) => {
 
           {isManageMode ? (
             <Link
-              to="/manage-event"
+              to={`/events/${event.id}/manage`}
               className={`group/btn relative flex-1 cursor-pointer overflow-hidden rounded-full bg-blue-500 px-5 py-3 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/40 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 focus:outline-none`}
             >
               <div

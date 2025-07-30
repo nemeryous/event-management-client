@@ -22,6 +22,7 @@ import CreatePoll from "@pages/poll/CreatePoll";
 import AttendantList from "@pages/admin/AttendantList";
 import AnswerQuestion from "@pages/AnswerQuestion";
 import EventDetailUser from "@pages/user/EventDetailUser";
+import EventManagementManage from "@components/user/EventManagementManage";
 
 const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
           {
             path: "/events/:id",
             element: <EventDetailUser />,
+          },
+          {
+            path: "/events/:id/manage",
+            element: <EventManagementManage />,
           },
           {
             path: "/qr/:id",
