@@ -10,6 +10,17 @@ import HomePage from "@pages/user/HomePage";
 import { createBrowserRouter } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
+import AdminLayout from "@layouts/AdminLayout";
+import EventManagement from "@pages/admin/EventManagement";
+import EventCreate from "@pages/admin/EventCreate";
+import EventDetail from "@pages/admin/EventDetail";
+import Dashboard from "@pages/admin/Dashboard";
+import UserManagement from "@pages/admin/UserManagement";
+import NotFound from "@pages/NotFound";
+import PollPage from "@pages/poll/PollPage";
+import CreatePoll from "@pages/poll/CreatePoll";
+import AttendantList from "@pages/admin/AttendantList";
+import AnswerQuestion from "@pages/AnswerQuestion";
 
 const router = createBrowserRouter([
   {
@@ -41,7 +52,7 @@ const router = createBrowserRouter([
           },
           {
             path: "/events/:id",
-            // element: <EventDetail />,
+            element: <EventDetail />,
           },
           {
             path: "/qr/:id",
@@ -85,7 +96,7 @@ const router = createBrowserRouter([
           },
           {
             path: "/admin/events/:id",
-            // element: <EventDetail />,
+            element: <EventDetail />,
           },
           {
             path: "/admin/dashboard",

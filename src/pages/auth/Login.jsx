@@ -6,11 +6,11 @@ import { Link, useNavigate } from "react-router-dom";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useDispatch } from "react-redux";
-import { useLoginMutation } from "@api/rootApi";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import { setToken } from "@store/slices/authSlice";
 import ErrorMessage from "@components/user/ErrorMessage";
 import { CircularProgress } from "@mui/material";
+import { useLoginMutation } from "@api/authApi";
 
 const Login = () => {
   const dispatch = useDispatch();

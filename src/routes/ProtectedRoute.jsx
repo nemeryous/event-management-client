@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback, memo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
-import { useGetAuthUserQuery, useRefreshTokenMutation } from "@api/rootApi";
+
 import { setUser, setToken, clearToken } from "@store/slices/authSlice";
 import Loading from "@components/common/Loading";
+import { useGetAuthUserQuery, useRefreshTokenMutation } from "@api/authApi";
 import { rootApi } from "@api/rootApi";
+
 
 const ProtectedRoute = memo(() => {
   const dispatch = useDispatch();

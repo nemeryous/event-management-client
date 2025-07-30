@@ -1,4 +1,4 @@
-import { useRegisterMutation } from "@api/rootApi";
+
 import CheckboxInput from "@components/common/CheckboxInput";
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useRegisterMutation } from "@api/authApi";
 
 const Register = () => {
   const navigate = useNavigate();
