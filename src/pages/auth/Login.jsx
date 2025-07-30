@@ -36,8 +36,8 @@ const Login = () => {
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      email: "",
-      password: "",
+      email: "tanh11704@gmail.com",
+      password: "123456",
     },
     resolver: yupResolver(formSchema),
   });

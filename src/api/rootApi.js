@@ -4,7 +4,13 @@ import { baseQueryWithReauth } from "./customBaseQuery";
 export const rootApi = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Auth"],
+  tagTypes: [
+    "Auth",
+    "Events",
+    "AllEvents",
+    "ManagedEvents",
+    "AllManagedEvents",
+  ],
   endpoints: (builder) => {
     return {
       register: builder.mutation({

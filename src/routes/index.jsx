@@ -17,6 +17,7 @@ import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
 import CreatePoll from "@pages/poll/CreatePoll.jsx";
 import ProtectedRoute from "./ProtectedRoute";
+import EventManagement from "@components/user/EventManagement";
 
 const router = createBrowserRouter([
   {
@@ -47,8 +48,8 @@ const router = createBrowserRouter([
             element: <DashboardUser />,
           },
           {
-            path: "/event/:id",
-            // element: <EventDetail />,
+            path: "/events/:id",
+            element: <EventDetail />,
           },
           {
             path: "/qr/:id",
@@ -101,6 +102,11 @@ const router = createBrowserRouter([
           {
             path: "/admin/users",
             element: <UserManagement />,
+          },
+
+          {
+            path: "/manage-event",
+            element: <EventManagement />,
           },
         ],
       },
