@@ -11,7 +11,6 @@ import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
 import HomePage from "@pages/user/HomePage";
 import { createBrowserRouter } from "react-router-dom";
-import EventManagement from "@pages/admin/EventManagement";
 import EventCreate from "@pages/admin/EventCreate";
 import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
