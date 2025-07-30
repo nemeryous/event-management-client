@@ -13,7 +13,7 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 
-const EventDetail = () => {
+const EventDetailUser = () => {
   const { id } = useParams();
   const { data: event, isLoading, error } = useGetEventByIdQuery(id);
   const dispatch = useDispatch();
@@ -21,6 +21,10 @@ const EventDetail = () => {
 
   const currentParticipants = event?.participants?.length || 0;
   const remainingSlots = (event?.maxParticipants || 0) - currentParticipants;
+
+  const isEventPassed = new Date(event?.startTime) < new Date();
+  const canRegister =
+    event?.status === "UPCOMING" && !isEventPassed && !event?.isRegistered;
 
   const [
     joinEvent,
@@ -242,13 +246,19 @@ const EventDetail = () => {
             <>
               <button
                 onClick={() => handleJoinEvent(event.qrJoinToken)}
-                className="bg-primary group relative w-full cursor-pointer overflow-hidden rounded-full border-none p-4 text-sm font-bold text-white transition-all hover:translate-y-0.5 hover:opacity-90"
+                className={`${canRegister ? "bg-primary text-white hover:translate-y-0.5" : "bg-gray-400 text-gray-900"} group relative w-full cursor-pointer overflow-hidden rounded-full border-none p-4 text-sm font-bold transition-all hover:opacity-90`}
+                disabled={!canRegister}
               >
                 Đăng ký ngay
               </button>
               <p className="mt-4 text-center text-sm text-[#666]">
                 Còn lại {remainingSlots} suất tham gia
               </p>
+              {isEventPassed && (
+                <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-600">
+                  ⚠️ Sự kiện đã qua, không thể đăng ký
+                </p>
+              )}
             </>
           ) : (
             <div className="text-center">
@@ -391,4 +401,4 @@ const EventDetail = () => {
   );
 };
 
-export default EventDetail;
+export default EventDetailUser;

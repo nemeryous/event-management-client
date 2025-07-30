@@ -12,7 +12,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 
-const Footer = () => {
+const FooterUser = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
@@ -268,4 +268,4 @@ const Footer = () => {
   );
 };
 
-export default Footer;
+export default FooterUser;

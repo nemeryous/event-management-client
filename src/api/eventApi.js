@@ -67,14 +67,14 @@ export const eventApi = rootApi.injectEndpoints({
       }),
     }),
     getEventQR: builder.query({
-        query: (id) => {
-          return {
-            url: `/attendants/get-qr-check/${id}`,
-            method: "GET",
-            responseHandler: (response) => response.blob(),
-          };
-        },
-      }),
+      query: (id) => {
+        return {
+          url: `/attendants/get-qr-check/${id}`,
+          method: "GET",
+          responseHandler: (response) => response.blob(),
+        };
+      },
+    }),
   }),
   overrideExisting: false,
 });
@@ -86,5 +86,5 @@ export const {
   useGetAllManagedEventsQuery,
   useGetEventByIdQuery,
   useJoinEventMutation,
-  useGetEventQRQuery
+  useGetEventQRQuery,
 } = eventApi;

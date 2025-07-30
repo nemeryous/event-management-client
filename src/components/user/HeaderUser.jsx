@@ -9,10 +9,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useLogoutMutation } from "@api/rootApi";
 import { clearToken } from "@store/slices/authSlice";
+import { useLogoutMutation } from "@api/authApi";
 
-const Header = () => {
+const HeaderUser = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -203,4 +203,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default HeaderUser;

@@ -227,12 +227,17 @@ const EventCard = ({ event, isManageMode = false }) => {
                   ? "bg-yellow-400 text-gray-900 hover:bg-yellow-500 hover:shadow-lg hover:shadow-yellow-400/40 focus:ring-yellow-500"
                   : "cursor-not-allowed bg-gray-300 text-gray-500"
               }`}
-              onClick={() => handleJoinEvent(event.qrJoinToken)}
-              disabled={event.isRegistered}
+              onClick={() => {
+                if (!canRegister) {
+                  return;
+                }
+                handleJoinEvent(event.qrJoinToken);
+              }}
+              disabled={!canRegister}
             >
               <div
                 className={`absolute inset-0 scale-0 rounded-full bg-white/30 transition-transform duration-300 ${
-                  !event.isRegistered ? "group-hover/btn:scale-100" : ""
+                  canRegister ? "group-hover/btn:scale-100" : ""
                 }`}
               ></div>
               <span className="relative z-10 flex items-center justify-center gap-2">
