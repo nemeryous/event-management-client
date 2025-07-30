@@ -8,7 +8,6 @@ import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
 import HomePage from "@pages/user/HomePage";
 import { createBrowserRouter } from "react-router-dom";
-import EventManagement from "@pages/admin/EventManagement";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -52,8 +51,51 @@ const router = createBrowserRouter([
             path: "/poll-analytics",
           },
           {
-            path: "/polls",
+            path: "/attendants",
+            element: <AttendantList />,
           },
+          {
+            path: "/answer-question",
+            element: <AnswerQuestion />,
+          },
+          {
+            path: "*",
+            element: <NotFound />,
+          },
+          {
+            path: "/poll",
+            element: <PollPage />,
+          },
+          {
+            path: "/create-poll",
+            element: <CreatePoll />,
+          },
+        ],
+      },
+      {
+        element: <AdminLayout />,
+        children: [
+          {
+            path: "/admin/events",
+            element: <EventManagement />,
+          },
+          {
+            path: "/admin/events/create",
+            element: <EventCreate />,
+          },
+          {
+            path: "/admin/events/:id",
+            // element: <EventDetail />,
+          },
+          {
+            path: "/admin/dashboard",
+            element: <Dashboard />,
+          },
+          {
+            path: "/admin/users",
+            element: <UserManagement />,
+          },
+
           {
             path: "/manage-event",
             element: <EventManagement />,

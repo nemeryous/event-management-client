@@ -2,21 +2,38 @@ import React, { useMemo } from "react";
 import EventInfo from "./EventInfo";
 import ButtonComponent from "@components/common/ButtonComponent";
 import StatCard from "./StatCard";
+import { useParams } from "react-router-dom";
+import { useGetEventByIdQuery, useGetEventQRQuery } from "@api/eventApi";
+import dayjs from "dayjs";
 
-const QRDisplay = ({ qrData }) => {
+const QRDisplay = ({participants=0}) => {
+  const eventId = useParams().id;
 
+  const { data = {}, isLoading, isError, error } = useGetEventQRQuery(eventId);
+  const {
+    data: eventData = {},
+    isLoading: isEventLoading,
+    isError: isEventError,
+    error: eventError,
+  } = useGetEventByIdQuery(eventId);
+
+  // console.log({ eventData });
+
+  const startTime = dayjs(eventData?.startTime).format("HH:mm DD-MM-YYYY");
+  const endTime = dayjs(eventData?.endTime).format("HH:mm DD-MM-YYYY");
+  // console.log({ startTime, endTime });
   const imageUrl = useMemo(() => {
-    if (!qrData || !(qrData instanceof Blob)) {
+    if (!data || !(data instanceof Blob)) {
       return null;
     }
 
     try {
-      return URL.createObjectURL(qrData);
+      return URL.createObjectURL(data);
     } catch (error) {
       console.error("Failed to create object URL", error);
       return null;
     }
-  }, [qrData]);
+  }, [data]);
 
   return (
     <div className="flex items-center justify-between px-0 py-4">
@@ -33,7 +50,13 @@ const QRDisplay = ({ qrData }) => {
           )}
         </div>
 
-        <EventInfo />
+        <EventInfo
+          name={eventData.title}
+          address={eventData.location}
+          startTime={startTime}
+          endTime={endTime}
+          participants={participants}
+        />
         <div className="mt-[30px] grid grid-cols-2 gap-[15px]">
           <ButtonComponent
             btnColor={"white"}

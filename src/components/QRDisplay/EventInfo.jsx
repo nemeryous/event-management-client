@@ -1,7 +1,7 @@
 import React from "react";
 import InfoItem from "./InfoItem";
 
-const EventInfo = () => {
+const EventInfo = ({name, address, startTime, endTime, participants}) => {
   return (
     <div className="mb-[30px] rounded-2xl bg-[#f8f9fa] p-[30px]">
       <h3 className="mb-5 flex items-center gap-[10px] text-[1.3rem] text-[#1e88e5]">
@@ -13,15 +13,20 @@ const EventInfo = () => {
       <InfoItem
         icon="🎯"
         label="Tên sự kiện:"
-        value="Hội thảo Công nghệ 2025"
+        value={name}
       />
       <InfoItem
         icon="⏰"
-        label="Thời gian:"
-        value="10:00 - 12:00, 15/01/2025"
+        label="Thời gian bắt đầu:"
+        value={startTime}
       />
-      <InfoItem icon="📍" label="Địa điểm:" value="Hội trường A, Tòa nhà XYZ" />
-      <InfoItem icon="👥" label="Đã tham gia:" value="42 người" />
+      <InfoItem
+        icon="⏰"
+        label="Thời gian kết thúc:"
+        value={endTime}
+      />
+      <InfoItem icon="📍" label="Địa điểm:" value={address} />
+      <InfoItem icon="👥" label="Đã tham gia:" value={`${participants} người`} />
     </div>
   );
 };
