@@ -7,7 +7,6 @@ import {
 import EventCard from "@components/user/EventCard";
 import { EVENT_STATUS } from "@utils/constants";
 import React, { useMemo, useState } from "react";
-import { useSelector } from "react-redux";
 
 const DashboardUser = () => {
   const user = useSelector((state) => state.auth.user);

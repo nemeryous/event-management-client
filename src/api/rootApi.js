@@ -1,9 +1,23 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQueryWithReauth } from "./customBaseQuery";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const rootApi = createApi({
   reducerPath: "api",
-  baseQuery: baseQueryWithReauth,
+  baseQuery: fetchBaseQuery({
+    baseUrl: import.meta.env.VITE_BASE_URL,
+    credentials: "include",
+    prepareHeaders: (headers, { getState }) => {
+      const token = getState().auth.accessToken;
+      const tokenType = getState().auth.tokenType;
+
+      if (token) {
+        headers.set("Authorization", `${tokenType} ${token}`);
+      }
+
+      headers.set("Content-Type", "application/json");
+
+      return headers;
+    },
+  }),
   tagTypes: [
     "Auth",
     "Events",
