@@ -17,10 +17,10 @@ import EventDetail from "@pages/admin/EventDetail";
 import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
 import NotFound from "@pages/NotFound";
-import PollPage from "@pages/poll/PollPage";
 import CreatePoll from "@pages/poll/CreatePoll";
 import AttendantList from "@pages/admin/AttendantList";
 import AnswerQuestion from "@pages/AnswerQuestion";
+import PollStatistics from "@components/poll/PollStatistics";
 
 const router = createBrowserRouter([
   {
@@ -75,7 +75,7 @@ const router = createBrowserRouter([
           },
           {
             path: "/poll",
-            element: <PollPage />,
+            element: <PollStatistics />,
           },
           {
             path: "/create-poll",
