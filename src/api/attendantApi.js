@@ -36,6 +36,13 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { user_id, event_id, roleType },
       }),
     }),
+    removeEventManager: builder.mutation({
+      query: ({ user_id, event_id, roleType }) => ({
+        url: "event-manager/remove-manager",
+        method: "DELETE",
+        body: { user_id, event_id, roleType },
+      }),
+    }),
   }),
 
   overrideExisting: false,
@@ -49,4 +56,5 @@ export const {
   useDeleteAttendantMutation,
   useGetEventManagersByEventQuery,
   useAssignEventManagerMutation,
+  useRemoveEventManagerMutation,
 } = attendantApi;

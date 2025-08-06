@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Header from "../../components/Header.jsx";
 import styles from './AttendantList.module.css';
-import { useGetAttendantsByEventQuery, useLazyGetUserByEmailQuery, useAddAttendantMutation, useDeleteAttendantMutation, useGetEventManagersByEventQuery, useAssignEventManagerMutation } from '../../api/attendantApi';
+import { useGetAttendantsByEventQuery, useLazyGetUserByEmailQuery, useAddAttendantMutation, useDeleteAttendantMutation, useGetEventManagersByEventQuery, useAssignEventManagerMutation, useRemoveEventManagerMutation } from '../../api/attendantApi';
 
 
 function getInitials(email) {
@@ -10,18 +10,27 @@ function getInitials(email) {
   return email.charAt(0).toUpperCase();
 }
 
-function getRandomColor() {
+function getColorFromEmail(email) {
   const colors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
     '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
     '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
   ];
-  return colors[Math.floor(Math.random() * colors.length)];
+  
+  // Tạo hash từ email để có màu cố định
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    hash = email.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  // Đảm bảo hash là số dương và lấy modulo với số lượng màu
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
 }
 
 function getAvatarStyle(email) {
   return {
-    backgroundColor: getRandomColor(),
+    backgroundColor: getColorFromEmail(email),
     color: 'white',
     fontWeight: 'bold'
   };
@@ -39,7 +48,7 @@ export default function AttendantList() {
   const [searchParams] = useSearchParams();
   const eventId = searchParams.get('eventId');
   const { data: attendants = [], isLoading, error, refetch } = useGetAttendantsByEventQuery(eventId);
-  const { data: eventManagers = [] } = useGetEventManagersByEventQuery(eventId);
+  const { data: eventManagers = [], refetch: refetchEventManagers } = useGetEventManagersByEventQuery(eventId);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -50,7 +59,9 @@ export default function AttendantList() {
   const [addAttendant, { isLoading: isAdding }] = useAddAttendantMutation();
   const [deleteAttendant] = useDeleteAttendantMutation();
   const [assignEventManager, { isLoading: isAssigning }] = useAssignEventManagerMutation();
+  const [removeEventManager, { isLoading: isRemoving }] = useRemoveEventManagerMutation();
   const [notify, setNotify] = useState({ message: '', type: '' });
+  const [modalErrorMsg, setModalErrorMsg] = useState('');
 
   useEffect(() => {
     if (notify.message) {
@@ -102,12 +113,10 @@ export default function AttendantList() {
   };
 
   const handleAddStaff = async (email) => {
-    setErrorMsg('');
     try {
       const participant = participants.find((p) => p.email === email);
       if (!participant) {
         setNotify({ message: 'Không tìm thấy người tham dự này!', type: 'error' });
-        setErrorMsg('Không tìm thấy người tham dự này!');
         return;
       }
   
@@ -120,48 +129,74 @@ export default function AttendantList() {
   
       if (result?.message && result.message !== "Thêm vai trò thành công!") {
         setNotify({ message: result.message, type: 'error' });
-        setErrorMsg(result.message);
         return;
       }
   
       setNotify({ message: result.message || "Thêm vai trò STAFF thành công!", type: 'success' });
-      refetch(); 
+      refetch();
+      refetchEventManagers();
     } catch (err) {
       const msg = err?.data?.message || err?.error || "Có lỗi xảy ra khi thêm vai trò STAFF!";
       setNotify({ message: msg, type: 'error' });
-      setErrorMsg(msg);
+    }
+  };
+
+  const handleRemoveStaff = async (email) => {
+    if (!window.confirm('Bạn có chắc muốn xóa vai trò STAFF của người này?')) return;
+    
+    try {
+      const participant = participants.find((p) => p.email === email);
+      if (!participant) {
+        setNotify({ message: 'Không tìm thấy người tham dự này!', type: 'error' });
+        return;
+      }
+  
+      const parsedEventId = parseInt(eventId, 10);
+      const result = await removeEventManager({
+        user_id: participant.userId,
+        event_id: parsedEventId,
+        roleType: 'STAFF',
+      }).unwrap();
+  
+      if (result?.message && result.message !== "Đã xóa vai trò thành công!") {
+        setNotify({ message: result.message, type: 'error' });
+        return;
+      }
+  
+      setNotify({ message: result.message || "Xóa vai trò STAFF thành công!", type: 'success' });
+      refetch();
+      refetchEventManagers();
+    } catch (err) {
+      const msg = err?.data?.message || err?.error || "Có lỗi xảy ra khi xóa vai trò STAFF!";
+      setNotify({ message: msg, type: 'error' });
     }
   };
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    setErrorMsg('');
+    setModalErrorMsg('');
     if (!email.trim()) {
-      setErrorMsg('Vui lòng nhập email!');
+      setModalErrorMsg('Vui lòng nhập email!');
       return;
     }
     try {
       const userRes = await triggerGetUserByEmail(email).unwrap();
       if (!userRes.id) {
-        setErrorMsg('Không tìm thấy userId!');
+        setModalErrorMsg('Không tìm thấy userId!');
         return;
       }
       const result = await addAttendant({ userId: userRes.id, eventId }).unwrap();
       if (result?.message && result.message !== "Người dùng đã được thêm vào sự kiện!") {
-        setNotify({ message: result.message, type: 'error' });
-        setErrorMsg(result.message);
+        setModalErrorMsg(result.message);
         return;
       }
       setNotify({ message: result.message || "Thêm thành công!", type: 'success' });
       setModalOpen(false);
       setEmail('');
+      setModalErrorMsg('');
       refetch();
     } catch (err) {
-      setNotify({
-        message: err?.data?.message || err?.error || "Có lỗi xảy ra khi thêm người tham dự!",
-        type: 'error',
-      });
-      setErrorMsg(err?.data?.message || err?.error || "Có lỗi xảy ra khi thêm người tham dự!");
+      setModalErrorMsg(err?.data?.message || err?.error || "Có lỗi xảy ra khi thêm người tham dự!");
     }
   };
 
@@ -174,6 +209,7 @@ export default function AttendantList() {
     setModalOpen(false);
     setName('');
     setEmail('');
+    setModalErrorMsg('');
   };
 
   return (
@@ -251,15 +287,26 @@ export default function AttendantList() {
                     <span className={styles.staffLabel} style={{ background: '#223B73' }}>MANAGE</span>
                   )}
                   {p.role === 'STAFF' && (
-                    <span className={styles.staffLabel}>STAFF</span>
+                    <div className={styles.staffLabelContainer}>
+                      <span className={styles.staffLabel}>STAFF</span>
+                      <button 
+                        className={styles.removeStaffButton} 
+                        onClick={() => handleRemoveStaff(p.email)}
+                        title="Xóa vai trò STAFF"
+                        disabled={isRemoving}
+                      >
+                        {isRemoving ? '...' : '✕'}
+                      </button>
+                    </div>
                   )}
                   {(!p.role) && (
                     <button 
                       className={styles.staffButton} 
                       onClick={() => handleAddStaff(p.email)}
                       title="Thêm làm staff"
+                      disabled={isAssigning}
                     >
-                      Thêm Staff
+                      {isAssigning ? 'Đang thêm...' : 'Thêm Staff'}
                     </button>
                   )}
                   <button className={styles.deleteButton} onClick={() => handleDelete(p.email)} title="Xóa người tham dự">✖</button>
@@ -295,9 +342,9 @@ export default function AttendantList() {
                     required
                     placeholder="Nhập địa chỉ email..."
                   />
-                  {errorMsg && (
+                  {modalErrorMsg && (
                     <div style={{ color: 'red', margin: '8px 0', textAlign: 'center' }}>
-                      {errorMsg}
+                      {modalErrorMsg}
                     </div>
                   )}
                 </div>

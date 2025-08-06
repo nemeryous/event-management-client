@@ -1,11 +1,10 @@
-import Footer from "@components/Footer";
-import Header from "@components/Header";
-import QRPage from "@pages/qr/QRPage";
 import { Alert, Snackbar } from "@mui/material";
 import { closeSnackbar } from "@store/slices/snackbarSlice";
 import React, { Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
+import HeaderUser from "@components/user/HeaderUser";
+import FooterUser from "@components/user/FooterUser";
 
 const MainLayout = () => {
   const dispatch = useDispatch();
@@ -17,11 +16,11 @@ const MainLayout = () => {
   return (
     <div>
       <Suspense fallback={<div>Loading...</div>}>
-        <Header />
-        {/* <div className="mx-auto max-w-6xl px-5"> */}
-        <Outlet />
-        {/* </div> */}
-        <Footer />
+        <HeaderUser />
+        <div className="mx-auto max-w-6xl px-5">
+          <Outlet />
+        </div>
+        <FooterUser />
       </Suspense>
       <Snackbar
         open={open}

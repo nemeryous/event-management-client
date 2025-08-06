@@ -5,11 +5,12 @@ import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
 import AttendantList from "../pages/admin/AttendantList.jsx";
 import NotFound from "../pages/NotFound.jsx";
-import AnswerQuestion from "../pages/AnswerQuestion.jsx";
-import PollPage from "@pages/poll/PollPage";
+import PollPageUser from "@pages/user/PollPageUser";
 import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
-import HomePage from "@pages/user/HomePage";
+import HomePageUser from "@pages/user/HomePageUser.jsx";
+import EventDetailUser from "@pages/user/EventDetailUser";
+
 import { createBrowserRouter } from "react-router-dom";
 import EventManagement from "@pages/admin/EventManagement";
 import EventCreate from "@pages/admin/EventCreate";
@@ -40,7 +41,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/",
-            element: <HomePage />,
+            element: <HomePageUser />,
           },
           {
             path: "/dashboard",
@@ -48,7 +49,7 @@ const router = createBrowserRouter([
           },
           {
             path: "/event/:id",
-            // element: <EventDetail />,
+            element: <EventDetailUser />,
           },
           {
             path: "/qr/:id",
@@ -58,16 +59,12 @@ const router = createBrowserRouter([
             path: "/poll-analytics",
           },
           {
-            path: "/answer-question",
-            element: <AnswerQuestion />,
-          },
-          {
             path: "*",
             element: <NotFound />,
           },
           {
-            path: "/poll",
-            element: <PollPage />,
+            path: "/poll/:pollId",
+            element: <PollPageUser />,
           },
           {
             path: "/create-poll",
