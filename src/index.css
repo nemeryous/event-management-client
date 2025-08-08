@@ -46,6 +46,7 @@
   --color-primary: #e53935;
   --color-secondary: #1e88e5;
   --color-accent: #fbc02d;
+  --color-success: #4caf50;
   --font-poppins: Poppins, sans-serif;
   /* Animation */
   --animate-slideDown: slideDown 0.6s ease-out;

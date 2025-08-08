@@ -20,7 +20,7 @@ import NotFound from "@pages/NotFound";
 import CreatePoll from "@pages/poll/CreatePoll";
 import AttendantList from "@pages/admin/AttendantList";
 import AnswerQuestion from "@pages/AnswerQuestion";
-import PollStatistics from "@components/poll/PollStatistics";
+import PollAnalystic from "@pages/poll/PollAnalystic";
 
 const router = createBrowserRouter([
   {
@@ -60,6 +60,7 @@ const router = createBrowserRouter([
           },
           {
             path: "/poll-analytics",
+            element: <PollAnalystic />,
           },
           {
             path: "/attendants",
@@ -73,10 +74,7 @@ const router = createBrowserRouter([
             path: "*",
             element: <NotFound />,
           },
-          {
-            path: "/poll",
-            element: <PollStatistics />,
-          },
+
           {
             path: "/create-poll",
             element: <CreatePoll />,
