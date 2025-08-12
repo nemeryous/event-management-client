@@ -20,7 +20,7 @@ const PollItem = ({
         pollOptions.map((option) => (
           <>
             <OptionResult key={option.id} optionInfo={option.info} percentage={option.percentage} votes={option.votes} />
-            <OptionBar key={option.id} optionPercentage={option.percentage} barColor={option.barColor} />
+            <OptionBar optionPercentage={option.percentage} barColor={option.barColor} />
           </>
         ))
       }

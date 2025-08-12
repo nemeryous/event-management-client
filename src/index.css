@@ -52,6 +52,7 @@
   /* Animation */
   --animate-slideDown: slideDown 0.6s ease-out;
   --animate-fadeInUP: fadeInUp 0.8s ease-out;
+  --animate-fadeIn: fadeIn 0.3s ease-out;
   @keyframes slideDown {
     0% {
       transform: translateY(-100%);
@@ -70,6 +71,14 @@
     }
     to {
       transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
       opacity: 1;
     }
   }
