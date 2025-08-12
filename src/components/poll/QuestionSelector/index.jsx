@@ -1,5 +1,6 @@
 import React from "react";
 import QuestionOption from "./QuestionOption";
+import { pollsData } from "@utils/constants";
 
 const QuestionSelectorPopUp = ({ closePopup }) => {
   return (
@@ -17,7 +18,13 @@ const QuestionSelectorPopUp = ({ closePopup }) => {
           </button>
         </div>
         <div className="max-h-[400px] overflow-y-auto px-0 py-5">
-          <QuestionOption questionTitle="Bạn có giới thiệu cho bạn bè không" questionMeta="Lựa chọn đơn • 287 phản hồi" />
+          {pollsData.map((poll) => (
+            <QuestionOption
+              key={poll.id}
+              questionTitle={poll.pollQuestion}
+              questionMeta={`${poll.pollType} • ${poll.pollResponsesNum} phản hồi `}
+            />
+          ))}
         </div>
       </div>
     </div>
