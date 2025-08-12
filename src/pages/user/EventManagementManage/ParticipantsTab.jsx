@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   faUserPlus,
   faUserMinus,
@@ -7,6 +7,7 @@ import {
   faCheckCircle,
   faTimesCircle,
   faTimes,
+  faUserShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { formatDateTime } from "@utils/helpers";
@@ -19,6 +20,9 @@ import {
   useDeleteParticipantMutation,
   useDeleteParticipantsMutation,
 } from "@api/attendantApi";
+import { useAssignManagerMutation } from "@api/attendantApi"; 
+import { useRemoveManagerMutation } from "@api/attendantApi";
+import { useGetEventManagersQuery } from "@api/attendantApi";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 
@@ -74,6 +78,7 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+
   const [
     addParticipants,
     { errorAddParticipants, isErrorAddParticipants, isSuccessAddParticipants },
@@ -86,6 +91,16 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
     deleteParticipants,
     { errorDelParticipants, isErrorDelParticipants, isSuccessDelParticipants },
   ] = useDeleteParticipantsMutation();
+
+  // Thêm mutation cho assign-manager
+  const [
+    assignManager,
+    { error: errorAssignManager, isError: isErrorAssignManager, isSuccess: isSuccessAssignManager }
+  ] = useAssignManagerMutation();
+  const [
+    removeManager,
+    { error: errorRemoveManager, isError: isErrorRemoveManager, isSuccess: isSuccessRemoveManager }
+  ] = useRemoveManagerMutation();
 
   const {
     register,
@@ -230,6 +245,67 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
       // Lỗi được xử lý trong useEffect
     }
   };
+
+  // Thêm hàm xử lý gán staff cho từng người
+  const handleAssignStaffSingle = async (userId) => {
+    try {
+      await assignManager({
+        event_id: eventData.id,
+        user_id: userId,
+        roleType: "STAFF",
+      }).unwrap();
+      if (refetchEvent) refetchEvent();
+      if (refetchManagers) refetchManagers();
+      dispatch(openSnackbar({ message: "Gán quyền staff thành công!" }));
+    } catch (e) {
+      dispatch(
+        openSnackbar({
+          message:
+            e?.data?.message ||
+            errorAssignManager?.data?.message ||
+            "Có lỗi xảy ra khi gán quyền staff!",
+          type: "error",
+        }),
+      );
+    }
+  };
+
+  const handleRemoveStaffSingle = async (userId) => {
+    try {
+      await removeManager({
+        event_id: eventData.id,
+        user_id: userId,
+      }).unwrap();
+      if (refetchManagers) refetchManagers();
+      if (refetchEvent) refetchEvent();
+      dispatch(openSnackbar({ message: "Xóa staff thành công!" }));
+    } catch (e) {
+      dispatch(
+        openSnackbar({
+          message:
+            e?.data?.message ||
+            errorRemoveManager?.data?.message ||
+            "Có lỗi xảy ra khi xóa staff!",
+          type: "error",
+        }),
+      );
+    }
+  };
+
+  const { data: managersData, refetch: refetchManagers } = useGetEventManagersQuery(eventData.id);
+  const staffIds = useMemo(() => {
+    const managersArray = Array.isArray(managersData?.data)
+      ? managersData.data
+      : Array.isArray(managersData)
+        ? managersData
+        : [];
+
+    return managersArray
+      .filter((manager) => (manager.roleType ?? manager.role ?? manager.role_type) === "STAFF")
+      .map((manager) => manager.userId ?? manager.user_id ?? manager.id ?? manager.managerId)
+      .filter(Boolean)
+      .map((id) => String(id));
+  }, [managersData]);
 
   useEffect(() => {
     if (isSuccessAddParticipants) {
@@ -560,15 +636,38 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center whitespace-nowrap">
-                    <button
-                      onClick={() =>
-                        handleDeleteParticipant(participant.userId)
-                      }
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-                    >
-                      <FontAwesomeIcon icon={faUserMinus} />
-                    </button>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={() => handleDeleteParticipant(participant.userId)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
+                      >
+                        <FontAwesomeIcon icon={faUserMinus} />
+                      </button>
+                      {staffIds.includes(String(participant.userId)) ? (
+                        <div className="relative group inline-flex h-8 w-28 items-center justify-center">
+                          <span className="inline-flex h-8 w-28 items-center justify-center rounded text-xs font-semibold text-yellow-700 bg-yellow-100 border border-yellow-300">
+                            STAFF
+                          </span>
+                          <button
+                            onClick={() => handleRemoveStaffSingle(participant.userId)}
+                            className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
+                            title="Xóa STAFF"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleAssignStaffSingle(participant.userId)}
+                          className="inline-flex h-8 w-28 items-center justify-center rounded text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-300 hover:bg-blue-200 transition-all"
+                          title="Gán quyền STAFF"
+                        >
+                          <FontAwesomeIcon icon={faUserShield} className="mr-1" />
+                          Thêm staff
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

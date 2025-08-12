@@ -119,5 +119,5 @@ export const {
   useGetEventByIdQuery,
   useJoinEventMutation,
   useGetEventQRQuery,
-  useUpdateEventMutation,
+  useUpdateEventMutation
 } = eventApi;

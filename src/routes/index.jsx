@@ -20,7 +20,6 @@ import NotFound from "@pages/NotFound";
 import PollPage from "@pages/poll/PollPage";
 import CreatePoll from "@pages/poll/CreatePoll";
 import AttendantList from "@pages/admin/AttendantList";
-import AnswerQuestion from "@pages/AnswerQuestion";
 import EventDetailUser from "@pages/user/EventDetailUser";
 import EventManagementManage from "@pages/user/EventManagementManage";
 import CheckinResultPage from "@pages/user/CheckinResultPage";
@@ -72,10 +71,7 @@ const router = createBrowserRouter([
             path: "/attendants",
             element: <AttendantList />,
           },
-          {
-            path: "/answer-question",
-            element: <AnswerQuestion />,
-          },
+
           {
             path: "*",
             element: <NotFound />,
