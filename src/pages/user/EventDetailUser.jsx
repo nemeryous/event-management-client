@@ -189,9 +189,8 @@ const EventDetailUser = () => {
                     ? "line-clamp-4"
                     : ""
                 }`}
-              >
-                {description}
-              </p>
+                dangerouslySetInnerHTML={{ __html: description }}
+              ></p>
               {shouldShowExpandButton && (
                 <div className="mt-4 text-center">
                   <button

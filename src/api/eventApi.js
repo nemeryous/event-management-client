@@ -1,3 +1,4 @@
+import { method } from "lodash";
 import { rootApi } from "./rootApi";
 
 export const eventApi = rootApi.injectEndpoints({
@@ -75,6 +76,37 @@ export const eventApi = rootApi.injectEndpoints({
         };
       },
     }),
+    updateEvent: builder.mutation({
+      query: ({
+        eventId,
+        title,
+        description,
+        start_time,
+        end_time,
+        location,
+        url_docs,
+        max_participants,
+      }) => ({
+        url: `/events/${eventId}`,
+        body: {
+          title,
+          description,
+          start_time,
+          end_time,
+          location,
+          url_docs,
+          max_participants,
+        },
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, { eventId }) => [
+        { type: "Events", id: eventId },
+        "Events",
+        "AllEvents",
+        "ManagedEvents",
+        "AllManagedEvents",
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -87,4 +119,5 @@ export const {
   useGetEventByIdQuery,
   useJoinEventMutation,
   useGetEventQRQuery,
+  useUpdateEventMutation,
 } = eventApi;

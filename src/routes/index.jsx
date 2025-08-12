@@ -22,7 +22,8 @@ import CreatePoll from "@pages/poll/CreatePoll";
 import AttendantList from "@pages/admin/AttendantList";
 import AnswerQuestion from "@pages/AnswerQuestion";
 import EventDetailUser from "@pages/user/EventDetailUser";
-import EventManagementManage from "@components/user/EventManagementManage";
+import EventManagementManage from "@pages/user/EventManagementManage";
+import CheckinResultPage from "@pages/user/CheckinResultPage";
 
 const router = createBrowserRouter([
   {
@@ -57,7 +58,7 @@ const router = createBrowserRouter([
             element: <EventDetailUser />,
           },
           {
-            path: "/events/:id/manage",
+            path: "/events/:eventId/manage",
             element: <EventManagementManage />,
           },
           {
@@ -86,6 +87,10 @@ const router = createBrowserRouter([
           {
             path: "/create-poll",
             element: <CreatePoll />,
+          },
+          {
+            path: "/events/check-in/:eventToken",
+            element: <CheckinResultPage />,
           },
         ],
       },
