@@ -3,7 +3,6 @@ import MainLayout from "@layouts/MainLayout";
 import AdminLayout from "@layouts/AdminLayout";
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
-import AttendantList from "../pages/admin/AttendantList.jsx";
 import NotFound from "../pages/NotFound.jsx";
 import PollPageUser from "@pages/user/PollPageUser";
 import QRPage from "@pages/qr/QRPage";
@@ -94,10 +93,6 @@ const router = createBrowserRouter([
           {
             path: "/admin/users",
             element: <UserManagement />,
-          },
-          {
-            path: "/admin/attendants",
-            element: <AttendantList />,
           },
         ],
       },
