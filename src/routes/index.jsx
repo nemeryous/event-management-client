@@ -76,7 +76,7 @@ const router = createBrowserRouter([
             element: <PollPageUser />,
           },
           {
-            path: "/create-poll",
+            path: "/create-poll/:id",
             element: <CreatePoll />,
           },
           {

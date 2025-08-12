@@ -17,6 +17,8 @@ const baseQuery = fetchBaseQuery({
 
     headers.set("Content-Type", "application/json");
 
+    console.log("Authorization Header:", headers.get("Authorization"));
+
     return headers;
   },
 });

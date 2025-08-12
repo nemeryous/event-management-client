@@ -1,6 +1,4 @@
-
 import { useGetAttendantsByEventQuery } from "@api/attendantApi";
-import { useGetEventByIdQuery, useGetEventQRQuery } from "@api/eventApi";
 import QRDisplay from "@components/QRDisplay";
 import StatDisplay from "@components/QRDisplay/StatDisplay";
 import { useParams } from "react-router-dom";
