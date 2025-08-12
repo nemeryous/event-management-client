@@ -17,10 +17,11 @@ import EventDetail from "@pages/admin/EventDetail";
 import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
 import NotFound from "@pages/NotFound";
-import CreatePoll from "@pages/poll/CreatePoll";
+
 import AttendantList from "@pages/admin/AttendantList";
 import AnswerQuestion from "@pages/AnswerQuestion";
 import PollAnalystic from "@pages/poll/PollAnalystic";
+import CreatePoll from "@components/poll/CreatePoll";
 
 const router = createBrowserRouter([
   {
