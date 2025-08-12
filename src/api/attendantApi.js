@@ -77,9 +77,8 @@ export const attendantApi = rootApi.injectEndpoints({
   overrideExisting: false,
 });
 
-
 export const {
-    useGetAttendantsByEventQuery,
+  useGetAttendantsByEventQuery,
   useAddParticipantsMutation,
   useDeleteParticipantsMutation,
   useDeleteParticipantMutation,

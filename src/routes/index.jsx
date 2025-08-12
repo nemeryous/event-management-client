@@ -3,13 +3,9 @@ import MainLayout from "@layouts/MainLayout";
 
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
-import NotFound from "../pages/NotFound.jsx";
 import PollPageUser from "@pages/user/PollPageUser";
 import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
-import HomePageUserUser from "@pages/user/HomePageUserUser.jsx";
-import EventDetailUser from "@pages/user/EventDetailUser";
-
 import { createBrowserRouter } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
@@ -21,13 +17,12 @@ import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
 import NotFound from "@pages/NotFound";
 
-import AttendantList from "@pages/admin/AttendantList";
-import AnswerQuestion from "@pages/AnswerQuestion";
 import EventDetailUser from "@pages/user/EventDetailUser";
 import EventManagementManage from "@pages/user/EventManagementManage";
 import CheckinResultPage from "@pages/user/CheckinResultPage";
 import PollAnalystic from "@pages/poll/PollAnalystic";
 import CreatePoll from "@components/poll/CreatePoll";
+import HomePageUser from "@pages/user/HomePageUser";
 
 const router = createBrowserRouter([
   {
@@ -52,7 +47,7 @@ const router = createBrowserRouter([
           {
             path: "/",
             element: <HomePageUser />,
-          },
+          }, 
           {
             path: "/dashboard",
             element: <DashboardUser />,
