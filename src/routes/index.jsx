@@ -3,10 +3,13 @@ import MainLayout from "@layouts/MainLayout";
 
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
-
+import NotFound from "../pages/NotFound.jsx";
+import PollPageUser from "@pages/user/PollPageUser";
 import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
-import HomePageUser from "@pages/user/HomePageUser";
+import HomePageUserUser from "@pages/user/HomePageUserUser.jsx";
+import EventDetailUser from "@pages/user/EventDetailUser";
+
 import { createBrowserRouter } from "react-router-dom";
 
 import ProtectedRoute from "./ProtectedRoute";
@@ -68,21 +71,15 @@ const router = createBrowserRouter([
           },
           {
             path: "/poll-analytics",
-            element: <PollAnalystic />,
-          },
-          {
-            path: "/attendants",
-            element: <AttendantList />,
-          },
-          {
-            path: "/answer-question",
-            element: <AnswerQuestion />,
           },
           {
             path: "*",
             element: <NotFound />,
           },
-
+          {
+            path: "/poll/:pollId",
+            element: <PollPageUser />,
+          },
           {
             path: "/create-poll",
             element: <CreatePoll />,

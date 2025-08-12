@@ -3,21 +3,27 @@ import Loading from "@components/common/Loading";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { openSnackbar } from "@store/slices/snackbarSlice";
+import Error from "@components/common/Error";
 import {
   formatDateTime,
   formatJoinedTime,
   getStatusColor,
   getStatusText,
-} from "@utils/helpers";
+} from "../../utils/helpers";
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
+import { useGetPollsByEventQuery } from "@api/pollApi";
+import PollPageUser from "./PollPageUser";
 
 const EventDetailUser = () => {
   const { id } = useParams();
   const { data: event, isLoading, error } = useGetEventByIdQuery(id);
+  const { data: polls, isLoading: isLoadingPolls } = useGetPollsByEventQuery(id);
   const dispatch = useDispatch();
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [selectedPollId, setSelectedPollId] = useState(null);
 
   const currentParticipants = event?.participants?.length || 0;
   const remainingSlots = (event?.maxParticipants || 0) - currentParticipants;
@@ -37,6 +43,11 @@ const EventDetailUser = () => {
     } catch {
       // ignore error
     }
+  };
+
+  const handleOpenPoll = (pollId) => {
+    setSelectedPollId(pollId);
+    setShowPollModal(true);
   };
 
   if (isJoining) {
@@ -189,8 +200,9 @@ const EventDetailUser = () => {
                     ? "line-clamp-4"
                     : ""
                 }`}
-                dangerouslySetInnerHTML={{ __html: description }}
-              ></p>
+              >
+                {description}
+              </p>
               {shouldShowExpandButton && (
                 <div className="mt-4 text-center">
                   <button
@@ -267,6 +279,49 @@ const EventDetailUser = () => {
               <p className="text-sm text-[#666]">
                 Sự kiện đã đạt số lượng tối đa
               </p>
+            </div>
+          )}
+        </div>
+
+        {/* Polls Section */}
+        <div className="rounded-2xl bg-white p-6 shadow">
+          <h3 className="text-secondary mb-5 flex items-center gap-2 text-xl leading-1.5 font-bold">
+            🗳️ Cuộc bình chọn
+          </h3>
+          {isLoadingPolls ? (
+            <div>Đang tải...</div>
+          ) : (
+            <div className="overflow-y-auto space-y-3" style={{ maxHeight: '200px' }}>
+              {polls && polls.filter(poll => poll.status !== "DRAFT").length > 0 ? (
+                polls.filter(poll => poll.status !== "DRAFT").map((poll) => (
+                  <div
+                    key={poll.id}
+                    className="flex items-center justify-between rounded-[10px] bg-[#f8f9fa] p-4"
+                  >
+                    <div>
+                      <div className="font-bold">{poll.title}</div>
+                      <div className="text-sm text-gray-500">Trạng thái: {poll.status}</div>
+                    </div>
+                    {poll.status === "OPEN" ? (
+                      <button
+                        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                        onClick={() => handleOpenPoll(poll.id)}
+                      >
+                        Tham gia
+                      </button>
+                    ) : (
+                      <button
+                        className="rounded bg-gray-400 px-4 py-2 text-white cursor-not-allowed"
+                        disabled
+                      >
+                        Đã đóng
+                      </button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 text-center">Chưa có cuộc bình chọn nào</div>
+              )}
             </div>
           )}
         </div>
@@ -392,6 +447,33 @@ const EventDetailUser = () => {
                   <p className="text-sm text-blue-600">Nhấn để mở tài liệu</p>
                 </div>
               </a>
+            </div>
+          </div>
+        )}
+
+        {event?.polls && event.polls.length > 0 && event.polls.map((poll) => (
+          <div key={poll.id} className="mb-4">
+            <span>{poll.title}</span>
+            <button
+              className="ml-2 bg-blue-600 text-white px-4 py-1 rounded"
+              onClick={() => handleOpenPoll(poll.id)}
+            >
+              Tham gia bình chọn
+            </button>
+          </div>
+        ))}
+
+        {showPollModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center ">
+            <div className="absolute inset-0 backdrop-blur-sm bg-transparent z-5"></div>
+            <div className="bg-yellow-50 rounded-lg shadow-lg p-6 w-full max-w-md relative z-30 border border-black-100">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowPollModal(false)}
+              >
+                ×
+              </button>
+              <PollPageUser pollId={selectedPollId} onClose={() => setShowPollModal(false)} />
             </div>
           </div>
         )}
