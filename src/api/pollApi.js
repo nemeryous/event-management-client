@@ -36,6 +36,19 @@ export const pollApi = rootApi.injectEndpoints({
         body: newPoll,
       }),
     }),
+    closePoll: builder.mutation({
+      query: (pollId) => ({
+        url: `/polls/${pollId}/close`,
+        method: "PUT",
+      }),
+    }),
+    updatePoll: builder.mutation({
+      query: ({pollId, updatedPoll}) => ({
+        url: `/polls/${pollId}`,
+        method: "PUT",
+        body: updatedPoll,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -45,5 +58,7 @@ export const {
   useGetPollQuery,
   useVotePollMutation,
   useGetMyVotedOptionsQuery,
-  useCreatePollMutation
+  useCreatePollMutation,
+  useClosePollMutation,
+  useUpdatePollMutation,
 } = pollApi;

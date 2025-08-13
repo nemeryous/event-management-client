@@ -1,4 +1,9 @@
-import { useCreatePollMutation } from "@api/pollApi";
+import {
+  useClosePollMutation,
+  useCreatePollMutation,
+  useGetPollsByEventQuery,
+  useUpdatePollMutation,
+} from "@api/pollApi";
 import {
   faEdit,
   faPlus,
@@ -8,26 +13,26 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 const CreatePoll = () => {
   const eventId = useParams().id;
   const [polls, setPolls] = useState([
-    {
-      id: 1,
-      title: "Bạn thích phần nào của sự kiện nhất?",
-      poll_type: "SINGLE_CHOICE",
-      options: [
-        { id: 1, content: "Phần thuyết trình", votes: 45 },
-        { id: 2, content: "Phần Q&A", votes: 23 },
-        { id: 3, content: "Networking", votes: 67 },
-        { id: 4, content: "Workshop", votes: 34 },
-      ],
-      status: "active",
-      start_time: "2024-12-15T09:00:00",
-      end_time: "2024-12-15T18:00:00",
-    },
+    // {
+    //   id: 1,
+    //   title: "Bạn thích phần nào của sự kiện nhất?",
+    //   poll_type: "SINGLE_CHOICE",
+    //   options: [
+    //     { id: 1, content: "Phần thuyết trình", votes: 45 },
+    //     { id: 2, content: "Phần Q&A", votes: 23 },
+    //     { id: 3, content: "Networking", votes: 67 },
+    //     { id: 4, content: "Workshop", votes: 34 },
+    //   ],
+    //   status: "active",
+    //   start_time: "2024-12-15T09:00:00",
+    //   end_time: "2024-12-15T18:00:00",
+    // },
   ]);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -44,9 +49,23 @@ const CreatePoll = () => {
     end_time: "",
   });
 
-  const [createPoll, { data = {}, isLoading, isSuccess, isError }] =
-    useCreatePollMutation();
+  const [editPoll, setEditPoll] = useState({
+    event_id: parseInt(eventId),
+    title: "",
+    poll_type: "SINGLE_CHOICE",
+    options: [
+      { content: "", image_url: "" },
+      { content: "", image_url: "" },
+    ],
+    start_time: "",
+    end_time: "",
+  });
 
+  const [createPoll, { data = {} }] = useCreatePollMutation();
+  const { data: pollsData = [] } = useGetPollsByEventQuery(eventId);
+  useEffect(() => {
+    setPolls(pollsData || []);
+  }, [pollsData.toString()]);
   const handleCreatePoll = () => {
     if (newPoll.title && newPoll.options.every((opt) => opt.content.trim())) {
       // Prepare data in PollDTO format
@@ -62,7 +81,7 @@ const CreatePoll = () => {
         })),
       };
 
-      console.log("PollDTO Data:", pollDTO); // For debugging - shows the exact DTO format
+      console.log("PollDTO Data:", pollDTO);
       console.log("Start Time:", newPoll.start_time);
       console.log("End Time:", newPoll.end_time);
 
@@ -94,9 +113,87 @@ const CreatePoll = () => {
       setShowCreateForm(false);
     }
   };
+  const [closePoll] = useClosePollMutation();
+  const [updatePoll, { data: updatePollData = {} }] = useUpdatePollMutation();
+  const handleEditPoll = (poll) => {
+    setEditPoll({
+      event_id: parseInt(eventId),
+      title: poll.title,
+      poll_type: poll.poll_type,
+      options: poll.options.map((opt) => ({
+        content: opt.content,
+        image_url: opt.image_url || "",
+      })),
+      start_time: poll.start_time ? poll.start_time.slice(0, 16) : "",
+      end_time: poll.end_time ? poll.end_time.slice(0, 16) : "",
+    });
+    setEditingPoll(poll);
+  };
 
-  const handleDeletePoll = (pollId) => {
-    setPolls(polls.filter((poll) => poll.id !== pollId));
+  const handleUpdatePoll = () => {
+    if (editPoll.title && editPoll.options.every((opt) => opt.content.trim())) {
+      console.log(editPoll);
+      console.log(editingPoll.id);
+      updatePoll({ pollId: parseInt(editingPoll.id), updatedPoll: editPoll });
+      const updatedPolls = polls.map((poll) =>
+        poll.id === editingPoll.id
+          ? {
+              ...poll,
+              title: editPoll.title,
+              poll_type: editPoll.poll_type,
+              start_time: editPoll.start_time,
+              end_time: editPoll.end_time,
+              options: editPoll.options.map((opt) => ({
+                content: opt.content,
+                image_url: opt.image_url || null,
+              })),
+            }
+          : poll,
+      );
+
+      setPolls(updatedPolls);
+      setEditingPoll(null);
+      setEditPoll({
+        event_id: parseInt(eventId),
+        title: "",
+        poll_type: "SINGLE_CHOICE",
+        options: [
+          { content: "", image_url: "" },
+          { content: "", image_url: "" },
+        ],
+        start_time: "",
+        end_time: "",
+      });
+    }
+  };
+
+  const addEditOption = () => {
+    setEditPoll({
+      ...editPoll,
+      options: [...editPoll.options, { content: "", image_url: "" }],
+    });
+  };
+
+  const removeEditOption = (index) => {
+    if (editPoll.options.length > 2) {
+      const newOptions = editPoll.options.filter((_, i) => i !== index);
+      setEditPoll({ ...editPoll, options: newOptions });
+    }
+  };
+
+  const updateEditOption = (index, field, value) => {
+    const newOptions = [...editPoll.options];
+    newOptions[index] = { ...newOptions[index], [field]: value };
+    setEditPoll({ ...editPoll, options: newOptions });
+  };
+
+  const handleDeletePoll = async (pollId) => {
+    try {
+      await closePoll(pollId).unwrap();
+      setPolls(polls.filter((poll) => poll.id !== pollId));
+    } catch (error) {
+      console.error("Failed to delete poll:", error);
+    }
   };
 
   const addOption = () => {
@@ -118,7 +215,6 @@ const CreatePoll = () => {
     newOptions[index] = { ...newOptions[index], [field]: value };
     setNewPoll({ ...newPoll, options: newOptions });
   };
-  console.log(data);
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -306,6 +402,170 @@ const CreatePoll = () => {
         </div>
       )}
 
+      {/* Edit Form */}
+      {editingPoll && (
+        <div className="rounded-xl border-2 border-orange-100 bg-white p-6 shadow-lg">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-gray-900">
+              Chỉnh sửa câu hỏi khảo sát
+            </h3>
+            <button
+              onClick={() => setEditingPoll(null)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <FontAwesomeIcon icon={faTimesCircle} className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Event ID
+              </label>
+              <input
+                type="text"
+                value={editPoll.event_id}
+                disabled
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-500"
+                placeholder="Event ID"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Tiêu đề câu hỏi *
+              </label>
+              <input
+                type="text"
+                value={editPoll.title}
+                onChange={(e) =>
+                  setEditPoll({ ...editPoll, title: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                placeholder="Nhập tiêu đề câu hỏi..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Loại câu hỏi
+                </label>
+                <select
+                  value={editPoll.poll_type}
+                  onChange={(e) =>
+                    setEditPoll({ ...editPoll, poll_type: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                >
+                  <option value="SINGLE_CHOICE">Chọn một</option>
+                  <option value="MULTIPLE_CHOICE">Chọn nhiều</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Thời gian bắt đầu
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editPoll.start_time}
+                  onChange={(e) => {
+                    setEditPoll({ ...editPoll, start_time: e.target.value });
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Thời gian kết thúc
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editPoll.end_time}
+                  onChange={(e) => {
+                    setEditPoll({ ...editPoll, end_time: e.target.value });
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">
+                  Các lựa chọn *
+                </label>
+                <button
+                  onClick={addEditOption}
+                  className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-800"
+                >
+                  <FontAwesomeIcon icon={faPlus} className="h-3 w-3" />
+                  Thêm lựa chọn
+                </button>
+              </div>
+              <div className="space-y-2">
+                {editPoll.options.map((option, index) => (
+                  <div
+                    key={index}
+                    className="space-y-2 rounded-lg border border-gray-200 p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={option.content}
+                        onChange={(e) =>
+                          updateEditOption(index, "content", e.target.value)
+                        }
+                        className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                        placeholder={`Lựa chọn ${index + 1}`}
+                      />
+                      {editPoll.options.length > 2 && (
+                        <button
+                          onClick={() => removeEditOption(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        type="url"
+                        value={option.image_url}
+                        onChange={(e) =>
+                          updateEditOption(index, "image_url", e.target.value)
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                        placeholder="URL hình ảnh (tuỳ chọn)"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={handleUpdatePoll}
+                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-2 text-white transition-all duration-300 hover:scale-105"
+              >
+                <FontAwesomeIcon icon={faSave} />
+                Cập nhật câu hỏi
+              </button>
+              <button
+                onClick={() => setEditingPoll(null)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Polls List */}
       <div className="grid gap-6">
         {polls.map((poll) => (
@@ -344,7 +604,7 @@ const CreatePoll = () => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setEditingPoll(poll)}
+                  onClick={() => handleEditPoll(poll)}
                   className="rounded-lg bg-blue-50 p-2 text-blue-600 transition-colors hover:bg-blue-100"
                 >
                   <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
