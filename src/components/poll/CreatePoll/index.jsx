@@ -15,7 +15,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
+/* eslint-disable no-unused-vars */
 const CreatePoll = () => {
   const eventId = useParams().id;
   const [polls, setPolls] = useState([
@@ -54,8 +54,8 @@ const CreatePoll = () => {
     title: "",
     poll_type: "SINGLE_CHOICE",
     options: [
-      { content: "", image_url: "" },
-      { content: "", image_url: "" },
+      { option_id: "", content: "", image_url: "" },
+      { option_id: "", content: "", image_url: "" },
     ],
     start_time: "",
     end_time: "",
@@ -116,11 +116,13 @@ const CreatePoll = () => {
   const [closePoll] = useClosePollMutation();
   const [updatePoll, { data: updatePollData = {} }] = useUpdatePollMutation();
   const handleEditPoll = (poll) => {
+    console.log(poll);
     setEditPoll({
       event_id: parseInt(eventId),
       title: poll.title,
       poll_type: poll.poll_type,
       options: poll.options.map((opt) => ({
+        option_id: opt.id,
         content: opt.content,
         image_url: opt.image_url || "",
       })),
@@ -144,6 +146,7 @@ const CreatePoll = () => {
               start_time: editPoll.start_time,
               end_time: editPoll.end_time,
               options: editPoll.options.map((opt) => ({
+                option_id: opt.id,
                 content: opt.content,
                 image_url: opt.image_url || null,
               })),
@@ -158,8 +161,8 @@ const CreatePoll = () => {
         title: "",
         poll_type: "SINGLE_CHOICE",
         options: [
-          { content: "", image_url: "" },
-          { content: "", image_url: "" },
+          { option_id: "", content: "", image_url: "" },
+          { option_id: "", content: "", image_url: "" },
         ],
         start_time: "",
         end_time: "",
@@ -215,6 +218,7 @@ const CreatePoll = () => {
     newOptions[index] = { ...newOptions[index], [field]: value };
     setNewPoll({ ...newPoll, options: newOptions });
   };
+
   return (
     <div className="space-y-6">
       {/* Header */}
