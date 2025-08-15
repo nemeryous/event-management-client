@@ -72,6 +72,24 @@ export const attendantApi = rootApi.injectEndpoints({
         method: "POST",
       }),
     }),
+    assignManager: builder.mutation({
+      query: ({ event_id, user_id, roleType }) => ({
+        url: `/event-manager/assign-manager`,
+        method: "POST",
+        body: { user_id: user_id, roleType, event_id },
+      }),
+    }),
+    removeManager: builder.mutation({
+      query: ({ event_id, user_id }) => ({
+        url: `/event-manager/remove-manager`,
+        method: "DELETE",
+        body: { user_id: user_id, event_id },
+      }),
+      invalidatesTags: ["Events"],
+    }),
+    getEventManagers: builder.query({
+      query: (eventId) => `/event-manager/event-managers?eventId=${eventId}`,
+    }),
   }),
 
   overrideExisting: false,

@@ -16,7 +16,9 @@ import EventDetail from "@pages/admin/EventDetail";
 import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
 import NotFound from "@pages/NotFound";
-
+import PollPage from "@pages/poll/PollPage";
+import CreatePoll from "@pages/poll/CreatePoll";
+import AttendantList from "@pages/admin/AttendantList";
 import EventDetailUser from "@pages/user/EventDetailUser";
 import EventManagementManage from "@pages/user/EventManagementManage";
 import CheckinResultPage from "@pages/user/CheckinResultPage";
@@ -67,6 +69,11 @@ const router = createBrowserRouter([
           {
             path: "/poll-analytics",
           },
+          {
+            path: "/attendants",
+            element: <AttendantList />,
+          },
+
           {
             path: "*",
             element: <NotFound />,
