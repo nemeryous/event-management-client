@@ -19,10 +19,11 @@ import {
   useAddParticipantsMutation,
   useDeleteParticipantMutation,
   useDeleteParticipantsMutation,
+  useGetEventManagersByEventQuery,
 } from "@api/attendantApi";
-import { useAssignManagerMutation } from "@api/attendantApi"; 
-import { useRemoveManagerMutation } from "@api/attendantApi";
-import { useGetEventManagersQuery } from "@api/attendantApi";
+import { useAssignEventManagerMutation } from "@api/attendantApi";
+import { useRemoveEventManagerMutation } from "@api/attendantApi";
+
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 
@@ -95,12 +96,14 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
   // Thêm mutation cho assign-manager
   const [
     assignManager,
-    { error: errorAssignManager, isError: isErrorAssignManager, isSuccess: isSuccessAssignManager }
-  ] = useAssignManagerMutation();
-  const [
-    removeManager,
-    { error: errorRemoveManager, isError: isErrorRemoveManager, isSuccess: isSuccessRemoveManager }
-  ] = useRemoveManagerMutation();
+    {
+      error: errorAssignEventManager,
+      isError: isErrorAssignEventManager,
+      isSuccess: isSuccessAssignEventManager,
+    },
+  ] = useAssignEventManagerMutation();
+  const [removeManager, { error: errorRemoveManager }] =
+    useRemoveEventManagerMutation();
 
   const {
     register,
@@ -292,7 +295,8 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
     }
   };
 
-  const { data: managersData, refetch: refetchManagers } = useGetEventManagersQuery(eventData.id);
+  const { data: managersData, refetch: refetchManagers } =
+    useGetEventManagersByEventQuery(eventData.id);
   const staffIds = useMemo(() => {
     const managersArray = Array.isArray(managersData?.data)
       ? managersData.data
@@ -301,8 +305,14 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
         : [];
 
     return managersArray
-      .filter((manager) => (manager.roleType ?? manager.role ?? manager.role_type) === "STAFF")
-      .map((manager) => manager.userId ?? manager.user_id ?? manager.id ?? manager.managerId)
+      .filter(
+        (manager) =>
+          (manager.roleType ?? manager.role ?? manager.role_type) === "STAFF",
+      )
+      .map(
+        (manager) =>
+          manager.userId ?? manager.user_id ?? manager.id ?? manager.managerId,
+      )
       .filter(Boolean)
       .map((id) => String(id));
   }, [managersData]);
@@ -639,18 +649,22 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-center gap-3">
                       <button
-                        onClick={() => handleDeleteParticipant(participant.userId)}
+                        onClick={() =>
+                          handleDeleteParticipant(participant.userId)
+                        }
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
                       >
                         <FontAwesomeIcon icon={faUserMinus} />
                       </button>
                       {staffIds.includes(String(participant.userId)) ? (
-                        <div className="relative group inline-flex h-8 w-28 items-center justify-center">
-                          <span className="inline-flex h-8 w-28 items-center justify-center rounded text-xs font-semibold text-yellow-700 bg-yellow-100 border border-yellow-300">
+                        <div className="group relative inline-flex h-8 w-28 items-center justify-center">
+                          <span className="inline-flex h-8 w-28 items-center justify-center rounded border border-yellow-300 bg-yellow-100 text-xs font-semibold text-yellow-700">
                             STAFF
                           </span>
                           <button
-                            onClick={() => handleRemoveStaffSingle(participant.userId)}
+                            onClick={() =>
+                              handleRemoveStaffSingle(participant.userId)
+                            }
                             className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
                             title="Xóa STAFF"
                           >
@@ -659,11 +673,16 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleAssignStaffSingle(participant.userId)}
-                          className="inline-flex h-8 w-28 items-center justify-center rounded text-xs font-semibold text-blue-700 bg-blue-100 border border-blue-300 hover:bg-blue-200 transition-all"
+                          onClick={() =>
+                            handleAssignStaffSingle(participant.userId)
+                          }
+                          className="inline-flex h-8 w-28 items-center justify-center rounded border border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-200"
                           title="Gán quyền STAFF"
                         >
-                          <FontAwesomeIcon icon={faUserShield} className="mr-1" />
+                          <FontAwesomeIcon
+                            icon={faUserShield}
+                            className="mr-1"
+                          />
                           Thêm staff
                         </button>
                       )}
