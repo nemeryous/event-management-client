@@ -1,16 +1,15 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import EventOverview from "../../components/admin/EventOverview";
+import { useNavigate, useParams } from "react-router-dom";
+import OverviewTab from "./EventManagementManage/OverviewTab";
+import ParticipantsTab from "./EventManagementManage/ParticipantsTab";
+import SettingsTab from "./EventManagementManage/SettingsTab";
 import EventVotes from "../../components/admin/EventVotes";
-import EventParticipants from "../../components/admin/EventParticipants";
-import EventLogs from "../../components/admin/EventLogs";
-import EventSettings from "../../components/admin/EventSettings";
+import { useGetEventByIdQuery } from "@api/eventApi";
 
 const TABS = [
   { key: "overview", label: "Tổng quan", icon: "📄" },
   { key: "votes", label: "Kết quả bình chọn", icon: "📊" },
-  { key: "participants", label: "Danh sách người tham gia", icon: "👥" },
-  { key: "logs", label: "Nhật ký hoạt động", icon: "📝" },
+  { key: "participants", label: "Người tham gia", icon: "👥" },
   { key: "settings", label: "Cài đặt", icon: "⚙️" }
 ];
 
@@ -19,6 +18,10 @@ export default function EventDetail() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const { id } = useParams(); // SỬA ĐÚNG Ở ĐÂY
+
+  // Lấy dữ liệu sự kiện (giống user)
+  const { data: eventData, refetch: refetchEvent, isLoading } = useGetEventByIdQuery(id);
 
   React.useEffect(() => {
     function handleClickOutside(event) {
@@ -36,14 +39,19 @@ export default function EventDetail() {
 
   const currentTab = TABS.find(t => t.key === tab);
 
-  // Nội dung tab (dùng lại cho cả mobile và desktop)
   const renderTabContent = () => (
     <div className="flex-1 w-full max-w-2xl flex flex-col items-center gap-6">
-      {tab === "overview" && <EventOverview />}
-      {tab === "votes" && <EventVotes />}
-      {tab === "participants" && <EventParticipants />}
-      {tab === "logs" && <EventLogs />}
-      {tab === "settings" && <EventSettings />}
+      {isLoading && <div>Đang tải dữ liệu sự kiện...</div>}
+      {!isLoading && tab === "overview" && eventData && (
+        <OverviewTab eventData={eventData} />
+      )}
+      {tab === "votes" && <EventVotes eventId={id} />}
+      {!isLoading && tab === "participants" && eventData && (
+        <ParticipantsTab eventData={eventData} />
+      )}
+      {!isLoading && tab === "settings" && eventData && (
+        <SettingsTab eventData={eventData} onCancel={() => setTab("overview")} />
+      )}
     </div>
   );
 
@@ -120,4 +128,4 @@ export default function EventDetail() {
       </div>
     </div>
   );
-} 
+}
