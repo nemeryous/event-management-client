@@ -11,7 +11,7 @@ const TABS = [
   { key: "votes", label: "Kết quả bình chọn", icon: "📊" },
   { key: "participants", label: "Danh sách người tham gia", icon: "👥" },
   { key: "logs", label: "Nhật ký hoạt động", icon: "📝" },
-  { key: "settings", label: "Cài đặt", icon: "⚙️" },
+  { key: "settings", label: "Cài đặt", icon: "⚙️" }
 ];
 
 export default function EventDetail() {
@@ -34,11 +34,11 @@ export default function EventDetail() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dropdownOpen]);
 
-  const currentTab = TABS.find((t) => t.key === tab);
+  const currentTab = TABS.find(t => t.key === tab);
 
   // Nội dung tab (dùng lại cho cả mobile và desktop)
   const renderTabContent = () => (
-    <div className="flex w-full max-w-2xl flex-1 flex-col items-center gap-6">
+    <div className="flex-1 w-full max-w-2xl flex flex-col items-center gap-6">
       {tab === "overview" && <EventOverview />}
       {tab === "votes" && <EventVotes />}
       {tab === "participants" && <EventParticipants />}
@@ -48,40 +48,36 @@ export default function EventDetail() {
   );
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[#f7f9fb]">
+    <div className="min-h-screen bg-[#f7f9fb] w-full flex flex-col items-center justify-center">
       {/* Mobile: Dropdown menu phía trên, nội dung bên dưới */}
-      <div className="block flex w-full flex-col items-center p-2 md:hidden">
+      <div className="block md:hidden w-full p-2 flex flex-col items-center">
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 self-start rounded-lg bg-[#223b73] px-4 py-2 font-semibold text-white shadow transition hover:bg-[#c52032]"
+          className="mb-4 px-4 py-2 rounded-lg bg-[#223b73] text-white font-semibold shadow hover:bg-[#c52032] transition self-start"
         >
           ← Quay lại
         </button>
-        <div className="relative mb-4 w-full max-w-xs" ref={dropdownRef}>
+        <div className="relative w-full max-w-xs mb-4" ref={dropdownRef}>
           <button
-            className="flex w-full items-center justify-between rounded-lg border border-[#e0e0e0] bg-white px-4 py-2 font-semibold text-[#223b73] shadow transition hover:bg-[#f7f9fb]"
-            onClick={() => setDropdownOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-2 rounded-lg bg-white shadow font-semibold text-[#223b73] border border-[#e0e0e0] hover:bg-[#f7f9fb] transition"
+            onClick={() => setDropdownOpen(v => !v)}
           >
             <span className="flex items-center gap-2">
               <span className="text-lg">{currentTab.icon}</span>
               <span>{currentTab.label}</span>
             </span>
-            <span
-              className={`ml-2 transition-transform ${dropdownOpen ? "rotate-180" : "rotate-0"}`}
-            >
-              ▼
-            </span>
+            <span className={`ml-2 transition-transform ${dropdownOpen ? "rotate-180" : "rotate-0"}`}>▼</span>
           </button>
           {dropdownOpen && (
-            <div className="animate-fadeIn absolute right-0 left-0 z-10 mt-2 overflow-hidden rounded-lg border border-[#e0e0e0] bg-white shadow-lg">
-              {TABS.map((t) => (
+            <div className="absolute left-0 right-0 mt-2 bg-white rounded-lg shadow-lg z-10 border border-[#e0e0e0] animate-fadeIn overflow-hidden">
+              {TABS.map(t => (
                 <button
                   key={t.key}
                   onClick={() => {
                     setTab(t.key);
                     setDropdownOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition hover:bg-[#f7f9fb] ${tab === t.key ? "bg-[#fff7f7] text-[#c52032]" : "text-[#223b73]"}`}
+                  className={`w-full flex items-center gap-2 px-4 py-2 text-left font-semibold transition hover:bg-[#f7f9fb] ${tab === t.key ? "bg-[#fff7f7] text-[#c52032]" : "text-[#223b73]"}`}
                 >
                   <span className="text-lg">{t.icon}</span>
                   <span>{t.label}</span>
@@ -93,25 +89,25 @@ export default function EventDetail() {
         {renderTabContent()}
       </div>
       {/* Desktop: Sidebar menu dọc cố định bên trái, nội dung bên phải */}
-      <div className="hidden w-full flex-row items-start justify-center gap-8 p-8 md:flex">
+      <div className="hidden md:flex w-full p-8 flex-row items-start justify-center gap-8">
         {/* Sidebar menu dọc */}
         <aside className="w-64 flex-shrink-0">
-          <div className="flex min-h-[400px] flex-col gap-2 rounded-2xl bg-white p-4 shadow-lg">
+          <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col gap-2 min-h-[400px]">
             <button
               onClick={() => navigate(-1)}
-              className="mb-2 w-full rounded-lg bg-[#223b73] px-4 py-2 font-semibold text-white shadow transition hover:bg-[#c52032]"
+              className="mb-2 px-4 py-2 rounded-lg bg-[#223b73] text-white font-semibold shadow hover:bg-[#c52032] transition w-full"
             >
               ← Quay lại
             </button>
-            {TABS.map((t) => (
+            {TABS.map(t => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex w-full items-center gap-2 rounded-lg border-l-4 border-transparent px-4 py-2 font-semibold transition ${
-                  tab === t.key
-                    ? "border-[#c52032] bg-[#fff7f7] text-[#c52032]"
-                    : "text-[#223b73] hover:bg-[#f7f9fb] hover:text-[#c52032]"
-                } `}
+                className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition border-l-4 border-transparent
+                  ${tab === t.key
+                    ? "bg-[#fff7f7] text-[#c52032] border-[#c52032]"
+                    : "text-[#223b73] hover:bg-[#f7f9fb] hover:text-[#c52032]"}
+                `}
                 style={{ minWidth: 0 }}
               >
                 <span className="text-lg">{t.icon}</span>
@@ -124,4 +120,4 @@ export default function EventDetail() {
       </div>
     </div>
   );
-}
+} 

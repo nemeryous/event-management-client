@@ -1,7 +1,15 @@
 import { rootApi } from "./rootApi";
 
 export const eventApi = rootApi.injectEndpoints({
+  tagTypes: ["Event", "EventManager"],
   endpoints: (builder) => ({
+    deleteEvent: builder.mutation({
+      query: (id) => ({
+        url: `/events/delete/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "Event", id: "LIST" }],
+    }),
     getEvents: builder.query({
       query: ({
         page = 0,
@@ -168,17 +176,100 @@ export const eventApi = rootApi.injectEndpoints({
         "AllManagedEvents",
       ],
     }),
+    uploadBanner: builder.mutation({
+      query: ({ eventId, file, accessToken }) => {
+        const formData = new FormData();
+        // Kiểm tra đuôi file hợp lệ
+        const allowedExt = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (!allowedExt.includes(ext)) {
+          throw new Error(
+            "File banner phải là ảnh (png, jpg, jpeg, gif, webp, svg)",
+          );
+        }
+        formData.append("banner", file);
+        return {
+          url: `/events/${eventId}/upload-banner`,
+          method: "PUT",
+          body: formData,
+          headers: accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : {},
+        };
+      },
+    }),
+    assignEventManager: builder.mutation({
+      query: (dto) => ({
+        url: "/event-manager/assign-manager",
+        method: "POST",
+        body: dto,
+      }),
+      invalidatesTags: (result, error, dto) => [
+        { type: "EventManager", id: dto.event_id },
+        { type: "Event", id: dto.event_id },
+      ],
+    }),
+    removeEventManager: builder.mutation({
+      query: (dto) => ({
+        url: "/event-manager/remove-manager",
+        method: "DELETE",
+        body: dto,
+      }),
+      invalidatesTags: (result, error, dto) => [
+        { type: "EventManager", id: dto.event_id },
+        { type: "Event", id: dto.event_id },
+      ],
+    }),
+    getEventManagersByEventId: builder.query({
+      query: (eventId) => ({
+        url: `/event-manager/event-managers?eventId=${eventId}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, eventId) => [
+        { type: "EventManager", id: eventId },
+      ],
+    }),
+    // createEvent: builder.mutation({
+    //   query: ({ data, accessToken }) => ({
+    //     url: `/events`,
+    //     method: "POST",
+    //     body: data, // object thuần
+    //     headers: {
+    //       "Content-Type": "application/json", // ép Content-Type JSON
+    //       Authorization: `Bearer ${accessToken}`,
+    //     },
+    //   }),
+    // }),
+
+    createEvent: builder.mutation({
+      query: (data) => ({
+        url: `/events`,
+        method: "POST",
+        body: data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      invalidatesTags: [{ type: "Event", id: "LIST" }],
+    }),
   }),
   overrideExisting: false,
 });
 
 export const {
   useGetEventsQuery,
-  useGetAllEventsQuery,
   useGetManagedEventsQuery,
   useGetAllManagedEventsQuery,
-  useGetEventByIdQuery,
   useJoinEventMutation,
   useGetEventQRQuery,
   useUpdateEventMutation,
+  useGetEventBannerQuery,
+  useGetAllEventsQuery,
+  useUploadBannerMutation,
+  useAssignEventManagerMutation,
+  useRemoveEventManagerMutation,
+  useGetEventManagersByEventIdQuery,
+  useGetEventByIdQuery,
+  useDeleteEventMutation,
+  useCreateEventMutation,
 } = eventApi;
