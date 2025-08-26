@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./EventManagement.css";
-import { useGetEventByIdQuery, useUpdateEventMutation, useCreateEventMutation, useAssignEventManagerMutation, useGetEventManagersByEventIdQuery, useRemoveEventManagerMutation } from "../../api/eventApi";
+import { useGetEventByIdQuery, useUpdateEventMutation, useCreateEventMutation, useAssignEventManagerMutation, useGetEventManagersByEventIdQuery, useRemoveEventManagerMutation, useUploadBannerMutation } from "../../api/eventApi";
 import { useGetAllUsersQuery, useGetUserNameQuery } from "../../api/authApi";
 import { useSelector } from "react-redux";
 import { mapBackendStatusToFrontend, mapFrontendStatusToBackend, truncateDescription, truncateTitle } from "../../utils/eventHelpers";
@@ -26,6 +26,7 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
   const [createEvent] = useCreateEventMutation();
   const accessToken = useSelector(state => state.auth.accessToken);
   const currentUserId = useSelector(state => state.auth.userId);
+  const [uploadBanner, { isLoading: isUploadingBanner }] = useUploadBannerMutation();
 
   const statusOptions = [
     { value: "UPCOMING", label: "Sắp diễn ra" },
@@ -92,6 +93,19 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dt)) return dt + ":00";
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(dt)) return dt;
     return dt;
+  };
+
+  const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      await uploadBanner({ eventId, file }).unwrap();
+      setErrorMsg("");
+      if (refetch) refetch();
+      alert("Tải lên banner thành công!");
+    } catch (err) {
+      setErrorMsg(err?.data?.message || "Tải lên banner thất bại!");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -177,18 +191,34 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
         <form id="eventForm" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="title">Tên Sự Kiện:</label>
-              <input type="text" id="title" value={form.title || ""} onChange={handleChange} required />
-              {form.title && (
-                <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
-                  {form.title.length > 40 ? (
-                    <span style={{ color: "#e53935" }}>
-                      Tên quá dài ({form.title.length} ký tự). Sẽ hiển thị: "{truncateTitle(form.title, 40)}"
-                    </span>
-                  ) : (
-                    <span>Độ dài: {form.title.length}/40 ký tự</span>
-                  )}
-                </div>
-              )}
+            <input type="text" id="title" value={form.title || ""} onChange={handleChange} required />
+            {form.title && (
+              <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
+                {form.title.length > 40 ? (
+                  <span style={{ color: "#e53935" }}>
+                    Tên quá dài ({form.title.length} ký tự). Sẽ hiển thị: "{truncateTitle(form.title, 40)}"
+                  </span>
+                ) : (
+                  <span>Độ dài: {form.title.length}/40 ký tự</span>
+                )}
+              </div>
+            )}
+          </div>
+          {/* Upload banner ngay dưới tên sự kiện */}
+          <div className="form-group">
+            <label>Banner sự kiện:</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleBannerChange}
+              disabled={isUploadingBanner}
+            />
+            {isUploadingBanner && <span style={{ marginLeft: 8, color: '#888' }}>Đang tải lên...</span>}
+            {eventDetail?.banner && (
+              <div style={{ marginTop: 8 }}>
+                <img src={`${import.meta.env.VITE_BASE_URL}/events/${eventDetail.banner}`} alt="Banner" style={{ maxWidth: 200, borderRadius: 8 }} />
+              </div>
+            )}
           </div>
           {/* Hiển thị tên manager hiện tại nếu có, nếu chưa có thì hiện phần chọn manager */}
           {managerUserName ? (

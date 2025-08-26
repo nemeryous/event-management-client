@@ -25,6 +25,7 @@ import {
 } from "@api/attendantApi";
 import { useAssignEventManagerMutation } from "@api/attendantApi";
 import { useRemoveEventManagerMutation } from "@api/attendantApi";
+import { useUploadBannerMutation } from "@api/eventApi";
 
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
@@ -76,18 +77,10 @@ const addParticipantsSchema = yup.object({
 });
 
 const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
-  // Fetch participants data directly if not provided
   const { data: attendantsData, isLoading: isLoadingAttendants, error: attendantsError, refetch: refetchAttendants } = useGetAttendantsByEventQuery(eventData?.id, {
     skip: !eventData?.id
   });
 
-  // Debug API call
-  if (attendantsError) {
-    console.error('❌ API Error:', attendantsError);
-  }
-
-  // Use API data first, then fall back to props or event data
-  // Priority: API data > eventData.participants > props participants
   const actualParticipants = (attendantsData?.data || attendantsData)?.length > 0
     ? (attendantsData?.data || attendantsData)
     : eventData?.participants?.length > 0
@@ -96,7 +89,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
         ? participants
         : [];
 
-  // Debug logging
   console.log('🔍 ParticipantsTab Debug:');
   console.log('eventData?.id:', eventData?.id);
   console.log('eventData?.participants:', eventData?.participants);
@@ -104,8 +96,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
   console.log('attendantsData?.data:', attendantsData?.data);
   console.log('participants (props):', participants);
   console.log('actualParticipants:', actualParticipants);
-  console.log('isLoadingAttendants:', isLoadingAttendants);
-  console.log('API Error:', attendantsError);
 
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,7 +116,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     { errorDelParticipants, isErrorDelParticipants, isSuccessDelParticipants },
   ] = useDeleteParticipantsMutation();
 
-  // Thêm mutation cho assign-manager
   const [
     assignManager,
     {
@@ -137,6 +126,20 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
   ] = useAssignEventManagerMutation();
   const [removeManager, { error: errorRemoveManager }] =
     useRemoveEventManagerMutation();
+
+  const [uploadBanner, { isLoading: isUploadingBanner }] = useUploadBannerMutation();
+
+  const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      await uploadBanner({ eventId: eventData.id, file }).unwrap();
+      dispatch(openSnackbar({ message: "Tải lên banner thành công!" }));
+      if (refetchEvent) refetchEvent();
+    } catch (err) {
+      dispatch(openSnackbar({ message: err?.data?.message || "Tải lên banner thất bại!", type: "error" }));
+    }
+  };
 
   const {
     register,
@@ -162,9 +165,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
   };
 
   const filteredParticipants = actualParticipants.filter((participant) => {
-    // Debug each participant
-    console.log('🔍 Filtering participant:', participant);
-    
     const matchesSearch =
       participant.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       participant.userEmail?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -176,9 +176,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
       matchesFilter = participant.isCheckedIn === false;
     }
 
-    const result = matchesSearch && matchesFilter;
-    console.log('🔍 Participant filter result:', { matchesSearch, matchesFilter, result });
-    return result;
+    return matchesSearch && matchesFilter;
   });
 
   const handleSelectParticipant = (participantId) => {
@@ -217,26 +215,25 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
       return;
     }
 
-         const worksheet = XLSX.utils.json_to_sheet(actualParticipants);
+    const worksheet = XLSX.utils.json_to_sheet(actualParticipants);
 
-         const headers = {
-       userId: "ID",
-       userName: "Họ tên",
-       userEmail: "Email",
-       userPhone: "Số điện thoại",
-       joinedAt: "Ngày đăng ký",
-       checkedTime: "Ngày điểm danh",
-     };
+    const headers = {
+      userId: "ID",
+      userName: "Họ tên",
+      userEmail: "Email",
+      userPhone: "Số điện thoại",
+      joinedAt: "Ngày đăng ký",
+      checkedTime: "Ngày điểm danh",
+    };
 
-         // Add headers to the first row
-     XLSX.utils.sheet_add_aoa(worksheet, [Object.values(headers)], {
-       origin: "A1",
-     });
+    XLSX.utils.sheet_add_aoa(worksheet, [Object.values(headers)], {
+      origin: "A1",
+    });
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Participants");
 
-    XLSX.writeFile(workbook, `event_participants.xlsx`);
+    XLSX.writeFile(workbook, `event_participants_${eventData?.title || 'event'}.xlsx`);
   };
 
   const onSubmit = async (data) => {
@@ -264,9 +261,9 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
 
   const handleDeleteSelectedParticipants = async () => {
     try {
-          const emails = selectedParticipants
-      .map((userId) => {
-        const participant = actualParticipants.find((p) => p.userId === userId);
+      const emails = selectedParticipants
+        .map((userId) => {
+          const participant = actualParticipants.find((p) => p.userId === userId);
           return participant ? { email: participant.userEmail } : null;
         })
         .filter((email) => email !== null);
@@ -288,7 +285,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     }
   };
 
-  // Thêm hàm xử lý gán staff cho từng người
   const handleAssignStaffSingle = async (userId) => {
     try {
       await assignManager({
@@ -336,8 +332,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
 
   const { data: managersData, refetch: refetchManagers } =
     useGetEventManagersByEventQuery(eventData.id);
-
-
   const staffIds = useMemo(() => {
     const managersArray = Array.isArray(managersData?.data)
       ? managersData.data
@@ -414,20 +408,15 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
 
   return (
     <div className="space-y-6">
-      {/* Add Participants Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 m-0 flex items-center justify-center">
-          {/* Backdrop with smooth transition */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="bg-opacity-30 absolute inset-0 bg-black backdrop-blur-sm transition-all duration-300 ease-out"
             onClick={handleCloseModal}
-     pb-0     />
+          />
 
-          {/* Modal container */}
           <div className="relative mx-4 w-full max-w-md transform transition-all duration-300 ease-out">
-            {/* Modal content with glassmorphism effect */}
             <div className="rounded-3xl border border-white/20 bg-white/95 p-8 shadow-2xl ring-1 ring-black/5 backdrop-blur-md">
-              {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h3
                   onClick={handleSubmit(onSubmit)}
@@ -508,10 +497,9 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
         </div>
       )}
 
-      {/* Controls */}
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between flex-wrap">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center flex-wrap">
             <div className="relative">
               <FontAwesomeIcon
                 icon={faSearch}
@@ -522,13 +510,13 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                 placeholder="Tìm kiếm theo tên hoặc email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-xl border-2 border-gray-200 py-2.5 pr-4 pl-10 transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none sm:w-64"
+                className="w-full rounded-xl border-2 border-gray-200 py-2 pr-4 pl-10 transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none sm:w-56"
               />
             </div>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-xl border-2 border-gray-200 px-4 py-2.5 transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none"
+              className="rounded-xl border-2 border-gray-200 px-3 py-2 transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none"
             >
               <option value="all">Tất cả trạng thái</option>
               <option value="checked">Đã điểm danh</option>
@@ -536,53 +524,55 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
             </select>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-row flex-wrap gap-2 items-center justify-start w-full sm:w-auto">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 px-4 py-2.5 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-green-700 hover:to-green-800 hover:shadow-xl focus:ring-4 focus:ring-green-500/30 focus:outline-none"
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 px-3 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-green-700 hover:to-green-800 hover:shadow-xl focus:ring-4 focus:ring-green-500/30 focus:outline-none"
+              style={{ minWidth: 160 }}
             >
               <FontAwesomeIcon icon={faUserPlus} />
               Thêm người tham gia
             </button>
-                         <button
-               onClick={exportParticipantsToExcel}
-               className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl focus:ring-4 focus:ring-blue-500/30 focus:outline-none"
-             >
-               <FontAwesomeIcon icon={faDownload} />
-               Xuất Excel
-             </button>
-             <button
-               onClick={() => refetchAttendants()}
-               disabled={isLoadingAttendants}
-               className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 px-4 py-2.5 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-gray-700 hover:to-gray-800 hover:shadow-xl focus:ring-4 focus:ring-gray-500/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-             >
-               <FontAwesomeIcon icon={faRefresh} />
-               {isLoadingAttendants ? 'Đang tải...' : 'Làm mới'}
-             </button>
+            <button
+              onClick={exportParticipantsToExcel}
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl focus:ring-4 focus:ring-blue-500/30 focus:outline-none"
+              style={{ minWidth: 120 }}
+            >
+              <FontAwesomeIcon icon={faDownload} />
+              Xuất Excel
+            </button>
+            <button
+              onClick={() => refetchAttendants()}
+              disabled={isLoadingAttendants}
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 px-3 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-gray-700 hover:to-gray-800 hover:shadow-xl focus:ring-4 focus:ring-gray-500/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FontAwesomeIcon icon={faRefresh} />
+              {isLoadingAttendants ? 'Đang tải...' : 'Làm mới'}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Participants List */}
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg">
+      {/* DÒNG NÀY ĐÃ ĐƯỢC SỬA: xóa class `mt-6` */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-lg">
         <div className="border-b border-gray-200 bg-gray-50/50 p-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">
               Danh sách người tham gia ({filteredParticipants.length})
               {isLoadingAttendants && ' - Đang tải...'}
-              {attendantsError && ' - Lỗi API'}
+
             </h3>
             {selectedParticipants.length > 0 && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-600">
                   Đã chọn {selectedParticipants.length} người
                 </span>
                 <button
                   onClick={handleDeleteSelectedParticipants}
                   disabled={isErrorDelParticipants}
-                  className="rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-4 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:from-red-600 hover:to-red-700 hover:shadow-lg focus:ring-4 focus:ring-red-500/30 focus:outline-none"
+                  className="rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:from-red-600 hover:to-red-700 hover:shadow-lg focus:ring-4 focus:ring-red-500/30 focus:outline-none"
                 >
-                  <FontAwesomeIcon icon={faUserMinus} className="mr-2" />
+                  <FontAwesomeIcon icon={faUserMinus} className="mr-1" />
                   Xóa đã chọn
                 </button>
               </div>
@@ -590,193 +580,191 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedParticipants.length ===
-                        filteredParticipants.length &&
-                      filteredParticipants.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
-                  />
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                  Họ tên
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                  Email
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                  Số điện thoại
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                  Ngày đăng ký
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-4 text-center text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {isLoadingAttendants ? (
+        <div className="overflow-x-auto max-h-96">
+          <div className="min-w-max">
+            <table className="w-full">
+              <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                    <div className="flex items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                      <span className="ml-2">Đang tải danh sách người tham gia...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredParticipants.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                    <div className="text-center">
-                      <div className="mb-2 text-4xl">👥</div>
-                      <p className="text-lg font-medium">Chưa có người tham gia nào</p>
-                      <p className="text-sm text-gray-400">Hãy thêm người tham gia vào sự kiện</p>
-                      <div className="mt-4 text-xs text-gray-500">
-                        <p>Debug info:</p>
-                        <p>actualParticipants length: {actualParticipants.length}</p>
-                        <p>searchTerm: "{searchTerm}"</p>
-                        <p>filterStatus: "{filterStatus}"</p>
-                        <p>isLoadingAttendants: {isLoadingAttendants.toString()}</p>
-                        {attendantsError && <p>API Error: {JSON.stringify(attendantsError)}</p>}
-                        <p>Raw attendantsData: {JSON.stringify(attendantsData)}</p>
-                        <p>eventData?.id: {eventData?.id}</p>
-                        <p>API URL: {eventData?.id ? `attendants?eventId=${eventData.id}` : 'No event ID'}</p>
-                        <p>eventData.participants: {eventData?.participants ? `${eventData.participants.length} items` : 'None'}</p>
-                        <p>Data source: {(attendantsData?.data || attendantsData)?.length > 0 ? 'API' : eventData?.participants?.length > 0 ? 'Event Data' : participants?.length > 0 ? 'Props' : 'None'}</p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredParticipants.map((participant) => (
-                <tr
-                  key={participant.userId}
-                  className="transition-all duration-200 hover:bg-blue-50/30"
-                >
-                  <td className="px-6 py-4">
+                  <th className="px-6 py-4 text-left w-16">
                     <input
                       type="checkbox"
-                      checked={selectedParticipants.includes(
-                        participant.userId,
-                      )}
-                      onChange={() =>
-                        handleSelectParticipant(participant.userId)
+                      checked={
+                        selectedParticipants.length ===
+                          filteredParticipants.length &&
+                        filteredParticipants.length > 0
                       }
+                      onChange={handleSelectAll}
                       className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
                     />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 font-bold text-white shadow-md">
-                          {participant.userName.charAt(0)}
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-48">
+                    Họ tên
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-64">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-32">
+                    Số điện thoại
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-40">
+                    Ngày đăng ký
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-32">
+                    Trạng thái
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-semibold tracking-wider text-gray-600 uppercase w-40">
+                    Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {isLoadingAttendants ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                      <div className="flex items-center justify-center">
+                        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                        <span className="ml-2 text-sm">Đang tải danh sách người tham gia...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredParticipants.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                      <div className="text-center">
+                        <div className="mb-2 text-3xl">👥</div>
+                        <p className="text-base font-medium">Chưa có người tham gia nào</p>
+                        <p className="text-xs text-gray-400">Hãy thêm người tham gia vào sự kiện</p>
+                        <div className="mt-3 text-xs text-gray-500">
+                          <p>Debug info:</p>
+                          <p>actualParticipants length: {actualParticipants.length}</p>
+                          <p>Raw attendantsData: {JSON.stringify(attendantsData)}</p>
+                          <p>eventData?.id: {eventData?.id}</p>
+                          <p>API URL: {eventData?.id ? `events/${eventData.id}/participants` : 'No event ID'}</p>
+                          <p>eventData.participants: {eventData?.participants ? `${eventData.participants.length} items` : 'None'}</p>
+                          <p>Data source: {(attendantsData?.data || attendantsData)?.length > 0 ? 'API' : eventData?.participants?.length > 0 ? 'Event Data' : participants?.length > 0 ? 'Props' : 'None'}</p>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {participant.userName}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredParticipants.map((participant) => (
+                    <tr
+                      key={participant.userId}
+                      className="transition-all duration-200 hover:bg-blue-50/30"
+                    >
+                      <td className="px-6 py-4 w-16">
+                        <input
+                          type="checkbox"
+                          checked={selectedParticipants.includes(
+                            participant.userId,
+                          )}
+                          onChange={() =>
+                            handleSelectParticipant(participant.userId)
+                          }
+                          className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap w-48">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 flex-shrink-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 font-bold text-white shadow-md">
+                              {participant.userName?.charAt(0)}
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {participant.userName}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                    {participant.userEmail}
-                  </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                    {participant.userPhone || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                    {formatDateTime(participant.joinedAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col">
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(participant.isCheckedIn)}`}
-                      >
-                        {participant.isCheckedIn ? (
-                          <>
-                            <FontAwesomeIcon
-                              icon={faCheckCircle}
-                              className="mr-1.5"
-                            />
-                            Đã điểm danh
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon
-                              icon={faTimesCircle}
-                              className="mr-1.5"
-                            />
-                            Đã đăng ký
-                          </>
-                        )}
-                      </span>
-                      {participant.checkedTime && (
-                        <div className="mt-1 text-center text-xs text-gray-500">
-                          {formatDateTime(participant.checkedTime)}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() =>
-                          handleDeleteParticipant(participant.userId)
-                        }
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-                      >
-                        <FontAwesomeIcon icon={faUserMinus} />
-                      </button>
-                      {staffIds.includes(String(participant.userId)) ? (
-                        <div className="group relative inline-flex h-8 w-28 items-center justify-center">
-                          <span className="inline-flex h-8 w-28 items-center justify-center rounded border border-yellow-300 bg-yellow-100 text-xs font-semibold text-yellow-700">
-                            STAFF
+                      </td>
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600 w-64">
+                        {participant.userEmail}
+                      </td>
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600 w-32">
+                        {participant.userPhone || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600 w-40">
+                        {formatDateTime(participant.joinedAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap w-32">
+                        <div className="flex flex-col">
+                          <span
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(participant.isCheckedIn)}`}
+                          >
+                            {participant.isCheckedIn ? (
+                              <>
+                                <FontAwesomeIcon
+                                  icon={faCheckCircle}
+                                  className="mr-1.5"
+                                />
+                                Đã điểm danh
+                              </>
+                            ) : (
+                              <>
+                                <FontAwesomeIcon
+                                  icon={faTimesCircle}
+                                  className="mr-1.5"
+                                />
+                                Đã đăng ký
+                              </>
+                            )}
                           </span>
+                          {participant.checkedTime && (
+                            <div className="mt-1 text-center text-xs text-gray-500">
+                              {formatDateTime(participant.checkedTime)}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap w-40">
+                        <div className="flex items-center justify-center gap-3">
                           <button
                             onClick={() =>
-                              handleRemoveStaffSingle(participant.userId)
+                              handleDeleteParticipant(participant.userId)
                             }
-                            className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
-                            title="Xóa STAFF"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
                           >
-                            ×
+                            <FontAwesomeIcon icon={faUserMinus} />
                           </button>
+                          {staffIds.includes(String(participant.userId)) ? (
+                            <div className="group relative inline-flex h-8 w-28 items-center justify-center">
+                              <span className="inline-flex h-8 w-28 items-center justify-center rounded border border-yellow-300 bg-yellow-100 text-xs font-semibold text-yellow-700">
+                                STAFF
+                              </span>
+                              <button
+                                onClick={() =>
+                                  handleRemoveStaffSingle(participant.userId)
+                                }
+                                className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
+                                title="Xóa STAFF"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                handleAssignStaffSingle(participant.userId)
+                              }
+                              className="inline-flex h-8 w-28 items-center justify-center rounded border border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-200"
+                              title="Gán quyền STAFF"
+                            >
+                              <FontAwesomeIcon
+                                icon={faUserShield}
+                                className="mr-1"
+                              />
+                              Thêm staff
+                            </button>
+                          )}
                         </div>
-                      ) : (
-                        <button
-                          onClick={() =>
-                            handleAssignStaffSingle(participant.userId)
-                          }
-                          className="inline-flex h-8 w-28 items-center justify-center rounded border border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-200"
-                          title="Gán quyền STAFF"
-                        >
-                          <FontAwesomeIcon
-                            icon={faUserShield}
-                            className="mr-1"
-                          />
-                          Thêm staff
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

@@ -1,16 +1,15 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import EventOverview from "../../components/admin/EventOverview";
-import EventVotes from "../../components/admin/EventVotes";
-import EventParticipants from "../../components/admin/EventParticipants";
-import EventLogs from "../../components/admin/EventLogs";
-import EventSettings from "../../components/admin/EventSettings";
+import { useNavigate, useParams } from "react-router-dom";
+import OverviewTab from "./EventManagementManage/OverviewTab";
+import ParticipantsTab from "./EventManagementManage/ParticipantsTab";
+import SettingsTab from "./EventManagementManage/SettingsTab";
+import EventVoteTab from "./EventManagementManage/EventVoteTab";
+import { useGetEventByIdQuery } from "@api/eventApi";
 
 const TABS = [
   { key: "overview", label: "Tổng quan", icon: "📄" },
   { key: "votes", label: "Kết quả bình chọn", icon: "📊" },
-  { key: "participants", label: "Danh sách người tham gia", icon: "👥" },
-  { key: "logs", label: "Nhật ký hoạt động", icon: "📝" },
+  { key: "participants", label: "Người tham gia", icon: "👥" },
   { key: "settings", label: "Cài đặt", icon: "⚙️" }
 ];
 
@@ -19,6 +18,9 @@ export default function EventDetail() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const { id } = useParams();
+
+  const { data: eventData, refetch: refetchEvent, isLoading } = useGetEventByIdQuery(id);
 
   React.useEffect(() => {
     function handleClickOutside(event) {
@@ -36,19 +38,48 @@ export default function EventDetail() {
 
   const currentTab = TABS.find(t => t.key === tab);
 
-  // Nội dung tab (dùng lại cho cả mobile và desktop)
   const renderTabContent = () => (
-    <div className="flex-1 w-full max-w-2xl flex flex-col items-center gap-6">
-      {tab === "overview" && <EventOverview />}
-      {tab === "votes" && <EventVotes />}
-      {tab === "participants" && <EventParticipants />}
-      {tab === "logs" && <EventLogs />}
-      {tab === "settings" && <EventSettings />}
+    <div className="flex-1 w-full max-w-7xl flex flex-col items-center gap-6">
+      {isLoading && <div>Đang tải dữ liệu sự kiện...</div>}
+      {!isLoading && tab === "overview" && eventData && (
+        <OverviewTab 
+          eventData={eventData} 
+          stats={{
+            totalRegistered: eventData?.participants?.length || 0,
+            checkedIn: eventData?.participants?.filter((p) => p.isCheckedIn)?.length || 0,
+          }}
+        />
+      )}
+      {tab === "votes" && (
+        isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Đang tải dữ liệu sự kiện...</p>
+            </div>
+          </div>
+        ) : eventData ? (
+          <EventVoteTab eventData={eventData} />
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-red-500 text-6xl mb-4">❌</div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Không tìm thấy sự kiện</h3>
+            <p className="text-gray-600">Vui lòng thử lại sau</p>
+          </div>
+        )
+      )}
+      {!isLoading && tab === "participants" && eventData && (
+        <ParticipantsTab eventData={eventData} refetchEvent={refetchEvent} />
+      )}
+      {!isLoading && tab === "settings" && eventData && (
+        <SettingsTab eventData={eventData} onCancel={() => setTab("overview")} />
+      )}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] w-full flex flex-col items-center justify-center">
+    // ĐÃ SỬA: Thay justify-center bằng justify-start để nội dung luôn bắt đầu từ trên
+    <div className="min-h-screen bg-[#f7f9fb] w-full flex flex-col items-center justify-start">
       {/* Mobile: Dropdown menu phía trên, nội dung bên dưới */}
       <div className="block md:hidden w-full p-2 flex flex-col items-center">
         <button
@@ -90,8 +121,7 @@ export default function EventDetail() {
       </div>
       {/* Desktop: Sidebar menu dọc cố định bên trái, nội dung bên phải */}
       <div className="hidden md:flex w-full p-8 flex-row items-start justify-center gap-8">
-        {/* Sidebar menu dọc */}
-        <aside className="w-64 flex-shrink-0">
+        <aside className="w-64 flex-shrink-0 self-start">
           <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col gap-2 min-h-[400px]">
             <button
               onClick={() => navigate(-1)}
@@ -106,6 +136,7 @@ export default function EventDetail() {
                 className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition border-l-4 border-transparent
                   ${tab === t.key
                     ? "bg-[#fff7f7] text-[#c52032] border-[#c52032]"
+                    // eslint-disable-next-line prettier/prettier
                     : "text-[#223b73] hover:bg-[#f7f9fb] hover:text-[#c52032]"}
                 `}
                 style={{ minWidth: 0 }}
@@ -120,4 +151,4 @@ export default function EventDetail() {
       </div>
     </div>
   );
-} 
+}
