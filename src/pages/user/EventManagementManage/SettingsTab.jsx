@@ -2,6 +2,7 @@ import { useUpdateEventMutation } from "@api/eventApi";
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
 import TinyMCEEditor from "@components/common/TinyMCEEditor";
+import BannerUpload from "@components/user/BannerUpload";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -73,6 +74,8 @@ const SettingsTab = ({ eventData }) => {
 
   return (
     <div className="space-y-6">
+      <BannerUpload eventData={eventData} />
+
       <div className="rounded-2xl bg-white p-6 shadow-lg">
         <h3 className="mb-6 text-xl font-bold">Cài đặt sự kiện</h3>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   faUserPlus,
   faUserMinus,
@@ -80,28 +80,13 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
   const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [
-    addParticipants,
-    { errorAddParticipants, isErrorAddParticipants, isSuccessAddParticipants },
-  ] = useAddParticipantsMutation();
-  const [
-    deleteParticipant,
-    { errorDelParticipant, isErrorDelParticipant, isSuccessDelParticipant },
-  ] = useDeleteParticipantMutation();
-  const [
-    deleteParticipants,
-    { errorDelParticipants, isErrorDelParticipants, isSuccessDelParticipants },
-  ] = useDeleteParticipantsMutation();
+  const [addParticipants] = useAddParticipantsMutation();
+  const [deleteParticipant] = useDeleteParticipantMutation();
+  const [deleteParticipants, { isErrorDelParticipants }] =
+    useDeleteParticipantsMutation();
 
   // Thêm mutation cho assign-manager
-  const [
-    assignManager,
-    {
-      error: errorAssignEventManager,
-      isError: isErrorAssignEventManager,
-      isSuccess: isSuccessAssignEventManager,
-    },
-  ] = useAssignEventManagerMutation();
+  const [assignManager] = useAssignEventManagerMutation();
   const [removeManager, { error: errorRemoveManager }] =
     useRemoveEventManagerMutation();
 
@@ -128,20 +113,24 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
     }
   };
 
-  const filteredParticipants = participants.filter((participant) => {
-    const matchesSearch =
-      participant.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      participant.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredParticipants = useMemo(() => {
+    return participants.filter((participant) => {
+      const matchesSearch =
+        participant.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        participant.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
 
-    let matchesFilter = true;
-    if (filterStatus === "checked") {
-      matchesFilter = participant.isCheckedIn === true;
-    } else if (filterStatus === "registered") {
-      matchesFilter = participant.isCheckedIn === false;
-    }
-
-    return matchesSearch && matchesFilter;
-  });
+      if (filterStatus === "all") {
+        return matchesSearch;
+      }
+      if (filterStatus === "checked") {
+        return matchesSearch && participant.isCheckedIn === true;
+      }
+      if (filterStatus === "registered") {
+        return matchesSearch && participant.isCheckedIn === false;
+      }
+      return false; // Thêm dòng này để rõ ràng hơn
+    });
+  }, [participants, searchTerm, filterStatus]);
 
   const handleSelectParticipant = (participantId) => {
     setSelectedParticipants((prev) =>
@@ -208,18 +197,35 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
         .map((email) => ({
           email: email.trim(),
         }));
+
       await addParticipants({ eventId: eventData.id, emails }).unwrap();
+
+      dispatch(openSnackbar({ message: "Thêm người tham gia thành công!" }));
+      if (refetchEvent) refetchEvent();
       handleCloseModal();
-    } catch {
-      //
+    } catch (error) {
+      dispatch(
+        openSnackbar({
+          message: error?.data?.message || "Thêm người tham gia thất bại!",
+          type: "error",
+        }),
+      );
     }
   };
 
   const handleDeleteParticipant = async (userId) => {
     try {
       await deleteParticipant({ eventId: eventData.id, userId }).unwrap();
-    } catch {
-      // Lỗi được xử lý trong useEffect
+
+      dispatch(openSnackbar({ message: "Xóa người tham gia thành công!" }));
+      if (refetchEvent) refetchEvent();
+    } catch (error) {
+      dispatch(
+        openSnackbar({
+          message: error?.data?.message || "Xóa người tham gia thất bại!",
+          type: "error",
+        }),
+      );
     }
   };
 
@@ -244,8 +250,15 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
 
       await deleteParticipants({ eventId: eventData.id, emails }).unwrap();
       setSelectedParticipants([]);
-    } catch {
-      // Lỗi được xử lý trong useEffect
+      if (refetchEvent) refetchEvent();
+    } catch (error) {
+      dispatch(
+        openSnackbar({
+          message:
+            error?.data?.message || "Xóa người tham gia đã chọn thất bại!",
+          type: "error",
+        }),
+      );
     }
   };
 
@@ -263,10 +276,7 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
     } catch (e) {
       dispatch(
         openSnackbar({
-          message:
-            e?.data?.message ||
-            errorAssignManager?.data?.message ||
-            "Có lỗi xảy ra khi gán quyền staff!",
+          message: e?.data?.message || "Có lỗi xảy ra khi gán quyền staff!",
           type: "error",
         }),
       );
@@ -316,60 +326,6 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
       .filter(Boolean)
       .map((id) => String(id));
   }, [managersData]);
-
-  useEffect(() => {
-    if (isSuccessAddParticipants) {
-      dispatch(openSnackbar({ message: "Thêm người tham gia thành công!" }));
-
-      if (refetchEvent) {
-        refetchEvent();
-      }
-    }
-
-    if (isErrorAddParticipants || errorAddParticipants) {
-      dispatch(
-        openSnackbar({
-          message: errorAddParticipants?.data?.message,
-          type: "error",
-        }),
-      );
-    }
-
-    if (isSuccessDelParticipant || isSuccessDelParticipants) {
-      dispatch(openSnackbar({ message: "Xóa người tham gia thành công!" }));
-
-      if (refetchEvent) {
-        refetchEvent();
-      }
-    }
-
-    if (
-      isErrorDelParticipant ||
-      errorDelParticipant ||
-      isErrorDelParticipants ||
-      errorDelParticipants
-    ) {
-      dispatch(
-        openSnackbar({
-          message: errorDelParticipant?.data?.message,
-          type: "error",
-        }),
-      );
-    }
-  }, [
-    isSuccessAddParticipants,
-    isErrorAddParticipants,
-    errorAddParticipants,
-    dispatch,
-    refetchEvent,
-    errorAddParticipants?.data?.message,
-    isSuccessDelParticipant,
-    isSuccessDelParticipants,
-    isErrorDelParticipant,
-    errorDelParticipant,
-    isErrorDelParticipants,
-    errorDelParticipants,
-  ]);
 
   return (
     <div className="space-y-6 pb-0">

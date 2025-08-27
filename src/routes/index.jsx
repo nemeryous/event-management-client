@@ -22,6 +22,7 @@ import EventManagementManage from "@pages/user/EventManagementManage";
 import CheckinResultPage from "@pages/user/CheckinResultPage";
 import HomePageUser from "@pages/user/HomePageUser";
 import CreatePoll from "@components/poll/CreatePoll";
+import AdminRoute from "./AdminRoute";
 
 const router = createBrowserRouter([
   {
@@ -90,32 +91,37 @@ const router = createBrowserRouter([
         ],
       },
       {
-        element: <AdminLayout />,
+        element: <AdminRoute />,
         children: [
           {
-            path: "/admin/events",
-            element: <EventManagement />,
-          },
-          {
-            path: "/admin/events/create",
-            element: <EventCreate />,
-          },
-          {
-            path: "/admin/events/:id",
-            element: <EventDetail />,
-          },
-          {
-            path: "/admin/dashboard",
-            element: <Dashboard />,
-          },
-          {
-            path: "/admin/users",
-            element: <UserManagement />,
-          },
+            element: <AdminLayout />,
+            children: [
+              {
+                path: "/admin/events",
+                element: <EventManagement />,
+              },
+              {
+                path: "/admin/events/create",
+                element: <EventCreate />,
+              },
+              {
+                path: "/admin/events/:id",
+                element: <EventDetail />,
+              },
+              {
+                path: "/admin/dashboard",
+                element: <Dashboard />,
+              },
+              {
+                path: "/admin/users",
+                element: <UserManagement />,
+              },
 
-          {
-            path: "/manage-event",
-            element: <EventManagement />,
+              {
+                path: "/manage-event",
+                element: <EventManagement />,
+              },
+            ],
           },
         ],
       },

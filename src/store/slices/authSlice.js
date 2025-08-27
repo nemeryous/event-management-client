@@ -38,5 +38,6 @@ export const counterSlice = createSlice({
   },
 });
 
-export const { setToken, clearToken, setUser, setLoading, setError } = counterSlice.actions;
+export const { setToken, clearToken, setUser, setLoading, setError } =
+  counterSlice.actions;
 export default counterSlice.reducer;

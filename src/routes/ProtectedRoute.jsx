@@ -7,7 +7,6 @@ import Loading from "@components/common/Loading";
 import { useGetAuthUserQuery, useRefreshTokenMutation } from "@api/authApi";
 import { rootApi } from "@api/rootApi";
 
-
 const ProtectedRoute = memo(() => {
   const dispatch = useDispatch();
   const { accessToken, user: currentUser } = useSelector((state) => state.auth);
