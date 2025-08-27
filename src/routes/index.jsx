@@ -23,6 +23,7 @@ import CheckinResultPage from "@pages/user/CheckinResultPage";
 import HomePageUser from "@pages/user/HomePageUser";
 import CreatePoll from "@components/poll/CreatePoll";
 import AdminRoute from "./AdminRoute";
+import Root from "./Root";
 
 const router = createBrowserRouter([
   {
@@ -42,10 +43,14 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
+        path: "/",
+        element: <Root />,
+      },
+      {
         element: <MainLayout />,
         children: [
           {
-            path: "/",
+            path: "/home",
             element: <HomePageUser />,
           },
           {

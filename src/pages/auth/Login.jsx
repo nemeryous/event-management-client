@@ -59,7 +59,7 @@ const Login = () => {
       dispatch(openSnackbar({ message: "Đăng nhập thành công" }));
       dispatch(setToken(data));
 
-      navigate("/admin/events");
+      navigate("/");
     }
   }, [isError, isSuccess, data, error?.data?.message, dispatch, navigate]);
 

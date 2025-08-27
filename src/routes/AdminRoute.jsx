@@ -4,11 +4,7 @@ import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 
 const AdminRoute = () => {
-  const { user, accessToken } = useSelector((state) => state.auth);
-
-  if (accessToken && !user) {
-    return <Loading message="Đang kiểm tra quyền truy cập..." />;
-  }
+  const { user } = useSelector((state) => state.auth);
 
   const isAdmin = user?.roles?.some((role) => role.roleName === "ROLE_ADMIN");
 

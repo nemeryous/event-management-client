@@ -11,6 +11,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { clearToken } from "@store/slices/authSlice";
 import { useLogoutMutation } from "@api/authApi";
+import { rootApi } from "@api/rootApi";
 
 const HeaderUser = () => {
   const dispatch = useDispatch();
@@ -58,6 +59,8 @@ const HeaderUser = () => {
     } catch {
       // ignore error
     }
+    dispatch(rootApi.util.resetApiState());
+
     dispatch(clearToken());
     navigate("/login");
     setShowUserMenu(false);

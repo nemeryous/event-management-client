@@ -10,106 +10,74 @@ import { rootApi } from "@api/rootApi";
 const ProtectedRoute = memo(() => {
   const dispatch = useDispatch();
   const { accessToken, user: currentUser } = useSelector((state) => state.auth);
-  const [authState, setAuthState] = useState({
-    isChecking: true,
-    hasAttemptedRefresh: false,
-  });
+
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState(false);
 
   const shouldFetchUser = accessToken && !currentUser;
 
   const {
     data: user,
-    isLoading: userLoading,
+    isLoading: isUserLoading,
+    isSuccess: isUserSuccess,
     error: userError,
-    isSuccess: userSuccess,
   } = useGetAuthUserQuery(undefined, {
     skip: !shouldFetchUser,
-    refetchOnMountOrArgChange: false,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
   });
 
-  const [refreshToken, { isLoading: refreshLoading, isError: refreshError }] =
-    useRefreshTokenMutation();
+  const [
+    refreshToken,
+    { isLoading: isRefreshLoading, isError: isRefreshError },
+  ] = useRefreshTokenMutation();
 
-  const verifyAuth = useCallback(async () => {
-    if (accessToken) {
-      setAuthState((prev) => ({ ...prev, isChecking: false }));
-      return;
-    }
-
-    if (authState.hasAttemptedRefresh) {
-      setAuthState((prev) => ({ ...prev, isChecking: false }));
-      return;
-    }
-
-    try {
-      setAuthState((prev) => ({ ...prev, hasAttemptedRefresh: true }));
-      const result = await refreshToken().unwrap();
-      dispatch(setToken(result));
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-      dispatch(clearToken());
-    } finally {
-      setAuthState((prev) => ({ ...prev, isChecking: false }));
-    }
-  }, [accessToken, authState.hasAttemptedRefresh, refreshToken, dispatch]);
-
-  useEffect(() => {
-    if (authState.isChecking && !refreshLoading) {
-      verifyAuth();
-    }
-  }, [authState.isChecking, refreshLoading, verifyAuth]);
-
-  useEffect(() => {
-    if (userSuccess && user && !currentUser) {
-      dispatch(setUser(user));
-      dispatch(
-        rootApi.util.invalidateTags([
-          "AllEvents",
-          "AllManagedEvents",
-          "Events",
-          "ManagedEvents",
-        ]),
-      );
-    }
-  }, [userSuccess, user, currentUser, dispatch]);
-
-  useEffect(() => {
-    if (userSuccess && user && currentUser && user.id !== currentUser.id) {
-      dispatch(
-        rootApi.util.invalidateTags([
-          "AllEvents",
-          "AllManagedEvents",
-          "Events",
-          "ManagedEvents",
-        ]),
-      );
-      dispatch(setUser(user));
-    }
-  }, [userSuccess, user, currentUser, dispatch]);
-
-  useEffect(() => {
-    if (userError) {
-      if (userError.status === 401 || userError.status === 403) {
+  const handleRefreshToken = useCallback(async () => {
+    if (!accessToken && !hasAttemptedRefresh) {
+      setHasAttemptedRefresh(true);
+      try {
+        const tokenData = await refreshToken().unwrap();
+        dispatch(setToken(tokenData));
+      } catch (err) {
+        console.error("Token refresh failed:", err);
         dispatch(clearToken());
-        dispatch(rootApi.util.resetApiState());
       }
+    }
+  }, [accessToken, hasAttemptedRefresh, refreshToken, dispatch]);
+
+  useEffect(() => {
+    handleRefreshToken();
+  }, [handleRefreshToken]);
+
+  useEffect(() => {
+    if (isUserSuccess && user) {
+      if (!currentUser || currentUser.id !== user.id) {
+        dispatch(setUser(user));
+        dispatch(
+          rootApi.util.invalidateTags([
+            "AllEvents",
+            "AllManagedEvents",
+            "Events",
+            "ManagedEvents",
+          ]),
+        );
+      }
+    }
+  }, [isUserSuccess, user, currentUser, dispatch]);
+
+  useEffect(() => {
+    if (userError && (userError.status === 401 || userError.status === 403)) {
+      dispatch(clearToken());
+      dispatch(rootApi.util.resetApiState());
     }
   }, [userError, dispatch]);
 
-  const isLoading =
-    authState.isChecking || refreshLoading || (shouldFetchUser && userLoading);
-
-  const hasAuthError =
-    refreshError ||
-    (userError && (userError.status === 401 || userError.status === 403));
+  const isAuthenticating =
+    (!accessToken && !hasAttemptedRefresh) || isRefreshLoading;
+  const isLoading = isAuthenticating || (shouldFetchUser && isUserLoading);
 
   if (isLoading) {
     return <Loading message={"Đang xác thực..."} />;
   }
 
-  if (!accessToken || hasAuthError) {
+  if (!accessToken || isRefreshError) {
     return <Navigate to="/login" replace />;
   }
 
