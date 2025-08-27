@@ -8,6 +8,7 @@ import {
   faTimesCircle,
   faTimes,
   faUserShield,
+  faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { formatDateTime } from "@utils/helpers";
@@ -20,6 +21,7 @@ import {
   useDeleteParticipantMutation,
   useDeleteParticipantsMutation,
   useGetEventManagersByEventQuery,
+  useGetAttendantsByEventQuery,
 } from "@api/attendantApi";
 import { useAssignEventManagerMutation } from "@api/attendantApi";
 import { useRemoveEventManagerMutation } from "@api/attendantApi";
@@ -73,7 +75,44 @@ const addParticipantsSchema = yup.object({
     ),
 });
 
-const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
+const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
+  // Fetch participants data directly if not provided
+  const {
+    data: attendantsData,
+    isLoading: isLoadingAttendants,
+    error: attendantsError,
+    refetch: refetchAttendants,
+  } = useGetAttendantsByEventQuery(eventData?.id, {
+    skip: !eventData?.id,
+  });
+
+  // Debug API call
+  if (attendantsError) {
+    console.error("❌ API Error:", attendantsError);
+  }
+
+  // Use API data first, then fall back to props or event data
+  // Priority: API data > eventData.participants > props participants
+  const actualParticipants =
+    (attendantsData?.data || attendantsData)?.length > 0
+      ? attendantsData?.data || attendantsData
+      : eventData?.participants?.length > 0
+        ? eventData.participants
+        : participants?.length > 0
+          ? participants
+          : [];
+
+  // Debug logging
+  console.log("🔍 ParticipantsTab Debug:");
+  console.log("eventData?.id:", eventData?.id);
+  console.log("eventData?.participants:", eventData?.participants);
+  console.log("attendantsData:", attendantsData);
+  console.log("attendantsData?.data:", attendantsData?.data);
+  console.log("participants (props):", participants);
+  console.log("actualParticipants:", actualParticipants);
+  console.log("isLoadingAttendants:", isLoadingAttendants);
+  console.log("API Error:", attendantsError);
+
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -113,24 +152,29 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
     }
   };
 
-  const filteredParticipants = useMemo(() => {
-    return participants.filter((participant) => {
-      const matchesSearch =
-        participant.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        participant.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredParticipants = actualParticipants.filter((participant) => {
+    // Debug each participant
+    console.log("🔍 Filtering participant:", participant);
 
-      if (filterStatus === "all") {
-        return matchesSearch;
-      }
-      if (filterStatus === "checked") {
-        return matchesSearch && participant.isCheckedIn === true;
-      }
-      if (filterStatus === "registered") {
-        return matchesSearch && participant.isCheckedIn === false;
-      }
-      return false; // Thêm dòng này để rõ ràng hơn
+    const matchesSearch =
+      participant.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      participant.userEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    let matchesFilter = true;
+    if (filterStatus === "checked") {
+      matchesFilter = participant.isCheckedIn === true;
+    } else if (filterStatus === "registered") {
+      matchesFilter = participant.isCheckedIn === false;
+    }
+
+    const result = matchesSearch && matchesFilter;
+    console.log("🔍 Participant filter result:", {
+      matchesSearch,
+      matchesFilter,
+      result,
     });
-  }, [participants, searchTerm, filterStatus]);
+    return result;
+  });
 
   const handleSelectParticipant = (participantId) => {
     setSelectedParticipants((prev) =>
@@ -163,22 +207,23 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
   };
 
   const exportParticipantsToExcel = () => {
-    if (!participants || participants.length === 0) {
+    if (!actualParticipants || actualParticipants.length === 0) {
       alert("Không có dữ liệu người tham gia để xuất!");
       return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(participants);
+    const worksheet = XLSX.utils.json_to_sheet(actualParticipants);
 
     const headers = {
-      id: "ID",
-      name: "Họ tên",
-      email: "Email",
-      phone: "Số điện thoại",
-      date: "Ngày đăng ký",
+      userId: "ID",
+      userName: "Họ tên",
+      userEmail: "Email",
+      userPhone: "Số điện thoại",
+      joinedAt: "Ngày đăng ký",
       checkedTime: "Ngày điểm danh",
     };
 
+    // Add headers to the first row
     XLSX.utils.sheet_add_aoa(worksheet, [Object.values(headers)], {
       origin: "A1",
     });
@@ -233,7 +278,9 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
     try {
       const emails = selectedParticipants
         .map((userId) => {
-          const participant = participants.find((p) => p.userId === userId);
+          const participant = actualParticipants.find(
+            (p) => p.userId === userId,
+          );
           return participant ? { email: participant.userEmail } : null;
         })
         .filter((email) => email !== null);
@@ -276,7 +323,10 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
     } catch (e) {
       dispatch(
         openSnackbar({
-          message: e?.data?.message || "Có lỗi xảy ra khi gán quyền staff!",
+          message:
+            e?.data?.message ||
+            errorAssignEventManager?.data?.message ||
+            "Có lỗi xảy ra khi gán quyền staff!",
           type: "error",
         }),
       );
@@ -307,6 +357,7 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
 
   const { data: managersData, refetch: refetchManagers } =
     useGetEventManagersByEventQuery(eventData.id);
+
   const staffIds = useMemo(() => {
     const managersArray = Array.isArray(managersData?.data)
       ? managersData.data
@@ -328,7 +379,7 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
   }, [managersData]);
 
   return (
-    <div className="space-y-6 pb-0">
+    <div className="space-y-6">
       {/* Add Participants Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 m-0 flex items-center justify-center">
@@ -336,6 +387,7 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
           <div
             className="bg-opacity-30 absolute inset-0 bg-black backdrop-blur-sm transition-all duration-300 ease-out"
             onClick={handleCloseModal}
+            pb-0
           />
 
           {/* Modal container */}
@@ -466,6 +518,14 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
               <FontAwesomeIcon icon={faDownload} />
               Xuất Excel
             </button>
+            <button
+              onClick={() => refetchAttendants()}
+              disabled={isLoadingAttendants}
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 px-4 py-2.5 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-gray-700 hover:to-gray-800 hover:shadow-xl focus:ring-4 focus:ring-gray-500/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FontAwesomeIcon icon={faRefresh} />
+              {isLoadingAttendants ? "Đang tải..." : "Làm mới"}
+            </button>
           </div>
         </div>
       </div>
@@ -476,6 +536,8 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">
               Danh sách người tham gia ({filteredParticipants.length})
+              {isLoadingAttendants && " - Đang tải..."}
+              {attendantsError && " - Lỗi API"}
             </h3>
             {selectedParticipants.length > 0 && (
               <div className="flex items-center gap-3">
@@ -532,120 +594,193 @@ const ParticipantsTab = ({ participants, eventData, refetchEvent }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {filteredParticipants.map((participant) => (
-                <tr
-                  key={participant.userId}
-                  className="transition-all duration-200 hover:bg-blue-50/30"
-                >
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedParticipants.includes(
-                        participant.userId,
-                      )}
-                      onChange={() =>
-                        handleSelectParticipant(participant.userId)
-                      }
-                      className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 font-bold text-white shadow-md">
-                          {participant.userName.charAt(0)}
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-semibold text-gray-900">
-                          {participant.userName}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                    {participant.userEmail}
-                  </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                    {participant.userPhone || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                    {formatDateTime(participant.joinedAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col">
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(participant.isCheckedIn)}`}
-                      >
-                        {participant.isCheckedIn ? (
-                          <>
-                            <FontAwesomeIcon
-                              icon={faCheckCircle}
-                              className="mr-1.5"
-                            />
-                            Đã điểm danh
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon
-                              icon={faTimesCircle}
-                              className="mr-1.5"
-                            />
-                            Đã đăng ký
-                          </>
-                        )}
+              {isLoadingAttendants ? (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    <div className="flex items-center justify-center">
+                      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
+                      <span className="ml-2">
+                        Đang tải danh sách người tham gia...
                       </span>
-                      {participant.checkedTime && (
-                        <div className="mt-1 text-center text-xs text-gray-500">
-                          {formatDateTime(participant.checkedTime)}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        onClick={() =>
-                          handleDeleteParticipant(participant.userId)
-                        }
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
-                      >
-                        <FontAwesomeIcon icon={faUserMinus} />
-                      </button>
-                      {staffIds.includes(String(participant.userId)) ? (
-                        <div className="group relative inline-flex h-8 w-28 items-center justify-center">
-                          <span className="inline-flex h-8 w-28 items-center justify-center rounded border border-yellow-300 bg-yellow-100 text-xs font-semibold text-yellow-700">
-                            STAFF
-                          </span>
-                          <button
-                            onClick={() =>
-                              handleRemoveStaffSingle(participant.userId)
-                            }
-                            className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
-                            title="Xóa STAFF"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() =>
-                            handleAssignStaffSingle(participant.userId)
-                          }
-                          className="inline-flex h-8 w-28 items-center justify-center rounded border border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-200"
-                          title="Gán quyền STAFF"
-                        >
-                          <FontAwesomeIcon
-                            icon={faUserShield}
-                            className="mr-1"
-                          />
-                          Thêm staff
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : filteredParticipants.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    <div className="text-center">
+                      <div className="mb-2 text-4xl">👥</div>
+                      <p className="text-lg font-medium">
+                        Chưa có người tham gia nào
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Hãy thêm người tham gia vào sự kiện
+                      </p>
+                      <div className="mt-4 text-xs text-gray-500">
+                        <p>Debug info:</p>
+                        <p>
+                          actualParticipants length: {actualParticipants.length}
+                        </p>
+                        <p>searchTerm: "{searchTerm}"</p>
+                        <p>filterStatus: "{filterStatus}"</p>
+                        <p>
+                          isLoadingAttendants: {isLoadingAttendants.toString()}
+                        </p>
+                        {attendantsError && (
+                          <p>API Error: {JSON.stringify(attendantsError)}</p>
+                        )}
+                        <p>
+                          Raw attendantsData: {JSON.stringify(attendantsData)}
+                        </p>
+                        <p>eventData?.id: {eventData?.id}</p>
+                        <p>
+                          API URL:{" "}
+                          {eventData?.id
+                            ? `attendants?eventId=${eventData.id}`
+                            : "No event ID"}
+                        </p>
+                        <p>
+                          eventData.participants:{" "}
+                          {eventData?.participants
+                            ? `${eventData.participants.length} items`
+                            : "None"}
+                        </p>
+                        <p>
+                          Data source:{" "}
+                          {(attendantsData?.data || attendantsData)?.length > 0
+                            ? "API"
+                            : eventData?.participants?.length > 0
+                              ? "Event Data"
+                              : participants?.length > 0
+                                ? "Props"
+                                : "None"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredParticipants.map((participant) => (
+                  <tr
+                    key={participant.userId}
+                    className="transition-all duration-200 hover:bg-blue-50/30"
+                  >
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedParticipants.includes(
+                          participant.userId,
+                        )}
+                        onChange={() =>
+                          handleSelectParticipant(participant.userId)
+                        }
+                        className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 flex-shrink-0">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 font-bold text-white shadow-md">
+                            {participant.userName.charAt(0)}
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-semibold text-gray-900">
+                            {participant.userName}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
+                      {participant.userEmail}
+                    </td>
+                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
+                      {participant.userPhone || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
+                      {formatDateTime(participant.joinedAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(participant.isCheckedIn)}`}
+                        >
+                          {participant.isCheckedIn ? (
+                            <>
+                              <FontAwesomeIcon
+                                icon={faCheckCircle}
+                                className="mr-1.5"
+                              />
+                              Đã điểm danh
+                            </>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon
+                                icon={faTimesCircle}
+                                className="mr-1.5"
+                              />
+                              Đã đăng ký
+                            </>
+                          )}
+                        </span>
+                        {participant.checkedTime && (
+                          <div className="mt-1 text-center text-xs text-gray-500">
+                            {formatDateTime(participant.checkedTime)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-3">
+                        <button
+                          onClick={() =>
+                            handleDeleteParticipant(participant.userId)
+                          }
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
+                        >
+                          <FontAwesomeIcon icon={faUserMinus} />
+                        </button>
+                        {staffIds.includes(String(participant.userId)) ? (
+                          <div className="group relative inline-flex h-8 w-28 items-center justify-center">
+                            <span className="inline-flex h-8 w-28 items-center justify-center rounded border border-yellow-300 bg-yellow-100 text-xs font-semibold text-yellow-700">
+                              STAFF
+                            </span>
+                            <button
+                              onClick={() =>
+                                handleRemoveStaffSingle(participant.userId)
+                              }
+                              className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
+                              title="Xóa STAFF"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleAssignStaffSingle(participant.userId)
+                            }
+                            className="inline-flex h-8 w-28 items-center justify-center rounded border border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-200"
+                            title="Gán quyền STAFF"
+                          >
+                            <FontAwesomeIcon
+                              icon={faUserShield}
+                              className="mr-1"
+                            />
+                            Thêm staff
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -61,8 +61,39 @@ const DashboardUser = () => {
   const { data: allManagedEvents } = useGetAllManagedEventsQuery();
   // console.log(allEvents);
   // console.log(allManagedEvents);
-  const currentData = isManageTab ? manageData : paginatedData;
-  console.log(currentData)
+  console.log(currentData);
+
+  // Chuẩn hóa dữ liệu trả về từ API để luôn có cấu trúc phân trang
+  const normalizePageData = (data) => {
+    if (!data) return undefined;
+    if (Array.isArray(data)) {
+      return {
+        content: data,
+        totalElements: data.length || 0,
+        totalPages: 1,
+        first: true,
+        last: true,
+      };
+    }
+    if (typeof data === "object" && data !== null) {
+      // Nếu backend trả về trực tiếp object sự kiện (không có content)
+      if (!("content" in data) && "id" in data) {
+        return {
+          content: [data],
+          totalElements: 1,
+          totalPages: 1,
+          first: true,
+          last: true,
+        };
+      }
+      return data;
+    }
+    return undefined;
+  };
+
+  const currentData = normalizePageData(
+    isManageTab ? manageData : paginatedData,
+  );
   const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
   const error = isManageTab ? errorManage : errorNormal;
 
@@ -75,7 +106,7 @@ const DashboardUser = () => {
         counts[tab.id] =
           allManagedEvents?.totalElements ||
           allManagedEvents?.content?.length ||
-          0;
+          (Array.isArray(allManagedEvents) ? allManagedEvents.length : 0);
       } else {
         counts[tab.id] =
           allEvents?.filter((event) => event.status === tab.id).length || 0;
