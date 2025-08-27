@@ -1,193 +1,267 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./EventManagement.css";
-import { useCreateEventMutation } from "../../api/eventApi";
-import TinyMCEEditor from "../../components/common/TinyMCEEditor";
+import { useDispatch } from "react-redux";
+import {
+  useCreateEventMutation,
+  useUploadEventBannerMutation,
+} from "@api/eventApi";
+import { Controller, useForm } from "react-hook-form";
+import { openSnackbar } from "@store/slices/snackbarSlice";
+import TextInput from "@components/common/TextInput";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { faUpload } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import FormField from "@components/common/FormField";
+import TinyMCEEditor from "@components/common/TinyMCEEditor";
 
-// const statusOptions = [
-//   { value: "UPCOMING", label: "Sắp Tới" },
-//   { value: "ACTIVE", label: "Đang Diễn Ra" },
-//   { value: "COMPLETED", label: "Hoàn Thành" },
-// ];
+const schema = yup.object().shape({
+  title: yup.string().required("Tên sự kiện là bắt buộc"),
+  description: yup.string().required("Mô tả là bắt buộc"),
+  startTime: yup.string().required("Thời gian bắt đầu là bắt buộc"),
+  endTime: yup
+    .string()
+    .required("Thời gian kết thúc là bắt buộc")
+    .test(
+      "is-after-start",
+      "Thời gian kết thúc phải sau thời gian bắt đầu",
+      function (value) {
+        const { startTime } = this.parent;
+        return startTime && value && new Date(value) > new Date(startTime);
+      },
+    ),
+  location: yup.string().required("Địa điểm là bắt buộc"),
+  maxParticipants: yup
+    .number()
+    .typeError("Số lượng phải là một con số")
+    .positive("Số lượng phải là số dương")
+    .integer("Số lượng phải là số nguyên")
+    .required("Số lượng tối đa là bắt buộc"),
+  urlDocs: yup
+    .string()
+    .url("Vui lòng nhập một URL hợp lệ cho tài liệu")
+    .nullable(),
+});
 
 export default function EventCreate() {
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    start_time: "",
-    end_time: "",
-    location: "",
-    max_participants: "",
-    url_docs: "",
-  });
   const navigate = useNavigate();
-  const [createEvent] = useCreateEventMutation();
-  const [errorMsg, setErrorMsg] = useState("");
+  const dispatch = useDispatch();
 
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    setForm((prev) => ({ ...prev, [id]: value }));
+  const [createEvent, { isLoading: isCreating }] = useCreateEventMutation();
+  const [uploadBanner, { isLoading: isUploading }] =
+    useUploadEventBannerMutation();
+
+  const [bannerFile, setBannerFile] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+    defaultValues: {
+      title: "Quốc Khánh",
+      description: "<p><strong>2/9</strong></p>",
+      startTime: "2025-08-22T16:02",
+      endTime: "2025-08-30T16:02",
+      location: "VKU",
+      maxParticipants: "100",
+      urlDocs: "https://example.com/docs",
+    },
+  });
+
+  const handleBannerChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerFile(file);
+      setBannerPreview(URL.createObjectURL(file));
+    }
   };
 
-  const handleDescriptionChange = (htmlContent) => {
-    setForm((prev) => ({ ...prev, description: htmlContent }));
-  };
-
-  const formatDateTime = (dt) => {
-    if (!dt) return dt;
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dt)) return dt + ":00";
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(dt)) return dt;
-    return dt;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-    const payload = {
-      title: form.title,
-      description: form.description,
-      start_time: formatDateTime(form.start_time),
-      end_time: formatDateTime(form.end_time),
-      location: form.location,
-      max_participants: form.max_participants
-        ? parseInt(form.max_participants, 10)
-        : undefined,
-      url_docs: form.url_docs,
+  const onSubmit = async (formData) => {
+    const eventData = {
+      title: formData.title,
+      description: formData.description,
+      start_time: formData.startTime,
+      end_time: formData.endTime,
+      location: formData.location,
+      max_participants: Number(formData.maxParticipants),
+      url_docs: formData.urlDocs || null,
     };
-    console.log("[DEBUG] Payload tạo sự kiện:", payload);
+
+    console.log(`eventData: ${JSON.stringify(eventData)}`);
+
     try {
-      await createEvent(payload).unwrap();
-      alert("Tạo sự kiện thành công!");
+      const createResponse = await createEvent(eventData).unwrap();
+      const newEventId = createResponse.id;
+
+      if (bannerFile) {
+        await uploadBanner({
+          eventId: newEventId,
+          bannerFile: bannerFile,
+        }).unwrap();
+      }
+
+      dispatch(openSnackbar({ message: "Tạo sự kiện mới thành công!" }));
       navigate("/admin/events");
-    } catch (err) {
-      setErrorMsg(
-        "Tạo sự kiện thất bại! " + (err?.data?.message || err?.message || ""),
+    } catch (error) {
+      dispatch(
+        openSnackbar({
+          message: error?.data?.message || "Đã có lỗi xảy ra",
+          type: "error",
+        }),
       );
     }
   };
 
+  const handleCancel = () => {
+    navigate("/admin/events");
+  };
+
+  const isLoading = isCreating || isUploading;
+
   return (
-    <div
-      className="container"
-      style={{
-        maxWidth: 600,
-        margin: "40px auto",
-        background: "#fff",
-        borderRadius: 16,
-        boxShadow: "0 4px 24px rgba(197,32,50,0.08)",
-        padding: 32,
-      }}
-    >
-      <h1
-        style={{
-          color: "#c52032",
-          textAlign: "center",
-          marginBottom: 32,
-        }}
-      >
-        ➕ Thêm Sự Kiện Mới
-      </h1>
-      {errorMsg && (
-        <div style={{ color: "red", marginBottom: 16 }}>{errorMsg}</div>
-      )}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="title">Tên Sự Kiện:</label>
-          <input
-            type="text"
-            id="title"
-            value={form.title}
-            onChange={handleChange}
-            required
-            placeholder="Nhập tên sự kiện"
-          />
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Tạo Sự Kiện Mới ✨</h1>
+        <p className="text-gray-500">
+          Điền các thông tin dưới đây để tạo một sự kiện.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Banner Upload */}
+        <div className="rounded-2xl bg-white p-6 shadow-lg">
+          <h3 className="mb-4 text-xl font-bold">Ảnh Bìa Sự Kiện</h3>
+          <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+            <div className="text-center">
+              {bannerPreview ? (
+                <img
+                  src={bannerPreview}
+                  alt="Banner Preview"
+                  className="mx-auto h-48 w-auto rounded-md object-cover"
+                />
+              ) : (
+                <FontAwesomeIcon
+                  icon={faUpload}
+                  className="mx-auto h-12 w-12 text-gray-300"
+                  aria-hidden="true"
+                />
+              )}
+              <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                <label
+                  htmlFor="file-upload"
+                  className="relative cursor-pointer rounded-md bg-white font-semibold text-blue-600 focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 focus-within:outline-none hover:text-blue-500"
+                >
+                  <span>Tải ảnh lên</span>
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    className="sr-only"
+                    accept="image/*"
+                    onChange={handleBannerChange}
+                  />
+                </label>
+                <p className="pl-1">hoặc kéo và thả</p>
+              </div>
+              <p className="text-xs leading-5 text-gray-600">
+                PNG, JPG, GIF up to 10MB
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="description">Mô Tả:</label>
-          <div
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: 6,
-              padding: 8,
-              marginBottom: 8,
-            }}
-          >
-            <TinyMCEEditor
-              value={form.description}
-              onChange={handleDescriptionChange}
-              placeholder="Nhập mô tả sự kiện với định dạng phong phú..."
+
+        <div className="rounded-2xl bg-white p-6 shadow-lg">
+          <h3 className="mb-6 text-xl font-bold">Thông Tin Chi Tiết</h3>
+          <div className="space-y-6">
+            <FormField
+              control={control}
+              label="Tên sự kiện"
+              name="title"
+              Component={TextInput}
+              error={errors.title}
+            />
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Mô tả
+              </label>
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => <TinyMCEEditor {...field} />}
+              />
+              {errors.description && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                control={control}
+                label="Thời gian bắt đầu"
+                name="startTime"
+                type="datetime-local"
+                Component={TextInput}
+                error={errors.startTime}
+              />
+              <FormField
+                control={control}
+                label="Thời gian kết thúc"
+                name="endTime"
+                type="datetime-local"
+                Component={TextInput}
+                error={errors.endTime}
+              />
+            </div>
+
+            <FormField
+              control={control}
+              label="Địa điểm"
+              name="location"
+              Component={TextInput}
+              error={errors.location}
+            />
+
+            <FormField
+              control={control}
+              label="Số lượng tối đa"
+              name="maxParticipants"
+              type="number"
+              Component={TextInput}
+              error={errors.maxParticipants}
+            />
+
+            <FormField
+              control={control}
+              label="Link tài liệu (nếu có)"
+              name="urlDocs"
+              Component={TextInput}
+              error={errors.urlDocs}
             />
           </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="start_time">Thời Gian Bắt Đầu:</label>
-          <input
-            type="datetime-local"
-            id="start_time"
-            value={form.start_time}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="end_time">Thời Gian Kết Thúc:</label>
-          <input
-            type="datetime-local"
-            id="end_time"
-            value={form.end_time}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="location">Địa Điểm:</label>
-          <input
-            type="text"
-            id="location"
-            value={form.location}
-            onChange={handleChange}
-            required
-            placeholder="Nhập địa điểm"
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="max_participants">Số lượng tham gia tối đa:</label>
-          <input
-            type="number"
-            id="max_participants"
-            value={form.max_participants}
-            onChange={handleChange}
-            min="1"
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="url_docs">Tài Liệu (URL):</label>
-          <input
-            type="text"
-            id="url_docs"
-            value={form.url_docs}
-            onChange={handleChange}
-            placeholder="https://example.com/docs/..."
-          />
-        </div>
-        <div
-          className="form-group"
-          style={{ display: "flex", gap: 16, justifyContent: "flex-end" }}
-        >
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{ background: "#c52032", color: "#fff" }}
-          >
-            Lưu Sự Kiện
-          </button>
+
+        <div className="flex justify-end gap-4">
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ background: "#223b73", color: "#fff" }}
-            onClick={() => navigate("/admin/events")}
+            onClick={handleCancel}
+            className="rounded-lg border border-gray-300 px-6 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
           >
-            Hủy
+            Hủy bỏ
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+          >
+            {isLoading ? "Đang xử lý..." : "Tạo Sự Kiện"}
           </button>
         </div>
       </form>

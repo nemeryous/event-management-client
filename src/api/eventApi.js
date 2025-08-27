@@ -1,5 +1,12 @@
 import { rootApi } from "./rootApi";
 
+const eventListTags = [
+  "Events",
+  "AllEvents",
+  "ManagedEvents",
+  "AllManagedEvents",
+];
+
 export const eventApi = rootApi.injectEndpoints({
   tagTypes: ["Event", "EventManager"],
   endpoints: (builder) => ({
@@ -9,6 +16,14 @@ export const eventApi = rootApi.injectEndpoints({
         method: "DELETE",
       }),
       invalidatesTags: [{ type: "Event", id: "LIST" }],
+    }),
+    createEvent: builder.mutation({
+      query: (eventData) => ({
+        url: "/events",
+        method: "POST",
+        body: eventData,
+      }),
+      invalidatesTags: [...eventListTags],
     }),
     getEvents: builder.query({
       query: ({
@@ -170,12 +185,36 @@ export const eventApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: (result, error, { eventId }) => [
         { type: "Events", id: eventId },
-        "Events",
-        "AllEvents",
-        "ManagedEvents",
-        "AllManagedEvents",
+        ...eventListTags,
       ],
     }),
+    uploadEventBanner: builder.mutation({
+      query: ({ eventId, bannerFile }) => {
+        const formData = new FormData();
+        formData.append("banner", bannerFile);
+
+        return {
+          url: `/events/${eventId}/upload-banner`,
+          method: "PUT",
+          body: formData,
+        };
+      },
+      invalidatesTags: (result, error, { eventId }) => [
+        { type: "Events", id: eventId },
+        ...eventListTags,
+      ],
+    }),
+    // createEvent: builder.mutation({
+    //   query: ({ data, accessToken }) => ({
+    //     url: `/events`,
+    //     method: "POST",
+    //     body: data, // object thuần
+    //     headers: {
+    //       "Content-Type": "application/json", // ép Content-Type JSON
+    //       Authorization: `Bearer ${accessToken}`,
+    //     },
+    //   }),
+    // }),
     uploadBanner: builder.mutation({
       query: ({ eventId, file, accessToken }) => {
         const formData = new FormData();
@@ -240,29 +279,18 @@ export const eventApi = rootApi.injectEndpoints({
     //     },
     //   }),
     // }),
-
-    createEvent: builder.mutation({
-      query: (data) => ({
-        url: `/events`,
-        method: "POST",
-        body: data,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }),
-      invalidatesTags: [{ type: "Event", id: "LIST" }],
-    }),
   }),
   overrideExisting: false,
 });
 
 export const {
+  useCreateEventMutation,
   useGetEventsQuery,
   useGetManagedEventsQuery,
   useGetAllManagedEventsQuery,
   useJoinEventMutation,
   useGetEventQRQuery,
-  useUpdateEventMutation,
+  useUploadEventBannerMutation,
   useGetEventBannerQuery,
   useGetAllEventsQuery,
   useUploadBannerMutation,
@@ -271,5 +299,4 @@ export const {
   useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,
   useDeleteEventMutation,
-  useCreateEventMutation,
 } = eventApi;
