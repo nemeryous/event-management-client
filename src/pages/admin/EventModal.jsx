@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import "./EventManagement.css";
 import { useGetEventByIdQuery, useUpdateEventMutation, useCreateEventMutation, useAssignEventManagerMutation, useGetEventManagersByEventIdQuery, useRemoveEventManagerMutation } from "../../api/eventApi";
-import { useGetAllUsersQuery, useGetUserNameQuery } from "../../api/authApi";
-import { useSelector } from "react-redux";
+import { useGetUserNameQuery, useGetAllUsersQuery } from "../../api/authApi";
+import { useSelector, useDispatch } from "react-redux";
+import { openSnackbar } from "@store/slices/snackbarSlice";
 import { mapBackendStatusToFrontend, mapFrontendStatusToBackend, truncateDescription, truncateTitle } from "../../utils/eventHelpers";
 import { Editor } from '@tinymce/tinymce-react';
 
@@ -20,12 +21,16 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
   const [errorMsg, setErrorMsg] = useState("");
   const [assignEventManager] = useAssignEventManagerMutation();
   const [removeEventManager] = useRemoveEventManagerMutation();
-  const { data: users = [] } = useGetAllUsersQuery();
-  const [selectedManager, setSelectedManager] = useState("");
+  const { data: allUsers = [] } = useGetAllUsersQuery();
+  const [searchName, setSearchName] = useState("");
+  const [foundUser, setFoundUser] = useState(null);
+  const [managerError, setManagerError] = useState("");
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation();
   const [createEvent] = useCreateEventMutation();
   const accessToken = useSelector(state => state.auth.accessToken);
   const currentUserId = useSelector(state => state.auth.userId);
+  const dispatch = useDispatch();
+  const [justAssignedName, setJustAssignedName] = useState("");
 
   const statusOptions = [
     { value: "UPCOMING", label: "Sắp diễn ra" },
@@ -37,10 +42,12 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
   const eventId = isEdit && initialData ? initialData.id : null;
   const { data: eventDetail, error: fetchError, isLoading: isFetching, refetch } = useGetEventByIdQuery(eventId, { skip: !isEdit || !eventId || !open });
   // Lấy danh sách manager (chỉ lấy user_id)
-  const { data: managerRoles = [] } = useGetEventManagersByEventIdQuery(eventId, { skip: !isEdit || !eventId || !open });
+  const { data: managerRoles = [], refetch: refetchManagers } = useGetEventManagersByEventIdQuery(eventId, { skip: !isEdit || !eventId || !open });
   // Lấy tên user của manager (chỉ lấy user đầu tiên nếu có)
   const managerUserId = managerRoles.length > 0 ? managerRoles[0].user_id : null;
   const { data: managerUserName } = useGetUserNameQuery(managerUserId, { skip: !managerUserId });
+  const [tempManagerName, setTempManagerName] = useState("");
+  const [removedNow, setRemovedNow] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -68,6 +75,14 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
       setErrorMsg("");
     }
   }, [open, isEdit, eventDetail]);
+
+  useEffect(() => {
+    if (managerUserName) {
+      setJustAssignedName("");
+      setRemovedNow(false);
+      setTempManagerName("");
+    }
+  }, [managerUserName]);
 
   useEffect(() => {
     if (fetchError && (fetchError.status === 401 || fetchError.status === 403)) {
@@ -124,18 +139,7 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
       };
       console.log("[DEBUG] Payload cập nhật sự kiện:", payload);
       const res = await updateEvent({ id: eventId, data: payload }).unwrap();
-      // Nếu chọn manager, gọi API assignEventManager
-      if (selectedManager && eventId) {
-        const assignPayload = {
-          user_id: selectedManager,
-          event_id: eventId,
-          roleType: "MANAGE",
-          assigned_by: currentUserId || ""
-        };
-        await assignEventManager(assignPayload);
-        // Refetch lại event để cập nhật manager mới
-        await handleRefresh();
-      }
+      // Việc gán manager sẽ được thực hiện qua luồng nhập email riêng bên dưới
       if (onSubmit) onSubmit(res, errorList);
       if (onClose) onClose();
     } catch (err) {
@@ -191,22 +195,34 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
               )}
           </div>
           {/* Hiển thị tên manager hiện tại nếu có, nếu chưa có thì hiện phần chọn manager */}
-          {managerUserName ? (
+          {(!removedNow) && (managerUserName || tempManagerName) ? (
             <>
               <div className="form-group">
                 <label>Manager hiện tại:</label>
+                <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>
+                  Sự kiện: {eventDetail?.title || eventDetail?.name || eventDetail?.eventName || "(Không rõ tên)"}
+                </div>
                 <div style={{ fontWeight: 600, color: '#223b73', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {managerUserName}
+                  {tempManagerName || managerUserName}
                   <button
                     type="button"
                     style={{ marginLeft: 8, background: '#fff4f4', color: '#e53935', border: '1px solid #e53935', borderRadius: 6, padding: '2px 10px', fontWeight: 600, cursor: 'pointer' }}
                     onClick={async () => {
                       try {
                         await removeEventManager({ user_id: managerUserId, event_id: eventId });
-                        setSelectedManager("");
-                        await handleRefresh();
+                        setFoundUser(null);
+                        setSearchName("");
+                        setJustAssignedName("");
+                        setTempManagerName("");
+                        setRemovedNow(true);
+                        await Promise.all([
+                          handleRefresh(),
+                          refetchManagers?.(),
+                        ]);
+                        dispatch(openSnackbar({ message: "Xóa quản lý thành công!", type: "success" }));
                       } catch (err) {
-                        alert("Xóa quản lý thất bại!\n" + (err?.data?.message || err?.message || ""));
+                        const msg = err?.data?.message || err?.message || "Xóa quản lý thất bại!";
+                        dispatch(openSnackbar({ message: msg, type: "error" }));
                       }
                     }}
                   >
@@ -217,13 +233,113 @@ export default function EventModal({ open, onClose, onSubmit, initialData, isEdi
             </>
           ) : (
             <div className="form-group">
-              <label htmlFor="manager">Chọn Manager:</label>
-              <select id="manager" value={selectedManager} onChange={e => setSelectedManager(e.target.value)}>
-                <option value="">-- Chọn người quản lý --</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                ))}
-              </select>
+              <label htmlFor="managerSearch">Nhập tên để tìm người quản lí:</label>
+              <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>
+                Sự kiện: {eventDetail?.title || eventDetail?.name || eventDetail?.eventName || "(Không rõ tên)"}
+              </div>
+              {justAssignedName && (
+                <div style={{ marginBottom: 8, padding: 8, background: '#e8f5e9', border: '1px solid #81c784', borderRadius: 6, color: '#2e7d32' }}>
+                  Đã gán quản lí: <strong>{justAssignedName}</strong>. Đang đồng bộ dữ liệu...
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input
+                  type="text"
+                  id="managerSearch"
+                  placeholder="Nhập tên hoặc email để tìm..."
+                  value={searchName}
+                  onChange={(e) => {
+                    setSearchName(e.target.value);
+                    setFoundUser(null);
+                    setManagerError("");
+                  }}
+                />
+                {searchName && (
+                  <div style={{ border: '1px solid #ddd', borderRadius: 6, maxHeight: 200, overflowY: 'auto' }}>
+                    {allUsers
+                      .filter(u => {
+                        const q = searchName.toLowerCase();
+                        return (
+                          (u.name && u.name.toLowerCase().includes(q)) ||
+                          (u.email && u.email.toLowerCase().includes(q))
+                        );
+                      })
+                      .slice(0, 8)
+                      .map(u => (
+                        <div
+                          key={u.id}
+                          onClick={() => {
+                            setFoundUser(u);
+                            setSearchName(u.name || u.email || "");
+                            setManagerError("");
+                          }}
+                          style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+                        >
+                          {(u.name || 'Không rõ tên')} ({u.email})
+                        </div>
+                      ))}
+                    {allUsers.filter(u => {
+                      const q = searchName.toLowerCase();
+                      return (
+                        (u.name && u.name.toLowerCase().includes(q)) ||
+                        (u.email && u.email.toLowerCase().includes(q))
+                      );
+                    }).length === 0 && (
+                      <div style={{ padding: '8px 10px', color: '#666' }}>Không tìm thấy người dùng phù hợp.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {managerError && (
+                <div style={{ color: '#e53935', marginTop: 6 }}>{managerError}</div>
+              )}
+              {foundUser && (
+                <div style={{ marginTop: 8, padding: 8, border: '1px solid #ccc', borderRadius: 6 }}>
+                  <div><strong>Người dùng:</strong> {foundUser.name || foundUser.fullName || foundUser.username || 'Không rõ tên'} ({foundUser.email})</div>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ marginTop: 8 }}
+                    onClick={async () => {
+                      try {
+                        if (!eventId) {
+                          setManagerError("Chỉ gán quản lí sau khi sự kiện đã tồn tại.");
+                          return;
+                        }
+                        await assignEventManager({
+                          user_id: foundUser.id,
+                          event_id: eventId,
+                          roleType: "MANAGE",
+                          assigned_by: currentUserId || "",
+                        }).unwrap?.() ?? assignEventManager({
+                          user_id: foundUser.id,
+                          event_id: eventId,
+                          roleType: "MANAGE",
+                          assigned_by: currentUserId || "",
+                        });
+                        setSearchName("");
+                        setFoundUser(null);
+                        setManagerError("");
+                        const displayName = foundUser.name || foundUser.fullName || foundUser.username || foundUser.email || "Người dùng";
+                        setJustAssignedName(displayName);
+                        setTempManagerName(displayName);
+                        setRemovedNow(false);
+                        await Promise.all([
+                          handleRefresh(),
+                          refetchManagers?.(),
+                        ]);
+                        dispatch(openSnackbar({ message: "Gán quản lí thành công!", type: "success" }));
+                      } catch (err) {
+                        const details = err?.data?.message || err?.error || err?.message || "Không thể gán quyền quản lí.";
+                        setManagerError(details);
+                        dispatch(openSnackbar({ message: details, type: "error" }));
+                      }
+                    }}
+                  >
+                    Gán làm quản lí
+                  </button>
+                </div>
+              )}
             </div>
           )}
           <div className="form-group">
