@@ -7,17 +7,21 @@ const mutex = new Mutex();
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_BASE_URL,
   credentials: "include",
-  prepareHeaders: (headers, { getState }) => {
+  prepareHeaders: (headers, { getState, body }) => {
     const token = getState().auth.accessToken;
     const tokenType = getState().auth.tokenType;
 
     if (token) {
-      headers.set("Authorization", `${tokenType} ${token}`);
+      const authHeader = `${tokenType} ${token}`;
+      headers.set("Authorization", authHeader);
     }
 
-    headers.set("Content-Type", "application/json");
-
-    // console.log("Authorization Header:", headers.get("Authorization"));
+    // Nếu body là FormData thì KHÔNG set Content-Type
+    if (body instanceof FormData) {
+      // Không set Content-Type, browser sẽ tự động set multipart/form-data
+    } else {
+      headers.set("Content-Type", "application/json");
+    }
 
     return headers;
   },
@@ -26,7 +30,12 @@ const baseQuery = fetchBaseQuery({
 export const baseQueryWithReauth = async (args, api, extraOptions) => {
   await mutex.waitForUnlock();
 
+  console.log("baseQueryWithReauth - Making request to:", args.url);
+  console.log("baseQueryWithReauth - Request args:", args);
+
   let result = await baseQuery(args, api, extraOptions);
+
+  console.log("baseQueryWithReauth - Response:", result);
 
   if (result.error && result.error.status === 401) {
     if (!mutex.isLocked()) {

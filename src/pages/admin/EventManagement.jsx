@@ -1,126 +1,141 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import EventStats from "../../components/admin/EventStats";
+import EventControls from "../../components/admin/EventControls";
+import EventList from "../../components/admin/EventList";
+import LoadingState from "../../components/common/LoadingState";
+import TokenDebug from "../../components/admin/TokenDebug";
 import "./EventManagement.css";
 import EventModal from "./EventModal";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useGetEventsQuery, useDeleteEventMutation, useCreateEventMutation, useGetEventManagersByEventIdQuery } from "../../api/eventApi";
+import dayjs from "dayjs";
+import { formatDate, getStatusText, formatTimeRemaining, mapBackendStatusToFrontend, truncateDescription, truncateTitle } from "../../utils/eventHelpers";
 
-const defaultEvents = [
-  {
-    id: 1,
-    title: "Hội nghị Công nghệ 2025",
-    description: "Hội nghị về xu hướng công nghệ mới nhất trong năm 2025",
-    start_time: "2025-08-15T09:00",
-    end_time: "2025-08-15T17:00",
-    location: "Trung tâm Hội nghị Quốc gia",
-    created_at: "2025-06-01T10:00",
-    created_by: 1,
-    qr_join_token: "ABC123XYZ",
-    banner: "banner1.png",
-    url_docs: "https://example.com/docs1",
-    status: "upcoming",
-    max_participants: 500
-  },
-  {
-    id: 2,
-    title: "Workshop Marketing Digital",
-    description: "Khóa học về chiến lược marketing số hiện đại",
-    start_time: "2025-07-20T14:00",
-    end_time: "2025-07-20T16:00",
-    location: "Khách sạn Lotte",
-    created_at: "2025-06-10T10:00",
-    created_by: 2,
-    qr_join_token: "DEF456UVW",
-    banner: "banner2.png",
-    url_docs: "https://example.com/docs2",
-    status: "active",
-    max_participants: 100
-  },
-  {
-    id: 3,
-    title: "Triển lãm Nghệ thuật Đương đại",
-    description: "Triển lãm các tác phẩm nghệ thuật đương đại của các nghệ sĩ trẻ",
-    start_time: "2025-06-10T10:00",
-    end_time: "2025-06-10T18:00",
-    location: "Bảo tàng Mỹ thuật",
-    created_at: "2025-05-20T09:00",
-    created_by: 1,
-    qr_join_token: "GHI789PQR",
-    banner: "banner3.png",
-    url_docs: "https://example.com/docs3",
-    status: "completed",
-    max_participants: 200
-  },
-  {
-    id: 4,
-    title: "Lễ hội Âm nhạc Mùa hè",
-    description: "Lễ hội âm nhạc outdoor với sự tham gia của nhiều nghệ sĩ nổi tiếng",
-    start_time: "2025-09-05T18:00",
-    end_time: "2025-09-05T22:00",
-    location: "Công viên Thống Nhất",
-    created_at: "2025-07-01T11:00",
-    created_by: 3,
-    qr_join_token: "JKL012MNO",
-    banner: "banner4.png",
-    url_docs: "https://example.com/docs4",
-    status: "upcoming",
-    max_participants: 300
-  },
-  {
-    id: 5,
-    title: "Khóa đào tạo Lãnh đạo",
-    description: "Khóa đào tạo kỹ năng lãnh đạo cho các quản lý cấp trung",
-    start_time: "2025-07-25T08:00",
-    end_time: "2025-07-25T12:00",
-    location: "Trung tâm Đào tạo FPT",
-    created_at: "2025-06-15T14:00",
-    created_by: 2,
-    qr_join_token: "PQR345STU",
-    banner: "banner5.png",
-    url_docs: "https://example.com/docs5",
-    status: "active",
-    max_participants: 150
-  }
+const STATUS_FILTERS = [
+  { value: "all", label: "Tất cả" },
+  { value: "upcoming", label: "Sắp diễn ra" },
+  { value: "ongoing", label: "Đang diễn ra" },
+  { value: "completed", label: "Đã kết thúc" },
+  { value: "cancelled", label: "Đã hủy" },
 ];
 
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("vi-VN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
-function getStatusText(status) {
-  const statusMap = {
-    upcoming: "Sắp Tới",
-    active: "Đang Diễn Ra",
-    completed: "Hoàn Thành"
-  };
-  return statusMap[status] || status;
-}
-
 export default function EventManagement() {
-  const [events, setEvents] = useState(defaultEvents);
+  const [modalErrors, setModalErrors] = useState([]);
+  const accessToken = useSelector(state => state.auth.accessToken);
+  const user = useSelector(state => state.auth.user);
+  const {
+    data: apiEvents = [],
+    isLoading,
+    error,
+    refetch
+  } = useGetEventsQuery({
+    page: 0,
+    size: 100, // Get more events for management page
+    sortBy: "startTime",
+    sortDir: "asc"
+  }, {
+    refetchOnMountOrArgChange: true,
+    refetchOnReconnect: true
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const [deleteEvent, { isLoading: isDeleting }] = useDeleteEventMutation();
+  const [createEvent, { isLoading: isCreating }] = useCreateEventMutation();
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Debug: Log API response
+  console.log("API Events:", apiEvents);
+  console.log("Loading:", isLoading);
+  console.log("Error:", error);
+  console.log("API Events type:", typeof apiEvents);
+  console.log("API Events length:", apiEvents?.length);
+  console.log("VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
+
+  // Map API events to display format and sort by upcoming time
+  const events = useMemo(() => {
+    // Handle paginated response (common with Spring Boot)
+    const eventsData = apiEvents?.content || apiEvents || [];
+    
+    console.log("Events Data:", eventsData);
+    console.log("Events Data length:", eventsData?.length);
+    
+    if (!eventsData || eventsData.length === 0) {
+      console.log("No events data found");
+      return [];
+    }
+    
+    const now = dayjs();
+    
+    return eventsData
+      .map(event => {
+        // Convert backend status to frontend display format
+        const displayStatus = mapBackendStatusToFrontend(event.status);
+        
+        return {
+          id: event.id,
+          title: event.title || event.name || "",
+          title_short: truncateTitle(event.title || event.name || "", 40), // Cắt bớt title
+          description: event.description || "",
+          description_short: truncateDescription(event.description || "", 400), // Giảm xuống 400 ký tự
+          start_time: event.startTime,
+          end_time: event.endTime,
+          location: event.location || "",
+          created_at: event.createdAt,
+          created_by: event.createdBy,
+          qr_join_token: event.qrJoinToken,
+          banner: event.banner,
+          url_docs: event.urlDocs,
+          status: displayStatus,
+          max_participants: event.maxParticipants,
+          participants: event.participants,
+          enable: event.enabled,
+          // Add time remaining for sorting
+          timeRemaining: dayjs(event.startTime).diff(now, 'hour', true)
+        };
+      })
+      .sort((a, b) => {
+        const statusOrder = {
+          upcoming: 0,
+          ongoing: 1,
+          completed: 2,
+          cancelled: 3
+        };
+        const aOrder = statusOrder[a.status] ?? 99;
+        const bOrder = statusOrder[b.status] ?? 99;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        if (a.status === "upcoming") {
+          return a.timeRemaining - b.timeRemaining;
+        }
+        if (a.status === "ongoing") {
+          return dayjs(a.start_time).valueOf() - dayjs(b.start_time).valueOf();
+        }
+        if (a.status === "completed" || a.status === "cancelled") {
+          return dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf();
+        }
+        return 0;
+      });
+  }, [apiEvents]);
 
   const filteredEvents = useMemo(() => {
-    if (!search) return events;
-    return events.filter(event =>
+    let filtered = events;
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(event => event.status === statusFilter);
+    }
+    if (!search) return filtered;
+    return filtered.filter(event =>
       event.title.toLowerCase().includes(search.toLowerCase()) ||
       event.location.toLowerCase().includes(search.toLowerCase()) ||
       event.description.toLowerCase().includes(search.toLowerCase())
     );
-  }, [events, search]);
+  }, [events, search, statusFilter]);
 
   const stats = useMemo(() => {
     return {
       total: events.length,
-      active: events.filter(e => e.status === "active").length,
+      active: events.filter(e => e.status === "ongoing").length,
       upcoming: events.filter(e => e.status === "upcoming").length,
       completed: events.filter(e => e.status === "completed").length
     };
@@ -135,24 +150,20 @@ export default function EventManagement() {
     setModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
-      setEvents(events.filter(e => e.id !== id));
-    }
-  };
-
   const handleModalClose = () => {
     setModalOpen(false);
     setEditEvent(null);
   };
 
-  const handleModalSubmit = (form) => {
-    if (editEvent) {
-      setEvents(events.map(e => e.id === editEvent.id ? { ...e, ...form } : e));
+  const handleModalSubmit = async (form, errorsFromModal) => {
+    // Nhận lỗi từ modal và hiển thị ở đầu trang
+    if (errorsFromModal && errorsFromModal.length > 0) {
+      setModalErrors(errorsFromModal);
     } else {
-      const newId = Math.max(0, ...events.map(e => e.id)) + 1;
-      setEvents([...events, { id: newId, ...form }]);
+      setModalErrors([]);
     }
+    // Luôn refetch lại danh sách sự kiện sau khi submit modal
+    await refetch();
     setModalOpen(false);
     setEditEvent(null);
   };
@@ -167,90 +178,148 @@ export default function EventManagement() {
     linkElement.click();
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
+      if (!accessToken) {
+        alert("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
+        return;
+      }
+      try {
+        await deleteEvent(id).unwrap();
+        alert("Đã xóa sự kiện thành công!");
+        await refetch();
+      } catch (err) {
+        alert("Xóa sự kiện thất bại!\n" + (err?.data?.message || err?.message || ""));
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Khi modal đóng hoặc manager thay đổi, tự động refetch lại dữ liệu
+    if (!modalOpen) {
+      refetch();
+    }
+  }, [modalOpen]);
+
+  function EventManagerInfo({ eventId }) {
+    const { data: managers, isLoading } = useGetEventManagersByEventIdQuery(eventId);
+    if (isLoading) return <span style={{ color: '#888', fontSize: 12 }}>Đang tải manager...</span>;
+    if (!managers || managers.length === 0) return <span style={{ color: '#888', fontSize: 12 }}>Chưa có quản lý</span>;
+    return (
+      <span style={{ color: '#223b73', fontWeight: 600, fontSize: 13 }}>
+        {managers.map(m => m.userName || m.name || m.email).join(', ')}
+      </span>
+    );
+  }
+
   return (
     <div className="container">
+      {/* <TokenDebug /> */}
       <div className="header">
         <h1>🎉 Quản Lý Sự Kiện</h1>
         <p>Hệ thống quản lý sự kiện chuyên nghiệp</p>
         <div className="admin-badge">👑 ADMIN</div>
       </div>
-      <div className="stats">
-        <div className="stat-card">
-          <h3>{stats.total}</h3>
-          <p>Tổng Sự Kiện</p>
+      
+      {isLoading && <LoadingState message="Đang tải dữ liệu sự kiện..." />}
+      
+      {error && (
+        <div className="error-state">
+          <h3>❌ Lỗi khi tải dữ liệu</h3>
+          <p>{error.message || "Không thể kết nối đến máy chủ"}</p>
+          <p>Chi tiết lỗi: {JSON.stringify(error)}</p>
         </div>
-        <div className="stat-card">
-          <h3>{stats.active}</h3>
-          <p>Sự Kiện Đang Diễn Ra</p>
+      )}
+      
+      {!isLoading && !error && events.length === 0 && (
+        <div className="no-events">
+          <h3>📭 Không có sự kiện nào</h3>
+          <p>Chưa có sự kiện nào được tạo hoặc API không trả về dữ liệu.</p>
+          <p>API Response: {JSON.stringify(apiEvents)}</p>
         </div>
-        <div className="stat-card">
-          <h3>{stats.upcoming}</h3>
-          <p>Sự Kiện Sắp Tới</p>
-        </div>
-        <div className="stat-card">
-          <h3>{stats.completed}</h3>
-          <p>Sự Kiện Hoàn Thành</p>
-        </div>
-      </div>
-      <div className="controls">
-        <button className="btn btn-primary" onClick={handleAdd}>➕ Thêm Sự Kiện</button>
-        <button className="btn btn-secondary" onClick={() => { setSearch(""); }}>🔄 Làm Mới</button>
-        <button className="btn btn-accent" onClick={handleExport}>📊 Xuất Dữ Liệu</button>
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="🔍 Tìm kiếm sự kiện..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-      <div className="events-grid">
-        {filteredEvents.length === 0 ? (
-          <div className="no-events">
-            <h3>🔍 Không tìm thấy sự kiện nào</h3>
-            <p>Hãy thử tìm kiếm với từ khóa khác hoặc thêm sự kiện mới</p>
+      )}
+      
+      {!isLoading && !error && events.length > 0 && (
+        <>
+          <EventStats stats={stats} />
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+            <label htmlFor="statusFilter" style={{ fontWeight: 600 }}>Lọc theo trạng thái:</label>
+            <select
+              id="statusFilter"
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              style={{ padding: 6, borderRadius: 6, border: "1px solid #ccc" }}
+            >
+              {STATUS_FILTERS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
-        ) : (
-          filteredEvents.map(event => (
-            <div className="event-card" key={event.id}>
-              <div className="event-header">
-                <div className="event-title">{event.title}</div>
-                <div className="event-date">📅 {formatDate(event.start_time)} - {formatDate(event.end_time)}</div>
+          <EventControls
+            onAdd={handleAdd}
+            onExport={handleExport}
+            onRefresh={() => window.location.reload()}
+            search={search}
+            setSearch={setSearch}
+          />
+          <EventList
+            events={filteredEvents.map(ev => ({
+              ...ev,
+              manager: <EventManagerInfo eventId={ev.id} />
+            }))}
+            onEdit={event => {
+              setEditEvent({ ...event });
+              setModalOpen(true);
+            }}
+            onDelete={handleDelete}
+            onView={id => navigate(`/admin/events/${id}`)}
+            formatDate={formatDate}
+            formatTimeRemaining={formatTimeRemaining}
+            getStatusText={getStatusText}
+            // Hiển thị manager ra ngoài card
+            renderExtra={event => (
+              <div style={{marginTop: 8, color: '#223b73', fontWeight: 600, fontSize: 14}}>
+                {event.manager}
               </div>
-              <div className="event-body">
-                <div className="event-info">
-                  <span>📍 {event.location}</span>
-                  <span className={`event-status status-${event.status}`}>
-                    {getStatusText(event.status)}
-                  </span>
-                </div>
-                <div className="event-description">{event.description}</div>
-                <div className="event-extra">
-                  <div><b>Người tạo:</b> {event.created_by}</div>
-                  <div><b>Ngày tạo:</b> {formatDate(event.created_at)}</div>
-                  <div><b>QR Token:</b> {event.qr_join_token}</div>
-                  <div><b>Banner:</b> {event.banner}</div>
-                  <div><b>Docs:</b> <a href={event.url_docs} target="_blank" rel="noopener noreferrer">Tài liệu</a></div>
-                  <div><b>SL tối đa:</b> {event.max_participants}</div>
-                </div>
-                <div className="event-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginBottom: 0, paddingBottom: 0 }}>
-                  <button className="btn btn-accent btn-small" onClick={() => handleEdit(event)}>✏️ Sửa</button>
-                  <button className="btn btn-primary btn-small" onClick={() => handleDelete(event.id)}>🗑️ Xóa</button>
-                  <button className="btn btn-outline btn-small" onClick={() => navigate(`/admin/events/${event.id}`)}>👁️ Xem chi tiết</button>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+            )}
+          />
+        </>
+      )}
+      {/* Khung thông báo lỗi từ modal */}
+      {modalErrors.length > 0 && (
+        <div style={{
+          background: '#fff4f4',
+          border: '1.5px solid #e53935',
+          borderRadius: 8,
+          padding: '12px 18px',
+          margin: '18px 0',
+          color: '#c52032',
+          fontWeight: 600,
+          boxShadow: '0 2px 8px rgba(229,57,53,0.08)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12
+        }}>
+          <span style={{fontSize: 22, marginRight: 8}}>⚠️</span>
+          <div>
+            <div style={{fontSize: 16, marginBottom: 4}}>Thông báo lỗi:</div>
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {modalErrors.map((msg, idx) => (
+                <li key={idx} style={{marginBottom: 2}}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
       <EventModal
+        key={editEvent ? editEvent.id : "new"}
         open={modalOpen}
         onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
+        onSubmit={(form, errors) => handleModalSubmit(form, errors)}
         initialData={editEvent}
         isEdit={!!editEvent}
       />
     </div>
   );
-} 
+}
+

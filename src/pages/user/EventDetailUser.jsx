@@ -19,7 +19,8 @@ import PollPageUser from "./PollPageUser";
 const EventDetailUser = () => {
   const { id } = useParams();
   const { data: event, isLoading, error } = useGetEventByIdQuery(id);
-  const { data: polls, isLoading: isLoadingPolls } = useGetPollsByEventQuery(id);
+  const { data: polls, isLoading: isLoadingPolls } =
+    useGetPollsByEventQuery(id);
   const dispatch = useDispatch();
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showPollModal, setShowPollModal] = useState(false);
@@ -200,9 +201,8 @@ const EventDetailUser = () => {
                     ? "line-clamp-4"
                     : ""
                 }`}
-              >
-                {description}
-              </p>
+                dangerouslySetInnerHTML={{ __html: description }}
+              ></p>
               {shouldShowExpandButton && (
                 <div className="mt-4 text-center">
                   <button
@@ -291,36 +291,46 @@ const EventDetailUser = () => {
           {isLoadingPolls ? (
             <div>Đang tải...</div>
           ) : (
-            <div className="overflow-y-auto space-y-3" style={{ maxHeight: '200px' }}>
-              {polls && polls.filter(poll => poll.status !== "DRAFT").length > 0 ? (
-                polls.filter(poll => poll.status !== "DRAFT").map((poll) => (
-                  <div
-                    key={poll.id}
-                    className="flex items-center justify-between rounded-[10px] bg-[#f8f9fa] p-4"
-                  >
-                    <div>
-                      <div className="font-bold">{poll.title}</div>
-                      <div className="text-sm text-gray-500">Trạng thái: {poll.status}</div>
+            <div
+              className="space-y-3 overflow-y-auto"
+              style={{ maxHeight: "200px" }}
+            >
+              {polls &&
+              polls.filter((poll) => poll.status !== "DRAFT").length > 0 ? (
+                polls
+                  .filter((poll) => poll.status !== "DRAFT")
+                  .map((poll) => (
+                    <div
+                      key={poll.id}
+                      className="flex items-center justify-between rounded-[10px] bg-[#f8f9fa] p-4"
+                    >
+                      <div>
+                        <div className="font-bold">{poll.title}</div>
+                        <div className="text-sm text-gray-500">
+                          Trạng thái: {poll.status}
+                        </div>
+                      </div>
+                      {poll.status === "OPEN" ? (
+                        <button
+                          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                          onClick={() => handleOpenPoll(poll.id)}
+                        >
+                          Tham gia
+                        </button>
+                      ) : (
+                        <button
+                          className="cursor-not-allowed rounded bg-gray-400 px-4 py-2 text-white"
+                          disabled
+                        >
+                          Đã đóng
+                        </button>
+                      )}
                     </div>
-                    {poll.status === "OPEN" ? (
-                      <button
-                        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                        onClick={() => handleOpenPoll(poll.id)}
-                      >
-                        Tham gia
-                      </button>
-                    ) : (
-                      <button
-                        className="rounded bg-gray-400 px-4 py-2 text-white cursor-not-allowed"
-                        disabled
-                      >
-                        Đã đóng
-                      </button>
-                    )}
-                  </div>
-                ))
+                  ))
               ) : (
-                <div className="text-gray-500 text-center">Chưa có cuộc bình chọn nào</div>
+                <div className="text-center text-gray-500">
+                  Chưa có cuộc bình chọn nào
+                </div>
               )}
             </div>
           )}
@@ -451,29 +461,34 @@ const EventDetailUser = () => {
           </div>
         )}
 
-        {event?.polls && event.polls.length > 0 && event.polls.map((poll) => (
-          <div key={poll.id} className="mb-4">
-            <span>{poll.title}</span>
-            <button
-              className="ml-2 bg-blue-600 text-white px-4 py-1 rounded"
-              onClick={() => handleOpenPoll(poll.id)}
-            >
-              Tham gia bình chọn
-            </button>
-          </div>
-        ))}
+        {event?.polls &&
+          event.polls.length > 0 &&
+          event.polls.map((poll) => (
+            <div key={poll.id} className="mb-4">
+              <span>{poll.title}</span>
+              <button
+                className="ml-2 rounded bg-blue-600 px-4 py-1 text-white"
+                onClick={() => handleOpenPoll(poll.id)}
+              >
+                Tham gia bình chọn
+              </button>
+            </div>
+          ))}
 
         {showPollModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center ">
-            <div className="absolute inset-0 backdrop-blur-sm bg-transparent z-5"></div>
-            <div className="bg-yellow-50 rounded-lg shadow-lg p-6 w-full max-w-md relative z-30 border border-black-100">
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 z-5 bg-transparent backdrop-blur-sm"></div>
+            <div className="border-black-100 relative z-30 w-full max-w-md rounded-lg border bg-yellow-50 p-6 shadow-lg">
               <button
                 className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
                 onClick={() => setShowPollModal(false)}
               >
                 ×
               </button>
-              <PollPageUser pollId={selectedPollId} onClose={() => setShowPollModal(false)} />
+              <PollPageUser
+                pollId={selectedPollId}
+                onClose={() => setShowPollModal(false)}
+              />
             </div>
           </div>
         )}

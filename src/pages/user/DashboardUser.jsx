@@ -5,7 +5,7 @@ import {
   useGetManagedEventsQuery,
 } from "@api/eventApi";
 
-import EventCard from "@components/user/EventCard";
+import EventCard from "@components/user/EventCard/index.jsx";
 import { EVENT_STATUS } from "@utils/constants";
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
@@ -59,8 +59,41 @@ const DashboardUser = () => {
 
   const { data: allEvents } = useGetAllEventsQuery();
   const { data: allManagedEvents } = useGetAllManagedEventsQuery();
+  // console.log(allEvents);
+  // console.log(allManagedEvents);
+  console.log(currentData);
 
-  const currentData = isManageTab ? manageData : paginatedData;
+  // Chuẩn hóa dữ liệu trả về từ API để luôn có cấu trúc phân trang
+  const normalizePageData = (data) => {
+    if (!data) return undefined;
+    if (Array.isArray(data)) {
+      return {
+        content: data,
+        totalElements: data.length || 0,
+        totalPages: 1,
+        first: true,
+        last: true,
+      };
+    }
+    if (typeof data === "object" && data !== null) {
+      // Nếu backend trả về trực tiếp object sự kiện (không có content)
+      if (!("content" in data) && "id" in data) {
+        return {
+          content: [data],
+          totalElements: 1,
+          totalPages: 1,
+          first: true,
+          last: true,
+        };
+      }
+      return data;
+    }
+    return undefined;
+  };
+
+  const currentData = normalizePageData(
+    isManageTab ? manageData : paginatedData,
+  );
   const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
   const error = isManageTab ? errorManage : errorNormal;
 
@@ -73,7 +106,7 @@ const DashboardUser = () => {
         counts[tab.id] =
           allManagedEvents?.totalElements ||
           allManagedEvents?.content?.length ||
-          0;
+          (Array.isArray(allManagedEvents) ? allManagedEvents.length : 0);
       } else {
         counts[tab.id] =
           allEvents?.filter((event) => event.status === tab.id).length || 0;
@@ -213,7 +246,7 @@ const DashboardUser = () => {
         <div className="mt-8 flex justify-center">
           <div className="flex items-center gap-2">
             <button
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               disabled={currentData.first}
               onClick={() => handlePageChange(currentPage - 1)}
             >
@@ -238,7 +271,7 @@ const DashboardUser = () => {
                   return (
                     <button
                       key={pageNum}
-                      className={`rounded-lg px-3 py-2 text-sm transition-colors ${
+                      className={`cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors ${
                         currentPage === pageNum
                           ? "bg-red-600 text-white"
                           : "border border-gray-300 hover:bg-gray-50"
@@ -253,61 +286,7 @@ const DashboardUser = () => {
             </div>
 
             <button
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-              disabled={currentData.last}
-              onClick={() => handlePageChange(currentPage + 1)}
-            >
-              Sau
-            </button>
-          </div>
-        </div>
-      )}
-
-      {currentData && currentData.totalPages > 1 && (
-        <div className="mt-8 flex justify-center">
-          <div className="flex items-center gap-2">
-            <button
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-              disabled={currentData.first}
-              onClick={() => handlePageChange(currentPage - 1)}
-            >
-              Trước
-            </button>
-
-            <div className="flex items-center gap-1">
-              {Array.from(
-                { length: Math.min(5, currentData.totalPages) },
-                (_, i) => {
-                  let pageNum;
-                  if (currentData.totalPages <= 5) {
-                    pageNum = i;
-                  } else if (currentPage < 3) {
-                    pageNum = i;
-                  } else if (currentPage > currentData.totalPages - 4) {
-                    pageNum = currentData.totalPages - 5 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <button
-                      key={pageNum}
-                      className={`rounded-lg px-3 py-2 text-sm transition-colors ${
-                        currentPage === pageNum
-                          ? "bg-red-600 text-white"
-                          : "border border-gray-300 hover:bg-gray-50"
-                      }`}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum + 1}
-                    </button>
-                  );
-                },
-              )}
-            </div>
-
-            <button
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               disabled={currentData.last}
               onClick={() => handlePageChange(currentPage + 1)}
             >

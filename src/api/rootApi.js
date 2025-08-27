@@ -11,5 +11,6 @@ export const rootApi = createApi({
     "ManagedEvents",
     "AllManagedEvents",
   ],
+
   endpoints: () => ({}),
 });

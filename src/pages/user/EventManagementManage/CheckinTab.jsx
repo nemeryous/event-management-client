@@ -1,58 +1,51 @@
-import React, { useEffect, useRef, useState } from "react";
-import { faQrcode, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import React, { useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import QRCodeStyling from "qr-code-styling";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 
-const CheckinTab = ({ eventData, participants, stats, refetchEvent }) => {
+const CheckinTab = ({ eventData, stats, refetchEvent }) => {
   const dispatch = useDispatch();
-  const qrRef = useRef(null);
-  const [qrCode, setQrCode] = useState(null);
+
+  const qrContainerRef = useRef(null); // Ref cho thẻ div chứa QR
+  const qrInstanceRef = useRef(null); // Ref để lưu đối tượng QR Styling
 
   useEffect(() => {
+    if (!qrContainerRef.current) return;
+
     const qr = new QRCodeStyling({
-      width: 192, // 48 * 4 (phù hợp với h-48 w-48)
+      width: 192,
       height: 192,
-      data: eventData.qrJoinToken
-        ? `${window.location.origin}/events/check-in/${eventData.qrJoinToken}`
-        : "default-token",
+      data: `${window.location.origin}/events/check-in/default-token`,
       image: "/mini-logo.png",
       margin: 8,
-      qrOptions: {
-        typeNumber: 0,
-        mode: "Byte",
-        errorCorrectionLevel: "Q", // Đảm bảo quét được khi có logo
-      },
-      imageOptions: {
-        hideBackgroundDots: true,
-        imageSize: 0.3, // Logo chiếm 30% mã QR
-        margin: 4,
-      },
-      dotsOptions: {
-        color: "#000000",
-        type: "rounded",
-      },
-      backgroundOptions: {
-        color: "#ffffff",
-      },
+      qrOptions: { typeNumber: 0, mode: "Byte", errorCorrectionLevel: "Q" },
+      imageOptions: { hideBackgroundDots: true, imageSize: 0.3, margin: 4 },
+      dotsOptions: { color: "#000000", type: "rounded" },
+      backgroundOptions: { color: "#ffffff" },
     });
 
-    setQrCode(qr);
-    if (qrRef.current) {
-      qr.append(qrRef.current);
-    }
+    qr.append(qrContainerRef.current);
+    qrInstanceRef.current = qr;
 
     return () => {
-      if (qrRef.current) {
-        qrRef.current.innerHTML = ""; // Dọn dẹp khi unmount
+      if (qrContainerRef.current) {
+        qrContainerRef.current.innerHTML = "";
       }
     };
+  }, []);
+
+  useEffect(() => {
+    if (qrInstanceRef.current && eventData.qrJoinToken) {
+      qrInstanceRef.current.update({
+        data: `${window.location.origin}/events/check-in/${eventData.qrJoinToken}`,
+      });
+    }
   }, [eventData.qrJoinToken]);
 
   const handleDownloadQR = () => {
-    if (qrCode) {
-      qrCode.download({
+    if (qrInstanceRef.current) {
+      qrInstanceRef.current.download({
         name: `QR_Checkin_${eventData.id}`,
         extension: "png",
       });
@@ -60,16 +53,15 @@ const CheckinTab = ({ eventData, participants, stats, refetchEvent }) => {
   };
 
   const handleShareQR = async () => {
-    if (!qrCode) return;
+    const qrInstance = qrInstanceRef.current;
+    if (!qrInstance) return;
 
     try {
-      // Tạo Data URL từ mã QR
-      const blob = await qrCode.getRawData("png");
+      const blob = await qrInstance.getRawData("png");
       const file = new File([blob], `QR_Checkin_${eventData.id}.png`, {
         type: "image/png",
       });
 
-      // Sử dụng Web Share API
       if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
@@ -85,17 +77,15 @@ const CheckinTab = ({ eventData, participants, stats, refetchEvent }) => {
       } else {
         dispatch(
           openSnackbar({
-            message: "Trình duyệt không hỗ trợ chia sẻ hoặc không có QR Code!",
+            message: "Trình duyệt không hỗ trợ chia sẻ!",
             type: "error",
           }),
         );
       }
-    } catch {
+    } catch (error) {
+      console.error("Lỗi chia sẻ QR:", error);
       dispatch(
-        openSnackbar({
-          message: "Chia sẻ QR Code thất bại!",
-          type: "error",
-        }),
+        openSnackbar({ message: "Chia sẻ QR Code thất bại!", type: "error" }),
       );
     }
   };
@@ -110,20 +100,7 @@ const CheckinTab = ({ eventData, participants, stats, refetchEvent }) => {
           </h3>
           <div className="text-center">
             <div className="mb-4 inline-block rounded-2xl bg-gray-100 p-6">
-              <div
-                ref={qrRef}
-                className="flex h-48 w-48 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white"
-              >
-                {!eventData.qrJoinToken && (
-                  <div className="text-center">
-                    <FontAwesomeIcon
-                      icon={faQrcode}
-                      className="mb-2 text-6xl text-gray-400"
-                    />
-                    <p className="text-gray-500">QR Code sẽ hiển thị ở đây</p>
-                  </div>
-                )}
-              </div>
+              <div ref={qrContainerRef} className="h-48 w-48"></div>
             </div>
             <div className="space-y-3">
               <button
@@ -134,15 +111,15 @@ const CheckinTab = ({ eventData, participants, stats, refetchEvent }) => {
               </button>
               <button
                 onClick={handleDownloadQR}
-                disabled={!qrCode || !eventData.qrJoinToken}
-                className="w-full rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
+                disabled={!eventData.qrJoinToken}
+                className="w-full rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:opacity-50"
               >
                 Tải xuống QR Code
               </button>
               <button
                 onClick={handleShareQR}
-                disabled={!qrCode || !eventData.qrJoinToken}
-                className="w-full rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
+                disabled={!eventData.qrJoinToken}
+                className="w-full rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
               >
                 Chia sẻ QR Code
               </button>
