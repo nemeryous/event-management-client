@@ -538,9 +538,7 @@ export default function EventModal({
               >
                 <Editor
                   initialValue={form.description}
-                  onEditorChange={(content, editor) =>
-                    handleDescriptionChange(content)
-                  }
+                  onEditorChange={(content) => handleDescriptionChange(content)}
                   init={{
                     height: 300,
                     menubar: false,

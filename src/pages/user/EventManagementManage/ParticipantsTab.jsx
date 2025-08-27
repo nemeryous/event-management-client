@@ -125,7 +125,8 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     useDeleteParticipantsMutation();
 
   // Thêm mutation cho assign-manager
-  const [assignManager] = useAssignEventManagerMutation();
+  const [assignManager, { error: errorAssignEventManager }] =
+    useAssignEventManagerMutation();
   const [removeManager, { error: errorRemoveManager }] =
     useRemoveEventManagerMutation();
 

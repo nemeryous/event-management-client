@@ -4,7 +4,7 @@ import QRCodeStyling from "qr-code-styling";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 
-const CheckinTab = ({ eventData, participants, stats, refetchEvent }) => {
+const CheckinTab = ({ eventData, stats, refetchEvent }) => {
   const dispatch = useDispatch();
 
   const qrContainerRef = useRef(null); // Ref cho thẻ div chứa QR
