@@ -137,11 +137,11 @@ const generateAlerts = (events) => {
   });
 };
 
-const topUsers = [
-  { id: 1, name: "Nguyễn Văn A", votes: 40, events: 8 },
-  { id: 2, name: "Trần Thị B", votes: 35, events: 7 },
-  { id: 3, name: "Lê Văn C", votes: 30, events: 6 },
-];
+// const topUsers = [
+//   { id: 1, name: "Nguyễn Văn A", votes: 40, events: 8 },
+//   { id: 2, name: "Trần Thị B", votes: 35, events: 7 },
+//   { id: 3, name: "Lê Văn C", votes: 30, events: 6 },
+// ];
 
 const statusColor = {
   UPCOMING: "bg-[#ffd012] text-[#223b73]",

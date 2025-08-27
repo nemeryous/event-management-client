@@ -4,11 +4,11 @@ import "./EventManagement.css";
 import { useCreateEventMutation } from "../../api/eventApi";
 import TinyMCEEditor from "../../components/common/TinyMCEEditor";
 
-const statusOptions = [
-  { value: "UPCOMING", label: "Sắp Tới" },
-  { value: "ACTIVE", label: "Đang Diễn Ra" },
-  { value: "COMPLETED", label: "Hoàn Thành" },
-];
+// const statusOptions = [
+//   { value: "UPCOMING", label: "Sắp Tới" },
+//   { value: "ACTIVE", label: "Đang Diễn Ra" },
+//   { value: "COMPLETED", label: "Hoàn Thành" },
+// ];
 
 export default function EventCreate() {
   const [form, setForm] = useState({
@@ -49,16 +49,20 @@ export default function EventCreate() {
       start_time: formatDateTime(form.start_time),
       end_time: formatDateTime(form.end_time),
       location: form.location,
-      max_participants: form.max_participants ? parseInt(form.max_participants, 10) : undefined,
+      max_participants: form.max_participants
+        ? parseInt(form.max_participants, 10)
+        : undefined,
       url_docs: form.url_docs,
     };
     console.log("[DEBUG] Payload tạo sự kiện:", payload);
     try {
       await createEvent(payload).unwrap();
-    alert("Tạo sự kiện thành công!");
-    navigate("/admin/events");
+      alert("Tạo sự kiện thành công!");
+      navigate("/admin/events");
     } catch (err) {
-      setErrorMsg("Tạo sự kiện thất bại! " + (err?.data?.message || err?.message || ""));
+      setErrorMsg(
+        "Tạo sự kiện thất bại! " + (err?.data?.message || err?.message || ""),
+      );
     }
   };
 
@@ -83,7 +87,9 @@ export default function EventCreate() {
       >
         ➕ Thêm Sự Kiện Mới
       </h1>
-      {errorMsg && <div style={{ color: "red", marginBottom: 16 }}>{errorMsg}</div>}
+      {errorMsg && (
+        <div style={{ color: "red", marginBottom: 16 }}>{errorMsg}</div>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">Tên Sự Kiện:</label>
@@ -98,8 +104,19 @@ export default function EventCreate() {
         </div>
         <div className="form-group">
           <label htmlFor="description">Mô Tả:</label>
-          <div style={{ border: "1px solid #ccc", borderRadius: 6, padding: 8, marginBottom: 8 }}>
-            <TinyMCEEditor value={form.description} onChange={handleDescriptionChange} placeholder="Nhập mô tả sự kiện với định dạng phong phú..." />
+          <div
+            style={{
+              border: "1px solid #ccc",
+              borderRadius: 6,
+              padding: 8,
+              marginBottom: 8,
+            }}
+          >
+            <TinyMCEEditor
+              value={form.description}
+              onChange={handleDescriptionChange}
+              placeholder="Nhập mô tả sự kiện với định dạng phong phú..."
+            />
           </div>
         </div>
         <div className="form-group">

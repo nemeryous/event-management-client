@@ -5,7 +5,7 @@ import {
   useGetManagedEventsQuery,
 } from "@api/eventApi";
 
-import EventCard from "@components/user/EventCard";
+import EventCard from "@components/user/EventCard/index.jsx";
 import { EVENT_STATUS } from "@utils/constants";
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
@@ -59,8 +59,10 @@ const DashboardUser = () => {
 
   const { data: allEvents } = useGetAllEventsQuery();
   const { data: allManagedEvents } = useGetAllManagedEventsQuery();
-
+  // console.log(allEvents);
+  // console.log(allManagedEvents);
   const currentData = isManageTab ? manageData : paginatedData;
+  console.log(currentData)
   const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
   const error = isManageTab ? errorManage : errorNormal;
 
