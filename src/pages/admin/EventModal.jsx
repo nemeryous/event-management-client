@@ -4,11 +4,11 @@ import {
   useGetEventByIdQuery,
   useUpdateEventMutation,
   useCreateEventMutation,
-  useAssignEventManagerMutation,
   useGetEventManagersByEventIdQuery,
   useRemoveEventManagerMutation,
   useUploadBannerMutation,
 } from "../../api/eventApi";
+import { useAssignEventManagerMutation } from "@api/attendantApi";
 import { useGetUserNameQuery, useGetAllUsersQuery } from "../../api/authApi";
 import { useSelector, useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
