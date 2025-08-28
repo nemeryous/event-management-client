@@ -10,20 +10,23 @@ const eventListTags = [
 export const eventApi = rootApi.injectEndpoints({
   tagTypes: ["Event", "EventManager"],
   endpoints: (builder) => ({
+    createEvent: builder.mutation({
+      query: (data) => ({
+        url: "/events",
+        method: "POST",
+        body: data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      invalidatesTags: [...eventListTags],
+    }),
     deleteEvent: builder.mutation({
       query: (id) => ({
         url: `/events/delete/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: [{ type: "Event", id: "LIST" }],
-    }),
-    createEvent: builder.mutation({
-      query: (eventData) => ({
-        url: "/events",
-        method: "POST",
-        body: eventData,
-      }),
-      invalidatesTags: [...eventListTags],
     }),
     getEvents: builder.query({
       query: ({
@@ -70,7 +73,7 @@ export const eventApi = rootApi.injectEndpoints({
       providesTags: ["ManagedEvents"],
     }),
     getAllManagedEvents: builder.query({
-      query: () => "/events/managed/all",
+      query: () => "/events/man foroaged/all",
       providesTags: ["AllManagedEvents"],
     }),
     getEventById: builder.query({
@@ -81,84 +84,15 @@ export const eventApi = rootApi.injectEndpoints({
       query: (eventToken) => ({
         url: `/events/join/${eventToken}`,
         method: "POST",
-        invalidatesTags: [
-          "Events",
-          "AllEvents",
-          "ManagedEvents",
-          "AllManagedEvents",
-        ],
       }),
-      // query: ({
-      //   page = 0,
-      //   size = 6,
-      //   sortBy = "startTime",
-      //   sortDir = "asc",
-      //   status = null,
-      //   search = null,
-      // }) => {
-      //   const params = new URLSearchParams({
-      //     page: page.toString(),
-      //     size: size.toString(),
-      //     sortBy,
-      //     sortDir,
-      //   });
-
-      //   if (status) params.append("status", status);
-      //   if (search) params.append("search", search);
-
-      //   return `/events?${params.toString()}`;
-      // },
-      providesTags: ["Events"],
+      invalidatesTags: [...eventListTags],
     }),
-    // getAllEvents: builder.query({
-    //   query: () => "/events/all",
-    //   providesTags: ["AllEvents"],
-    // }),
-    // getManagedEvents: builder.query({
-    //   query: ({
-    //     page = 0,
-    //     size = 6,
-    //     sortBy = "startTime",
-    //     sortDir = "asc",
-    //   }) => {
-    //     const params = new URLSearchParams({
-    //       page: page.toString(),
-    //       size: size.toString(),
-    //       sortBy,
-    //       sortDir,
-    //     });
-    //     return `/events/managed?${params.toString()}`;
-    //   },
-    //   providesTags: ["ManagedEvents"],
-    // }),
-    // getAllManagedEvents: builder.query({
-    //   query: () => "/events/managed/all",
-    //   providesTags: ["AllManagedEvents"],
-    // }),
-    // getEventById: builder.query({
-    //   query: (id) => `/events/${id}`,
-    //   providesTags: (result, error, id) => [{ type: "Events", id }],
-    // }),
-    // joinEvent: builder.mutation({
-    //   query: (eventToken) => ({
-    //     url: `/events/join/${eventToken}`,
-    //     method: "POST",
-    //     invalidatesTags: [
-    //       "Events",
-    //       "AllEvents",
-    //       "ManagedEvents",
-    //       "AllManagedEvents",
-    //     ],
-    //   }),
-    // }),
     getEventQR: builder.query({
-      query: (id) => {
-        return {
-          url: `/attendants/get-qr-check/${id}`,
-          method: "GET",
-          responseHandler: (response) => response.blob(),
-        };
-      },
+      query: (id) => ({
+        url: `/attendants/get-qr-check/${id}`,
+        method: "GET",
+        responseHandler: (response) => response.blob(),
+      }),
     }),
     updateEvent: builder.mutation({
       query: ({
@@ -192,7 +126,6 @@ export const eventApi = rootApi.injectEndpoints({
       query: ({ eventId, bannerFile }) => {
         const formData = new FormData();
         formData.append("banner", bannerFile);
-
         return {
           url: `/events/${eventId}/upload-banner`,
           method: "PUT",
@@ -204,21 +137,9 @@ export const eventApi = rootApi.injectEndpoints({
         ...eventListTags,
       ],
     }),
-    // createEvent: builder.mutation({
-    //   query: ({ data, accessToken }) => ({
-    //     url: `/events`,
-    //     method: "POST",
-    //     body: data, // object thuần
-    //     headers: {
-    //       "Content-Type": "application/json", // ép Content-Type JSON
-    //       Authorization: `Bearer ${accessToken}`,
-    //     },
-    //   }),
-    // }),
     uploadBanner: builder.mutation({
       query: ({ eventId, file, accessToken }) => {
         const formData = new FormData();
-        // Kiểm tra đuôi file hợp lệ
         const allowedExt = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
         const ext = file.name.split(".").pop().toLowerCase();
         if (!allowedExt.includes(ext)) {
@@ -236,51 +157,12 @@ export const eventApi = rootApi.injectEndpoints({
             : {},
         };
       },
-    }),
-    assignEventManager: builder.mutation({
-      query: (dto) => ({
-        url: "/event-manager/assign-manager",
-        method: "POST",
-        body: dto,
-      }),
-      invalidatesTags: (result, error, dto) => [
-        { type: "EventManager", id: dto.event_id },
-        { type: "Event", id: dto.event_id },
-        "Events",
-        "AllEvents",
+      invalidatesTags: (result, error, { eventId }) => [
+        { type: "Events", id: eventId },
+        ...eventListTags,
       ],
-      async onQueryStarted(dto, { dispatch, queryFulfilled }) {
-        // Optimistic update: add/update manager in getEventManagersByEventId cache
-        const patchManagers = dispatch(
-          rootApi.util.updateQueryData(
-            "getEventManagersByEventId",
-            dto.event_id,
-            (draft) => {
-              try {
-                if (!Array.isArray(draft)) return;
-                const exists = draft.some((m) => String(m.user_id) === String(dto.user_id));
-                if (!exists) {
-                  draft.push({ user_id: dto.user_id, roleType: dto.roleType || "MANAGE" });
-                } else {
-                  for (let i = 0; i < draft.length; i++) {
-                    if (String(draft[i].user_id) === String(dto.user_id)) {
-                      draft[i].roleType = dto.roleType || draft[i].roleType || "MANAGE";
-                    }
-                  }
-                }
-              } catch (_) {
-                // no-op
-              }
-            }
-          )
-        );
-        try {
-          await queryFulfilled;
-        } catch (_) {
-          patchManagers.undo();
-        }
-      },
     }),
+
     removeEventManager: builder.mutation({
       query: (dto) => ({
         url: "/event-manager/remove-manager",
@@ -290,11 +172,9 @@ export const eventApi = rootApi.injectEndpoints({
       invalidatesTags: (result, error, dto) => [
         { type: "EventManager", id: dto.event_id },
         { type: "Event", id: dto.event_id },
-        "Events",
-        "AllEvents",
+        ...eventListTags,
       ],
       async onQueryStarted(dto, { dispatch, queryFulfilled }) {
-        // Optimistic update: remove manager from getEventManagersByEventId cache
         const patchManagers = dispatch(
           rootApi.util.updateQueryData(
             "getEventManagersByEventId",
@@ -333,35 +213,23 @@ export const eventApi = rootApi.injectEndpoints({
         { type: "EventManager", id: eventId },
       ],
     }),
-    // createEvent: builder.mutation({
-    //   query: ({ data, accessToken }) => ({
-    //     url: `/events`,
-    //     method: "POST",
-    //     body: data, // object thuần
-    //     headers: {
-    //       "Content-Type": "application/json", // ép Content-Type JSON
-    //       Authorization: `Bearer ${accessToken}`,
-    //     },
-    //   }),
-    // }),
   }),
   overrideExisting: false,
 });
 
 export const {
   useCreateEventMutation,
+  useDeleteEventMutation,
   useGetEventsQuery,
+  useGetAllEventsQuery,
   useGetManagedEventsQuery,
   useGetAllManagedEventsQuery,
   useJoinEventMutation,
   useGetEventQRQuery,
+  useUpdateEventMutation,
   useUploadEventBannerMutation,
-  useGetEventBannerQuery,
-  useGetAllEventsQuery,
   useUploadBannerMutation,
-  useAssignEventManagerMutation,
   useRemoveEventManagerMutation,
   useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,
-  useDeleteEventMutation,
 } = eventApi;

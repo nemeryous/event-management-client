@@ -61,7 +61,7 @@ const DashboardUser = () => {
   const { data: allManagedEvents } = useGetAllManagedEventsQuery();
   // console.log(allEvents);
   // console.log(allManagedEvents);
-  console.log(currentData);
+  // console.log(currentData);
 
   // Chuẩn hóa dữ liệu trả về từ API để luôn có cấu trúc phân trang
   const normalizePageData = (data) => {
