@@ -74,11 +74,6 @@ const router = createBrowserRouter([
             path: "/poll-analytics/:eventId",
             element: <PollAnalystic />,
           },
-          // {
-          //   path: "/attendants",
-          //   element: <AttendantList />,
-          // },
-
           {
             path: "*",
             element: <NotFound />,
