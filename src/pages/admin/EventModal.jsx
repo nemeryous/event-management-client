@@ -12,12 +12,7 @@ import {
 import { useGetUserNameQuery, useGetAllUsersQuery } from "../../api/authApi";
 import { useSelector, useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
-import {
-  mapBackendStatusToFrontend,
-  mapFrontendStatusToBackend,
-  truncateDescription,
-  truncateTitle,
-} from "../../utils/eventHelpers";
+import { truncateDescription, truncateTitle } from "../../utils/eventHelpers";
 import { Editor } from "@tinymce/tinymce-react";
 
 export default function EventModal({
@@ -537,6 +532,7 @@ export default function EventModal({
                 }}
               >
                 <Editor
+                  apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                   initialValue={form.description}
                   onEditorChange={(content) => handleDescriptionChange(content)}
                   init={{

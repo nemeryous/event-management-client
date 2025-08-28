@@ -538,7 +538,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
             <h3 className="text-lg font-bold text-gray-900">
               Danh sách người tham gia ({filteredParticipants.length})
               {isLoadingAttendants && " - Đang tải..."}
-              {attendantsError && " - Lỗi API"}
+              {attendantsError && ""}
             </h3>
             {selectedParticipants.length > 0 && (
               <div className="flex items-center gap-3">
