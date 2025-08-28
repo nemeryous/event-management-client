@@ -179,7 +179,6 @@ export default function EventModal({
         max_participants: formWithSeconds.max_participants,
         url_docs: formWithSeconds.url_docs,
       };
-      console.log("[DEBUG] Payload cập nhật sự kiện:", payload);
       const res = await updateEvent({ id: eventId, data: payload }).unwrap();
       // Việc gán manager sẽ được thực hiện qua luồng nhập email riêng bên dưới
       if (onSubmit) onSubmit(res, errorList);

@@ -81,6 +81,12 @@ const ProtectedRoute = memo(() => {
     return <Navigate to="/login" replace />;
   }
 
+  // const isAdmin = user?.roles?.some((role) => role.roleName === "ROLE_ADMIN");
+
+  // if (isAdmin) {
+  //   return <Navigate to="/admin/events" replace />;
+  // }
+
   return <Outlet />;
 });
 

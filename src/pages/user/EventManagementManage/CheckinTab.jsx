@@ -3,12 +3,21 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import QRCodeStyling from "qr-code-styling";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
+import { useGetParticipantsByEventQuery } from "@api/attendantApi";
+import { faCheckCircle } from "@fortawesome/free-regular-svg-icons";
 
-const CheckinTab = ({ eventData, stats, refetchEvent }) => {
+const CheckinTab = ({ eventData, refetchEvent }) => {
   const dispatch = useDispatch();
 
-  const qrContainerRef = useRef(null); // Ref cho thẻ div chứa QR
-  const qrInstanceRef = useRef(null); // Ref để lưu đối tượng QR Styling
+  const { data: participants = [] } = useGetParticipantsByEventQuery(
+    eventData.id,
+    {
+      skip: !eventData.id,
+    },
+  );
+
+  const qrContainerRef = useRef(null);
+  const qrInstanceRef = useRef(null);
 
   useEffect(() => {
     if (!qrContainerRef.current) return;
@@ -90,6 +99,12 @@ const CheckinTab = ({ eventData, stats, refetchEvent }) => {
     }
   };
 
+  const checkedInParticipants = participants.filter((p) => p.check_in_time);
+  const stats = {
+    totalRegistered: participants.length,
+    checkedIn: checkedInParticipants.length,
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -128,32 +143,42 @@ const CheckinTab = ({ eventData, stats, refetchEvent }) => {
         </div>
 
         {/* Recent Check-ins */}
-        {/* <div className="rounded-2xl bg-white p-6 shadow-lg">
+        <div className="rounded-2xl bg-white p-6 shadow-lg">
           <h3 className="mb-6 text-xl font-bold">Check-in gần đây</h3>
           <div className="max-h-96 space-y-3 overflow-y-auto">
-            {participants
-              .filter((p) => p.isCheckedIn)
-              .map((participant) => (
-                <div
-                  key={participant.id}
-                  className="flex items-center gap-3 rounded-lg bg-green-50 p-3"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 font-bold text-white">
-                    {participant.name?.charAt(0)}
+            {console.log(checkedInParticipants)}
+            {checkedInParticipants.length > 0 ? (
+              checkedInParticipants
+                .sort(
+                  (a, b) =>
+                    new Date(b.check_in_time) - new Date(a.check_in_time),
+                )
+                .map((participant) => (
+                  <div
+                    key={participant.id}
+                    className="animate-fade-in flex items-center gap-3 rounded-lg bg-green-50 p-3"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 font-bold text-white">
+                      {participant.user.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">
+                        {participant.user.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {participant.user.email}
+                      </p>
+                    </div>
+                    <div className="text-green-600">
+                      <FontAwesomeIcon icon={faCheckCircle} />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">
-                      {participant.name}
-                    </p>
-                    <p className="text-sm text-gray-500">{participant.email}</p>
-                  </div>
-                  <div className="text-green-600">
-                    <FontAwesomeIcon icon={faCheckCircle} />
-                  </div>
-                </div>
-              ))}
+                ))
+            ) : (
+              <p className="text-center text-gray-500">Chưa có ai check-in.</p>
+            )}
           </div>
-        </div> */}
+        </div>
       </div>
 
       {/* Check-in Stats */}

@@ -1,21 +1,73 @@
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { rootApi } from "./rootApi";
 
 export const attendantApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Get participants/attendants for an event
     getAttendantsByEvent: builder.query({
       query: (eventId) => `attendants?eventId=${eventId}`,
       providesTags: (result, error, eventId) => [
-        { type: 'Attendants', id: eventId }
+        { type: "Attendants", id: eventId },
       ],
     }),
+    getParticipantsByEvent: builder.query({
+      query: (eventId) => `attendants/${eventId}`,
+      providesTags: (result, error, eventId) => [
+        { type: "Participants", id: eventId },
+      ],
+      async onCacheEntryAdded(
+        eventId,
+        { updateCachedData, cacheDataLoaded, cacheEntryRemoved, getState },
+      ) {
+        await cacheDataLoaded;
 
-    // Get user by email
+        const token = getState().auth.accessToken;
+
+        if (!token) {
+          console.error("SSE Connection: No token found.");
+          return;
+        }
+
+        const controller = new AbortController();
+
+        fetchEventSource(
+          `${import.meta.env.VITE_BASE_URL}/attendants/events/${eventId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+
+            onmessage(event) {
+              if (event.event === "participant-checked-in") {
+                const updatedParticipant = JSON.parse(event.data);
+                updateCachedData((draft) => {
+                  const participant = draft.find(
+                    (p) => p.user.id === updatedParticipant.user.id,
+                  );
+                  if (participant) {
+                    participant.check_in_time =
+                      updatedParticipant.check_in_time;
+                  }
+                });
+              }
+            },
+            onerror(err) {
+              console.error("EventSource failed:", err);
+              throw err;
+            },
+          },
+        );
+
+        await cacheEntryRemoved;
+        controller.abort();
+      },
+    }),
+
     getUserByEmail: builder.query({
       query: (email) => `users/by-email?email=${encodeURIComponent(email)}`,
     }),
 
-    // Add single attendant
     addAttendant: builder.mutation({
       query: ({ userId, eventId }) => ({
         url: "attendants/add-user",
@@ -23,8 +75,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { userId, eventId },
       }),
       invalidatesTags: (result, error, { eventId }) => [
-        { type: 'Attendants', id: eventId },
-        { type: 'Events' }
+        { type: "Attendants", id: eventId },
+        { type: "Events" },
       ],
     }),
 
@@ -36,8 +88,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { userId, eventId },
       }),
       invalidatesTags: (result, error, { eventId }) => [
-        { type: 'Attendants', id: eventId },
-        { type: 'Events' }
+        { type: "Attendants", id: eventId },
+        { type: "Events" },
       ],
     }),
 
@@ -45,7 +97,7 @@ export const attendantApi = rootApi.injectEndpoints({
     getEventManagersByEvent: builder.query({
       query: (eventId) => `event-manager/event-managers?eventId=${eventId}`,
       providesTags: (result, error, eventId) => [
-        { type: 'EventManagers', id: eventId }
+        { type: "EventManagers", id: eventId },
       ],
     }),
 
@@ -57,8 +109,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { user_id, event_id, roleType },
       }),
       invalidatesTags: (result, error, { event_id }) => [
-        { type: 'EventManagers', id: event_id },
-        { type: 'Events' }
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
       ],
     }),
 
@@ -70,8 +122,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { user_id, event_id, roleType },
       }),
       invalidatesTags: (result, error, { event_id }) => [
-        { type: 'EventManagers', id: event_id },
-        { type: 'Events' }
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
       ],
     }),
 
@@ -83,8 +135,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { emails },
       }),
       invalidatesTags: (result, error, { eventId }) => [
-        { type: 'Attendants', id: eventId },
-        { type: 'Events' }
+        { type: "Attendants", id: eventId },
+        { type: "Events" },
       ],
     }),
 
@@ -96,8 +148,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { emails },
       }),
       invalidatesTags: (result, error, { eventId }) => [
-        { type: 'Attendants', id: eventId },
-        { type: 'Events' }
+        { type: "Attendants", id: eventId },
+        { type: "Events" },
       ],
     }),
 
@@ -108,8 +160,8 @@ export const attendantApi = rootApi.injectEndpoints({
         method: "DELETE",
       }),
       invalidatesTags: (result, error, { eventId }) => [
-        { type: 'Attendants', id: eventId },
-        { type: 'Events' }
+        { type: "Attendants", id: eventId },
+        { type: "Events" },
       ],
     }),
 
@@ -129,8 +181,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { user_id, roleType, event_id },
       }),
       invalidatesTags: (result, error, { event_id }) => [
-        { type: 'EventManagers', id: event_id },
-        { type: 'Events' }
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
       ],
     }),
 
@@ -142,8 +194,8 @@ export const attendantApi = rootApi.injectEndpoints({
         body: { user_id, event_id },
       }),
       invalidatesTags: (result, error, { event_id }) => [
-        { type: 'EventManagers', id: event_id },
-        { type: 'Events' }
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
       ],
     }),
   }),
@@ -157,7 +209,8 @@ export const {
   useGetUserByEmailQuery,
   useLazyGetUserByEmailQuery,
   useGetEventManagersByEventQuery,
-  
+  useGetParticipantsByEventQuery,
+
   // Mutations
   useAddAttendantMutation,
   useDeleteAttendantMutation,
