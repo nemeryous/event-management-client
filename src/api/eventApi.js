@@ -9,6 +9,13 @@ const eventListTags = [
 
 export const eventApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
+    deleteEvent: builder.mutation({
+      query: (id) => ({
+        url: `/events/delete/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "Event", id: "LIST" }],
+    }),
     createEvent: builder.mutation({
       query: (eventData) => ({
         url: "/events",
@@ -74,7 +81,10 @@ export const eventApi = rootApi.injectEndpoints({
         url: `/events/join/${eventToken}`,
         method: "POST",
       }),
-      invalidatesTags: [...eventListTags],
+      invalidatesTags: (result, error, arg) => [
+        { type: "Events", id: result?.eventId },
+        ...eventListTags,
+      ],
     }),
     getEventQR: builder.query({
       query: (id) => {
@@ -129,6 +139,158 @@ export const eventApi = rootApi.injectEndpoints({
         ...eventListTags,
       ],
     }),
+    // createEvent: builder.mutation({
+    //   query: ({ data, accessToken }) => ({
+    //     url: `/events`,
+    //     method: "POST",
+    //     body: data, // object thuần
+    //     headers: {
+    //       "Content-Type": "application/json", // ép Content-Type JSON
+    //       Authorization: `Bearer ${accessToken}`,
+    //     },
+    //   }),
+    // }),
+    uploadBanner: builder.mutation({
+      query: ({ eventId, file, accessToken }) => {
+        const formData = new FormData();
+        // Kiểm tra đuôi file hợp lệ
+        const allowedExt = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (!allowedExt.includes(ext)) {
+          throw new Error(
+            "File banner phải là ảnh (png, jpg, jpeg, gif, webp, svg)",
+          );
+        }
+        formData.append("banner", file);
+        return {
+          url: `/events/${eventId}/upload-banner`,
+          method: "PUT",
+          body: formData,
+          headers: accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : {},
+        };
+      },
+    }),
+    assignEventManager: builder.mutation({
+      query: (dto) => ({
+        url: "/event-manager/assign-manager",
+        method: "POST",
+        body: dto,
+      }),
+      invalidatesTags: (result, error, dto) => [
+        { type: "EventManager", id: dto.event_id },
+        { type: "Events", id: dto.event_id },
+        "AllEvents",
+      ],
+      async onQueryStarted(dto, { dispatch, queryFulfilled }) {
+        // Optimistic update: add/update manager in getEventManagersByEventId cache
+        const patchManagers = dispatch(
+          rootApi.util.updateQueryData(
+            "getEventManagersByEventId",
+            dto.event_id,
+            (draft) => {
+              try {
+                if (!Array.isArray(draft)) return;
+                const exists = draft.some(
+                  (m) => String(m.user_id) === String(dto.user_id),
+                );
+                if (!exists) {
+                  draft.push({
+                    user_id: dto.user_id,
+                    roleType: dto.roleType || "MANAGE",
+                  });
+                } else {
+                  for (let i = 0; i < draft.length; i++) {
+                    if (String(draft[i].user_id) === String(dto.user_id)) {
+                      draft[i].roleType =
+                        dto.roleType || draft[i].roleType || "MANAGE";
+                    }
+                  }
+                }
+              } catch (_) {
+                // no-op
+              }
+            },
+          ),
+        );
+        try {
+          await queryFulfilled;
+        } catch (_) {
+          patchManagers.undo();
+        }
+      },
+    }),
+    removeEventManager: builder.mutation({
+      query: (dto) => ({
+        url: "/event-manager/remove-manager",
+        method: "DELETE",
+        body: dto,
+      }),
+      invalidatesTags: (result, error, dto) => [
+        { type: "EventManager", id: dto.event_id },
+        { type: "Events", id: dto.event_id },
+        "AllEvents",
+      ],
+      async onQueryStarted(dto, { dispatch, queryFulfilled }) {
+        // Optimistic update: remove manager from getEventManagersByEventId cache
+        const patchManagers = dispatch(
+          rootApi.util.updateQueryData(
+            "getEventManagersByEventId",
+            dto.event_id,
+            (draft) => {
+              try {
+                if (!Array.isArray(draft)) return;
+                const idx = draft.findIndex(
+                  (m) => String(m.user_id) === String(dto.user_id),
+                );
+                if (idx !== -1) draft.splice(idx, 1);
+              } catch (_) {
+                // no-op
+              }
+            },
+          ),
+        );
+        try {
+          await queryFulfilled;
+        } catch (_) {
+          patchManagers.undo();
+        }
+      },
+    }),
+    getEventManagersByEventId: builder.query({
+      query: (eventId) => ({
+        url: `/event-manager/event-managers?eventId=${eventId}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        const list = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+            ? response
+            : [];
+        return list
+          .map((m) => ({
+            user_id: m.user_id ?? m.userId ?? m.id ?? m.managerId,
+            roleType: m.roleType ?? m.role ?? m.role_type ?? "MANAGE",
+          }))
+          .filter((m) => m.user_id);
+      },
+      providesTags: (result, error, eventId) => [
+        { type: "EventManager", id: eventId },
+      ],
+    }),
+    // createEvent: builder.mutation({
+    //   query: ({ data, accessToken }) => ({
+    //     url: `/events`,
+    //     method: "POST",
+    //     body: data, // object thuần
+    //     headers: {
+    //       "Content-Type": "application/json", // ép Content-Type JSON
+    //       Authorization: `Bearer ${accessToken}`,
+    //     },
+    //   }),
+    // }),
   }),
   overrideExisting: false,
 });
@@ -136,12 +298,18 @@ export const eventApi = rootApi.injectEndpoints({
 export const {
   useCreateEventMutation,
   useGetEventsQuery,
-  useGetAllEventsQuery,
   useGetManagedEventsQuery,
   useGetAllManagedEventsQuery,
-  useGetEventByIdQuery,
   useJoinEventMutation,
   useGetEventQRQuery,
-  useUpdateEventMutation,
   useUploadEventBannerMutation,
+  useGetEventBannerQuery,
+  useGetAllEventsQuery,
+  useUploadBannerMutation,
+  useAssignEventManagerMutation,
+  useRemoveEventManagerMutation,
+  useGetEventManagersByEventIdQuery,
+  useGetEventByIdQuery,
+  useDeleteEventMutation,
+  useUpdateEventMutation,
 } = eventApi;

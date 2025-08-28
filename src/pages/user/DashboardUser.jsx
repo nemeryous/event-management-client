@@ -5,7 +5,7 @@ import {
   useGetManagedEventsQuery,
 } from "@api/eventApi";
 
-import EventCard from "@components/user/EventCard";
+import EventCard from "@components/user/EventCard/index.jsx";
 import { EVENT_STATUS } from "@utils/constants";
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
@@ -60,7 +60,37 @@ const DashboardUser = () => {
   const { data: allEvents } = useGetAllEventsQuery();
   const { data: allManagedEvents } = useGetAllManagedEventsQuery();
 
-  const currentData = isManageTab ? manageData : paginatedData;
+  // Chuẩn hóa dữ liệu trả về từ API để luôn có cấu trúc phân trang
+  const normalizePageData = (data) => {
+    if (!data) return undefined;
+    if (Array.isArray(data)) {
+      return {
+        content: data,
+        totalElements: data.length || 0,
+        totalPages: 1,
+        first: true,
+        last: true,
+      };
+    }
+    if (typeof data === "object" && data !== null) {
+      // Nếu backend trả về trực tiếp object sự kiện (không có content)
+      if (!("content" in data) && "id" in data) {
+        return {
+          content: [data],
+          totalElements: 1,
+          totalPages: 1,
+          first: true,
+          last: true,
+        };
+      }
+      return data;
+    }
+    return undefined;
+  };
+
+  const currentData = normalizePageData(
+    isManageTab ? manageData : paginatedData,
+  );
   const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
   const error = isManageTab ? errorManage : errorNormal;
 
@@ -73,7 +103,7 @@ const DashboardUser = () => {
         counts[tab.id] =
           allManagedEvents?.totalElements ||
           allManagedEvents?.content?.length ||
-          0;
+          (Array.isArray(allManagedEvents) ? allManagedEvents.length : 0);
       } else {
         counts[tab.id] =
           allEvents?.filter((event) => event.status === tab.id).length || 0;

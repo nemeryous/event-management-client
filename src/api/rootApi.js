@@ -10,6 +10,8 @@ export const rootApi = createApi({
     "AllEvents",
     "ManagedEvents",
     "AllManagedEvents",
+    "EventManager",
   ],
+
   endpoints: () => ({}),
 });

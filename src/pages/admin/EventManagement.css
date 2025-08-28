@@ -133,6 +133,10 @@
     overflow: hidden;
     transition: all 0.3s ease;
     border-top: 4px solid #c52032;
+    display: flex;
+    flex-direction: column;
+    min-height: 480px;
+    height: 100%;
 }
 .event-card:hover {
     transform: translateY(-5px);
@@ -147,13 +151,25 @@
     font-size: 1.4rem;
     font-weight: bold;
     margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    max-height: 1.2em;
 }
 .event-date {
     font-size: 0.9rem;
     opacity: 0.9;
 }
+.event-extra {
+    margin-top: auto;
+    margin-bottom: 16px;
+}
 .event-body {
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
 }
 .event-info {
     display: flex;
@@ -172,6 +188,10 @@
     background: #e8f5e8;
     color: #2e7d32;
 }
+.status-ongoing {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
 .status-upcoming {
     background: #fff3e0;
     color: #ef6c00;
@@ -180,21 +200,133 @@
     background: #f3e5f5;
     color: #7b1fa2;
 }
+.status-cancelled {
+    background: #ffebee;
+    color: #c62828;
+}
 .event-description {
     color: #2c3e50;
     margin-bottom: 15px;
-    line-height: 1.5;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-height: 4.2em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
 }
 .event-actions {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    margin-top: 0;
 }
 .btn-small {
     padding: 6px 12px;
     font-size: 0.9rem;
     border-radius: 6px;
 }
+
+/* Rich Text Editor Styles */
+.rich-text-editor {
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+}
+
+.rich-text-editor:focus-within {
+    border-color: #c52032;
+}
+
+.editor-toolbar {
+    display: flex;
+    gap: 2px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
+}
+
+.toolbar-btn {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    min-width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toolbar-btn:hover {
+    background: #e9ecef;
+    border-color: #c52032;
+}
+
+.toolbar-btn.active {
+    background: #c52032;
+    color: white;
+    border-color: #c52032;
+}
+
+.editor-content {
+    min-height: 120px;
+    padding: 12px;
+    outline: none;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #2c3e50;
+    overflow-y: auto;
+}
+
+.editor-content:empty:before {
+    content: attr(placeholder);
+    color: #999;
+    font-style: italic;
+}
+
+.editor-content:focus {
+    outline: none;
+}
+
+.editor-content strong {
+    font-weight: bold;
+}
+
+.editor-content em {
+    font-style: italic;
+}
+
+.editor-content u {
+    text-decoration: underline;
+}
+
+.editor-content ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.editor-content li {
+    margin: 4px 0;
+}
+
+.editor-content a {
+    color: #c52032;
+    text-decoration: underline;
+}
+
+.editor-content a:hover {
+    color: #a01b2a;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -285,6 +417,42 @@
     margin-bottom: 10px;
     color: #223b73;
 }
+
+.loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #2c3e50;
+}
+.loading-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #223b73;
+}
+
+.error-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #c52032;
+    background: #ffeaea;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+.error-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #c52032;
+}
+
+.event-time-remaining {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-top: 5px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    display: inline-block;
+}
+
 @media (max-width: 768px) {
     .controls {
         flex-direction: column;
@@ -320,5 +488,17 @@
         width: 100%;
         max-width: 400px;
         margin: 0 auto;
+        min-height: 0;
+    }
+    
+    .editor-toolbar {
+        gap: 1px;
+        padding: 6px;
+    }
+    
+    .toolbar-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        min-width: 25px;
     }
 } 

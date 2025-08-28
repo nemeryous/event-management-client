@@ -22,6 +22,7 @@ import EventManagementManage from "@pages/user/EventManagementManage";
 import CheckinResultPage from "@pages/user/CheckinResultPage";
 import HomePageUser from "@pages/user/HomePageUser";
 import CreatePoll from "@components/poll/CreatePoll";
+import PollAnalystic from "@pages/poll/PollAnalystic";
 import AdminRoute from "./AdminRoute";
 import Root from "./Root";
 
@@ -70,7 +71,8 @@ const router = createBrowserRouter([
             element: <QRPage />,
           },
           {
-            path: "/poll-analytics",
+            path: "/poll-analytics/:eventId",
+            element: <PollAnalystic />,
           },
           // {
           //   path: "/attendants",
