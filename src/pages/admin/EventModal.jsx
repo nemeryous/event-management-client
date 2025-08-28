@@ -3,7 +3,6 @@ import "./EventManagement.css";
 import {
   useGetEventByIdQuery,
   useUpdateEventMutation,
-  useCreateEventMutation,
   useGetEventManagersByEventIdQuery,
   useRemoveEventManagerMutation,
   useUploadBannerMutation,
@@ -40,7 +39,6 @@ export default function EventModal({
   const [foundUser, setFoundUser] = useState(null);
   const [managerError, setManagerError] = useState("");
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation();
-  const [createEvent] = useCreateEventMutation();
   const accessToken = useSelector((state) => state.auth.accessToken);
   const currentUserId = useSelector((state) => state.auth.userId);
   const dispatch = useDispatch();

@@ -20,6 +20,34 @@ export const eventApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: [...eventListTags],
     }),
+    updateEvent: builder.mutation({
+      query: ({
+        eventId,
+        title,
+        description,
+        start_time,
+        end_time,
+        location,
+        url_docs,
+        max_participants,
+      }) => ({
+        url: `/events/${eventId}`,
+        body: {
+          title,
+          description,
+          start_time,
+          end_time,
+          location,
+          url_docs,
+          max_participants,
+        },
+        method: "PUT",
+      }),
+      invalidatesTags: (result, error, { eventId }) => [
+        { type: "Events", id: eventId },
+        ...eventListTags,
+      ],
+    }),
     deleteEvent: builder.mutation({
       query: (id) => ({
         url: `/events/delete/${id}`,
@@ -240,4 +268,6 @@ export const {
   useRemoveEventManagerMutation,
   useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,
+  useUpdateEventMutation,
+  useDeleteEventMutation,
 } = eventApi;
