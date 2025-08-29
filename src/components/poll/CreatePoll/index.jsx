@@ -4,36 +4,25 @@ import {
   useGetPollsByEventQuery,
   useUpdatePollMutation,
 } from "@api/pollApi";
+import Loading from "@components/common/Loading";
 import {
   faEdit,
   faPlus,
   faPoll,
   faSave,
+  faTableCells,
   faTimesCircle,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { mapBackendStatusToFrontend } from "@utils/eventHelpers";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 /* eslint-disable no-unused-vars */
 const CreatePoll = () => {
+  const navigate = useNavigate();
   const eventId = useParams().id;
-  const [polls, setPolls] = useState([
-    // {
-    //   id: 1,
-    //   title: "Bạn thích phần nào của sự kiện nhất?",
-    //   poll_type: "SINGLE_CHOICE",
-    //   options: [
-    //     { id: 1, content: "Phần thuyết trình", votes: 45 },
-    //     { id: 2, content: "Phần Q&A", votes: 23 },
-    //     { id: 3, content: "Networking", votes: 67 },
-    //     { id: 4, content: "Workshop", votes: 34 },
-    //   ],
-    //   status: "active",
-    //   start_time: "2024-12-15T09:00:00",
-    //   end_time: "2024-12-15T18:00:00",
-    // },
-  ]);
+  const [polls, setPolls] = useState([]);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingPoll, setEditingPoll] = useState(null);
@@ -62,10 +51,13 @@ const CreatePoll = () => {
   });
 
   const [createPoll, { data = {} }] = useCreatePollMutation();
-  const { data: pollsData = [] } = useGetPollsByEventQuery(eventId);
+  const { data: pollsData = [], isLoading: isLoadingPolls } =
+    useGetPollsByEventQuery(eventId);
+
   useEffect(() => {
     setPolls(pollsData || []);
   }, [pollsData.toString()]);
+
   const handleCreatePoll = () => {
     if (newPoll.title && newPoll.options.every((opt) => opt.content.trim())) {
       // Prepare data in PollDTO format
@@ -116,7 +108,6 @@ const CreatePoll = () => {
   const [closePoll] = useClosePollMutation();
   const [updatePoll, { data: updatePollData = {} }] = useUpdatePollMutation();
   const handleEditPoll = (poll) => {
-    console.log(poll);
     setEditPoll({
       event_id: parseInt(eventId),
       title: poll.title,
@@ -219,8 +210,12 @@ const CreatePoll = () => {
     setNewPoll({ ...newPoll, options: newOptions });
   };
 
+  if (isLoadingPolls) {
+    return <Loading message="Đang tải biểu mẫu..." />;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="my-4 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -231,6 +226,13 @@ const CreatePoll = () => {
             Tạo và quản lý các câu hỏi khảo sát cho sự kiện
           </p>
         </div>
+        <button
+          onClick={() => navigate(`/poll-analytics/${eventId}`)}
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+        >
+          <FontAwesomeIcon icon={faTableCells} />
+          Xem thống kê
+        </button>
         <button
           onClick={() => setShowCreateForm(true)}
           className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
@@ -585,14 +587,16 @@ const CreatePoll = () => {
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      poll.status === "active"
+                      poll.status === "OPEN"
                         ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                        : poll.status === "CLOSED"
+                          ? "bg-gray-100 text-gray-800"
+                          : poll.status === "CANCELLED"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
-                    {poll.status === "active"
-                      ? "Đang hoạt động"
-                      : "Đã kết thúc"}
+                    {mapBackendStatusToFrontend(poll.status)}
                   </span>
                   <span>
                     Loại:{" "}

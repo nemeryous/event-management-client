@@ -76,7 +76,6 @@ const addParticipantsSchema = yup.object({
 });
 
 const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
-  // Fetch participants data directly if not provided
   const {
     data: attendantsData,
     isLoading: isLoadingAttendants,
@@ -86,13 +85,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     skip: !eventData?.id,
   });
 
-  // Debug API call
-  if (attendantsError) {
-    console.error("❌ API Error:", attendantsError);
-  }
-
-  // Use API data first, then fall back to props or event data
-  // Priority: API data > eventData.participants > props participants
   const actualParticipants =
     (attendantsData?.data || attendantsData)?.length > 0
       ? attendantsData?.data || attendantsData
@@ -101,17 +93,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
         : participants?.length > 0
           ? participants
           : [];
-
-  // Debug logging
-  console.log("🔍 ParticipantsTab Debug:");
-  console.log("eventData?.id:", eventData?.id);
-  console.log("eventData?.participants:", eventData?.participants);
-  console.log("attendantsData:", attendantsData);
-  console.log("attendantsData?.data:", attendantsData?.data);
-  console.log("participants (props):", participants);
-  console.log("actualParticipants:", actualParticipants);
-  console.log("isLoadingAttendants:", isLoadingAttendants);
-  console.log("API Error:", attendantsError);
 
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
@@ -154,9 +135,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
   };
 
   const filteredParticipants = actualParticipants.filter((participant) => {
-    // Debug each participant
-    console.log("🔍 Filtering participant:", participant);
-
     const matchesSearch =
       participant.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       participant.userEmail?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -169,11 +147,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     }
 
     const result = matchesSearch && matchesFilter;
-    console.log("🔍 Participant filter result:", {
-      matchesSearch,
-      matchesFilter,
-      result,
-    });
     return result;
   });
 
@@ -623,46 +596,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                       <p className="text-sm text-gray-400">
                         Hãy thêm người tham gia vào sự kiện
                       </p>
-                      <div className="mt-4 text-xs text-gray-500">
-                        <p>Debug info:</p>
-                        <p>
-                          actualParticipants length: {actualParticipants.length}
-                        </p>
-                        <p>searchTerm: "{searchTerm}"</p>
-                        <p>filterStatus: "{filterStatus}"</p>
-                        <p>
-                          isLoadingAttendants: {isLoadingAttendants.toString()}
-                        </p>
-                        {attendantsError && (
-                          <p>API Error: {JSON.stringify(attendantsError)}</p>
-                        )}
-                        <p>
-                          Raw attendantsData: {JSON.stringify(attendantsData)}
-                        </p>
-                        <p>eventData?.id: {eventData?.id}</p>
-                        <p>
-                          API URL:{" "}
-                          {eventData?.id
-                            ? `attendants?eventId=${eventData.id}`
-                            : "No event ID"}
-                        </p>
-                        <p>
-                          eventData.participants:{" "}
-                          {eventData?.participants
-                            ? `${eventData.participants.length} items`
-                            : "None"}
-                        </p>
-                        <p>
-                          Data source:{" "}
-                          {(attendantsData?.data || attendantsData)?.length > 0
-                            ? "API"
-                            : eventData?.participants?.length > 0
-                              ? "Event Data"
-                              : participants?.length > 0
-                                ? "Props"
-                                : "None"}
-                        </p>
-                      </div>
                     </div>
                   </td>
                 </tr>

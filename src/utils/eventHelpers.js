@@ -5,7 +5,7 @@ export function formatDate(dateString) {
     month: "long",
     day: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
   });
 }
 
@@ -14,7 +14,7 @@ export function getStatusText(status) {
     upcoming: "Sắp diễn ra",
     ongoing: "Đang diễn ra",
     completed: "Đã kết thúc",
-    cancelled: "Đã hủy"
+    cancelled: "Đã hủy",
   };
   return statusMap[status] || status;
 }
@@ -22,21 +22,21 @@ export function getStatusText(status) {
 // Mapping từ backend enum sang frontend display
 export function mapBackendStatusToFrontend(backendStatus) {
   const statusMap = {
-    "UPCOMING": "upcoming",
-    "ONGOING": "ongoing", 
-    "COMPLETED": "completed",
-    "CANCELLED": "cancelled"
+    UPCOMING: "Sắp diễn ra",
+    ONGOING: "Đang diễn ra",
+    COMPLETED: "Đã kết thúc",
+    CANCELLED: "Đã hủy",
   };
-  return statusMap[backendStatus] || "upcoming";
+  return statusMap[backendStatus] || "Sắp diễn ra";
 }
 
 // Mapping từ frontend display sang backend enum
 export function mapFrontendStatusToBackend(frontendStatus) {
   const statusMap = {
-    "upcoming": "UPCOMING",
-    "ongoing": "ONGOING",
-    "completed": "COMPLETED", 
-    "cancelled": "CANCELLED"
+    upcoming: "UPCOMING",
+    ongoing: "ONGOING",
+    completed: "COMPLETED",
+    cancelled: "CANCELLED",
   };
   return statusMap[frontendStatus] || "UPCOMING";
 }

@@ -1,6 +1,6 @@
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
-import React, { useEffect } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import * as yup from "yup";
@@ -15,8 +15,7 @@ import { useLoginMutation } from "@api/authApi";
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [login, { data = {}, isLoading, error, isError, isSuccess }] =
-    useLoginMutation();
+  const [login, { isLoading, error, isError }] = useLoginMutation();
 
   const formSchema = yup.object().shape({
     email: yup
@@ -46,22 +45,23 @@ const Login = () => {
     return touchedFields[fieldName] && !errors[fieldName];
   };
 
-  function onSubmit(formData) {
-    login(formData);
-  }
+  const onSubmit = async (formData) => {
+    try {
+      const loginData = await login(formData).unwrap();
 
-  useEffect(() => {
-    if (isError) {
-      dispatch(openSnackbar({ message: error?.data?.message, type: "error" }));
-    }
-
-    if (isSuccess) {
+      dispatch(setToken(loginData));
       dispatch(openSnackbar({ message: "Đăng nhập thành công" }));
-      dispatch(setToken(data));
-
       navigate("/");
+    } catch (err) {
+      dispatch(
+        openSnackbar({
+          message: err.data?.message || "Đăng nhập thất bại",
+          type: "error",
+        }),
+      );
+      console.error("Failed to login: ", err);
     }
-  }, [isError, isSuccess, data, error?.data?.message, dispatch, navigate]);
+  };
 
   return (
     <div className="flex w-full items-center justify-center px-8 py-12 lg:w-1/2">
@@ -107,6 +107,7 @@ const Login = () => {
             </div>
             <button
               type="submit"
+              disabled={isLoading}
               className="bg-primary w-full transform cursor-pointer rounded-xl px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-red-500/40 active:scale-95"
             >
               {isLoading && <CircularProgress size={20} className="mr-1" />}

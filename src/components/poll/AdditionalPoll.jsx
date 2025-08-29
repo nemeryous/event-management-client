@@ -20,7 +20,11 @@ const AdditionalPoll = ({ openPopup, selectedPoll }) => {
           {selectedPoll ? (
             <PollItem
               pollQuestion={selectedPoll.title}
-              pollType={selectedPoll.poll_type === 'SINGLE_CHOICE' ? 'Lựa chọn đơn' : 'Lựa chọn nhiều'}
+              pollType={
+                selectedPoll.poll_type === "SINGLE_CHOICE"
+                  ? "Lựa chọn đơn"
+                  : "Lựa chọn nhiều"
+              }
               pollResponsesNum={selectedPoll.total_votes}
               pollOptions={selectedPoll.options}
             />

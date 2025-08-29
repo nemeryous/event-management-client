@@ -11,7 +11,7 @@ import OverviewTab from "./OverviewTab";
 import ParticipantsTab from "./ParticipantsTab";
 import CheckinTab from "./CheckinTab";
 import SettingsTab from "./SettingsTab";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useGetEventByIdQuery } from "@api/eventApi";
 import Loading from "@components/common/Loading";
 
@@ -54,8 +54,9 @@ const EventManagementManage = () => {
         return <ParticipantsTab {...commonProps} />;
       case "checkin":
         return <CheckinTab {...commonProps} />;
-      // case "polls":
-      //   return <PollsTab {...commonProps} />;
+      case "polls":
+        // return <PollsTab {...commonProps} />;
+        return <Navigate to={`/create-poll/${eventId}`} replace />;
       case "settings":
         return <SettingsTab {...commonProps} />;
       default:

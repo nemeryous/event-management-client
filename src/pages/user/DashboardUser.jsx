@@ -60,7 +60,6 @@ const DashboardUser = () => {
   const { data: allEvents } = useGetAllEventsQuery();
   const { data: allManagedEvents } = useGetAllManagedEventsQuery();
 
-  // Chuẩn hóa dữ liệu trả về từ API để luôn có cấu trúc phân trang
   const normalizePageData = (data) => {
     if (!data) return undefined;
     if (Array.isArray(data)) {

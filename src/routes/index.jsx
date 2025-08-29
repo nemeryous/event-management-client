@@ -24,7 +24,7 @@ import HomePageUser from "@pages/user/HomePageUser";
 import CreatePoll from "@components/poll/CreatePoll";
 import PollAnalystic from "@pages/poll/PollAnalystic";
 import AdminRoute from "./AdminRoute";
-import Root from "./Root";
+import RoleLanding from "./RoleLanding";
 
 const router = createBrowserRouter([
   {
@@ -44,8 +44,8 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        path: "/",
-        element: <Root />,
+        index: true,
+        element: <RoleLanding />,
       },
       {
         element: <MainLayout />,
@@ -73,10 +73,6 @@ const router = createBrowserRouter([
           {
             path: "/poll-analytics/:eventId",
             element: <PollAnalystic />,
-          },
-          {
-            path: "*",
-            element: <NotFound />,
           },
           {
             path: "/poll/:pollId",
@@ -128,6 +124,10 @@ const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    path: "*",
+    element: <NotFound />,
   },
 ]);
 
