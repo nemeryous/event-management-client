@@ -373,17 +373,6 @@ const CreatePoll = () => {
                         </button>
                       )}
                     </div>
-                    <div>
-                      <input
-                        type="url"
-                        value={option.image_url}
-                        onChange={(e) =>
-                          updateOption(index, "image_url", e.target.value)
-                        }
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-                        placeholder="URL hình ảnh (tuỳ chọn)"
-                      />
-                    </div>
                   </div>
                 ))}
               </div>

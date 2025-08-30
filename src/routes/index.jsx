@@ -4,7 +4,6 @@ import MainLayout from "@layouts/MainLayout";
 import Login from "@pages/auth/Login";
 import Register from "@pages/auth/Register";
 import PollPageUser from "@pages/user/PollPageUser";
-import QRPage from "@pages/qr/QRPage";
 import DashboardUser from "@pages/user/DashboardUser";
 import { createBrowserRouter } from "react-router-dom";
 
@@ -59,16 +58,12 @@ const router = createBrowserRouter([
             element: <DashboardUser />,
           },
           {
-            path: "/events/:id",
+            path: "/events/:eventId",
             element: <EventDetailUser />,
           },
           {
             path: "/events/:eventId/manage",
             element: <EventManagementManage />,
-          },
-          {
-            path: "/qr/:id",
-            element: <QRPage />,
           },
           {
             path: "/poll-analytics/:eventId",

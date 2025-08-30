@@ -32,7 +32,7 @@ const DashboardUser = () => {
     {
       page: currentPage,
       size: 6,
-      sortBy: sortBy === "date" ? "startTime" : "name",
+      sortBy: sortBy === "date" ? "startTime" : "title",
       sortDir,
       status: activeTab,
     },
@@ -49,7 +49,7 @@ const DashboardUser = () => {
     {
       page: currentPage,
       size: 6,
-      sortBy: sortBy === "date" ? "startTime" : "name",
+      sortBy: sortBy === "date" ? "startTime" : "title",
       sortDir,
     },
     {
@@ -72,7 +72,6 @@ const DashboardUser = () => {
       };
     }
     if (typeof data === "object" && data !== null) {
-      // Nếu backend trả về trực tiếp object sự kiện (không có content)
       if (!("content" in data) && "id" in data) {
         return {
           content: [data],
@@ -146,8 +145,8 @@ const DashboardUser = () => {
   }
 
   return (
-    <div className="my-5 rounded-2xl bg-white p-7 shadow">
-      <h2 className="text-secondary mb-2 text-2xl font-bold md:text-3xl">
+    <div className="my-5 rounded-2xl bg-white p-4 shadow md:p-7">
+      <h2 className="text-secondary mb-2 text-xl font-bold md:text-3xl">
         Chào mừng, {user?.name || "Người dùng"}! 👋
       </h2>
       <p className="mb-8 text-gray-600">
@@ -156,11 +155,11 @@ const DashboardUser = () => {
           : "Khám phá và tham gia các sự kiện thú vị của chúng tôi"}
       </p>
 
-      <nav className="mb-8 flex overflow-hidden rounded-xl shadow-md">
+      <nav className="mb-8 flex overflow-x-auto rounded-xl shadow-md">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            className={`group relative flex-1 cursor-pointer overflow-hidden px-4 py-4 text-sm font-medium transition-all duration-300 md:text-base ${
+            className={`group relative flex-shrink-0 cursor-pointer overflow-hidden px-5 py-4 text-sm font-medium transition-all duration-300 md:px-6 md:text-base ${
               activeTab === tab.id
                 ? "-translate-y-1 border-b-2 border-red-600 bg-white text-red-600 shadow-lg"
                 : "bg-white text-gray-700 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-md"
@@ -187,7 +186,8 @@ const DashboardUser = () => {
       </nav>
 
       <div className="min-h-[400px]">
-        <div className="mb-6 flex items-center justify-between">
+        {/* Thay đổi 4: Khu vực sắp xếp */}
+        <div className="mb-6 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-gray-600">
             Tìm thấy{" "}
             <span className="font-semibold text-gray-900">
@@ -196,7 +196,7 @@ const DashboardUser = () => {
             {isManageTab ? "sự kiện quản lý" : "sự kiện"}
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end md:self-auto">
             <span className="text-sm text-gray-500">Sắp xếp theo:</span>
             <select
               className="rounded border border-gray-300 px-2 py-1 text-sm focus:border-red-500 focus:outline-none"
@@ -240,7 +240,7 @@ const DashboardUser = () => {
 
       {currentData && currentData.totalPages > 1 && (
         <div className="mt-8 flex justify-center">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             <button
               className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               disabled={currentData.first}

@@ -10,6 +10,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { clearToken } from "@store/slices/authSlice"; // Assuming same Redux slice
 import { useLogoutMutation } from "@api/authApi"; // Assuming same API slice
+import { rootApi } from "@api/rootApi";
 
 // Component for mobile menu
 function MobileMenu({ open, onClose, email, handleLogout }) {
@@ -122,9 +123,10 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-    } catch (error) {
-      console.error("Logout failed:", error); // Log error for debugging
+    } catch {
+      //
     }
+    dispatch(rootApi.util.resetApiState());
     dispatch(clearToken());
     navigate("/login");
     setShowAdminMenu(false);

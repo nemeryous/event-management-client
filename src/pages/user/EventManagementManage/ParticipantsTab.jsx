@@ -21,7 +21,7 @@ import {
   useDeleteParticipantMutation,
   useDeleteParticipantsMutation,
   useGetEventManagersByEventQuery,
-  useGetAttendantsByEventQuery,
+  useGetParticipantsByEventQuery,
 } from "@api/attendantApi";
 import { useAssignEventManagerMutation } from "@api/attendantApi";
 import { useRemoveEventManagerMutation } from "@api/attendantApi";
@@ -75,24 +75,17 @@ const addParticipantsSchema = yup.object({
     ),
 });
 
-const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
+const ParticipantsTab = ({ eventData, refetchEvent }) => {
   const {
-    data: attendantsData,
-    isLoading: isLoadingAttendants,
-    error: attendantsError,
-    refetch: refetchAttendants,
-  } = useGetAttendantsByEventQuery(eventData?.id, {
+    data: participantsData,
+    isLoading: isLoadingParticipants,
+    error: participantsError,
+    refetch: refetchParticipants,
+  } = useGetParticipantsByEventQuery(eventData?.id, {
     skip: !eventData?.id,
   });
 
-  const actualParticipants =
-    (attendantsData?.data || attendantsData)?.length > 0
-      ? attendantsData?.data || attendantsData
-      : eventData?.participants?.length > 0
-        ? eventData.participants
-        : participants?.length > 0
-          ? participants
-          : [];
+  const actualParticipants = participantsData || [];
 
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
@@ -136,18 +129,19 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
 
   const filteredParticipants = actualParticipants.filter((participant) => {
     const matchesSearch =
-      participant.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      participant.userEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+      participant.user?.name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      participant.user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
     let matchesFilter = true;
     if (filterStatus === "checked") {
-      matchesFilter = participant.isCheckedIn === true;
+      matchesFilter = participant.check_in_time !== null;
     } else if (filterStatus === "registered") {
-      matchesFilter = participant.isCheckedIn === false;
+      matchesFilter = participant.check_in_time === null;
     }
 
-    const result = matchesSearch && matchesFilter;
-    return result;
+    return matchesSearch && matchesFilter;
   });
 
   const handleSelectParticipant = (participantId) => {
@@ -176,7 +170,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     if (selectedParticipants.length === filteredParticipants.length) {
       setSelectedParticipants([]);
     } else {
-      setSelectedParticipants(filteredParticipants.map((p) => p.userId));
+      setSelectedParticipants(filteredParticipants.map((p) => p.user.id));
     }
   };
 
@@ -197,7 +191,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
       checkedTime: "Ngày điểm danh",
     };
 
-    // Add headers to the first row
     XLSX.utils.sheet_add_aoa(worksheet, [Object.values(headers)], {
       origin: "A1",
     });
@@ -253,9 +246,9 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
       const emails = selectedParticipants
         .map((userId) => {
           const participant = actualParticipants.find(
-            (p) => p.userId === userId,
+            (p) => p.user.id === userId,
           );
-          return participant ? { email: participant.userEmail } : null;
+          return participant ? { email: participant.user.email } : null;
         })
         .filter((email) => email !== null);
 
@@ -283,7 +276,6 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     }
   };
 
-  // Thêm hàm xử lý gán staff cho từng người
   const handleAssignStaffSingle = async (userId) => {
     try {
       await assignManager({
@@ -493,12 +485,12 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
               Xuất Excel
             </button>
             <button
-              onClick={() => refetchAttendants()}
-              disabled={isLoadingAttendants}
+              onClick={() => refetchParticipants()}
+              disabled={isLoadingParticipants}
               className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 px-4 py-2.5 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-gray-700 hover:to-gray-800 hover:shadow-xl focus:ring-4 focus:ring-gray-500/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               <FontAwesomeIcon icon={faRefresh} />
-              {isLoadingAttendants ? "Đang tải..." : "Làm mới"}
+              {isLoadingParticipants ? "Đang tải..." : "Làm mới"}
             </button>
           </div>
         </div>
@@ -510,8 +502,8 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">
               Danh sách người tham gia ({filteredParticipants.length})
-              {isLoadingAttendants && " - Đang tải..."}
-              {attendantsError && ""}
+              {isLoadingParticipants && " - Đang tải..."}
+              {participantsError && ""}
             </h3>
             {selectedParticipants.length > 0 && (
               <div className="flex items-center gap-3">
@@ -568,7 +560,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {isLoadingAttendants ? (
+              {isLoadingParticipants ? (
                 <tr>
                   <td
                     colSpan="7"
@@ -602,17 +594,17 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
               ) : (
                 filteredParticipants.map((participant) => (
                   <tr
-                    key={participant.userId}
+                    key={participant.user.id}
                     className="transition-all duration-200 hover:bg-blue-50/30"
                   >
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
                         checked={selectedParticipants.includes(
-                          participant.userId,
+                          participant.user.id,
                         )}
                         onChange={() =>
-                          handleSelectParticipant(participant.userId)
+                          handleSelectParticipant(participant.user.id)
                         }
                         className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
                       />
@@ -621,31 +613,31 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 font-bold text-white shadow-md">
-                            {participant.userName.charAt(0)}
+                            {participant.user.name.charAt(0)}
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-semibold text-gray-900">
-                            {participant.userName}
+                            {participant.user.name}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                      {participant.userEmail}
+                      {participant.user.email}
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                      {participant.userPhone || "N/A"}
+                      {participant.user.phoneNumber || "N/A"}
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                      {formatDateTime(participant.joinedAt)}
+                      {formatDateTime(participant.joined_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span
-                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(participant.isCheckedIn)}`}
+                          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(participant.check_in_time != null)}`}
                         >
-                          {participant.isCheckedIn ? (
+                          {participant.check_in_time !== null ? (
                             <>
                               <FontAwesomeIcon
                                 icon={faCheckCircle}
@@ -663,9 +655,9 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                             </>
                           )}
                         </span>
-                        {participant.checkedTime && (
+                        {participant.check_in_time && (
                           <div className="mt-1 text-center text-xs text-gray-500">
-                            {formatDateTime(participant.checkedTime)}
+                            {formatDateTime(participant.check_in_time)}
                           </div>
                         )}
                       </div>
@@ -674,20 +666,20 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                       <div className="flex items-center justify-center gap-3">
                         <button
                           onClick={() =>
-                            handleDeleteParticipant(participant.userId)
+                            handleDeleteParticipant(participant.user.id)
                           }
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:ring-2 focus:ring-red-500/20 focus:outline-none"
                         >
                           <FontAwesomeIcon icon={faUserMinus} />
                         </button>
-                        {staffIds.includes(String(participant.userId)) ? (
+                        {staffIds.includes(String(participant.user.id)) ? (
                           <div className="group relative inline-flex h-8 w-28 items-center justify-center">
                             <span className="inline-flex h-8 w-28 items-center justify-center rounded border border-yellow-300 bg-yellow-100 text-xs font-semibold text-yellow-700">
                               STAFF
                             </span>
                             <button
                               onClick={() =>
-                                handleRemoveStaffSingle(participant.userId)
+                                handleRemoveStaffSingle(participant.user.id)
                               }
                               className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
                               title="Xóa STAFF"
@@ -698,7 +690,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                         ) : (
                           <button
                             onClick={() =>
-                              handleAssignStaffSingle(participant.userId)
+                              handleAssignStaffSingle(participant.user.id)
                             }
                             className="inline-flex h-8 w-28 items-center justify-center rounded border border-blue-300 bg-blue-100 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-200"
                             title="Gán quyền STAFF"

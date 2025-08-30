@@ -55,7 +55,6 @@ const EventManagementManage = () => {
       case "checkin":
         return <CheckinTab {...commonProps} />;
       case "polls":
-        // return <PollsTab {...commonProps} />;
         return <Navigate to={`/create-poll/${eventId}`} replace />;
       case "settings":
         return <SettingsTab {...commonProps} />;
@@ -85,19 +84,20 @@ const EventManagementManage = () => {
         </div>
 
         <div className="mb-8">
-          <nav className="flex space-x-1 rounded-xl bg-white p-1 shadow-lg">
+          <nav className="flex justify-center space-x-1 rounded-xl bg-white p-1 shadow-lg md:justify-start">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 rounded-lg px-6 py-3 font-medium transition-all duration-300 ${
+                aria-label={tab.label}
+                className={`flex items-center justify-center gap-3 rounded-lg p-3 font-medium transition-all duration-300 md:px-6 md:py-3 ${
                   activeTab === tab.id
                     ? "scale-105 transform bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
               >
                 <FontAwesomeIcon icon={tab.icon} className="text-lg" />
-                <span>{tab.label}</span>
+                <span className="hidden md:inline">{tab.label}</span>
               </button>
             ))}
           </nav>

@@ -19,7 +19,6 @@ export function getStatusText(status) {
   return statusMap[status] || status;
 }
 
-// Mapping từ backend enum sang frontend display
 export function mapBackendStatusToFrontend(backendStatus) {
   const statusMap = {
     UPCOMING: "Sắp diễn ra",
@@ -30,7 +29,6 @@ export function mapBackendStatusToFrontend(backendStatus) {
   return statusMap[backendStatus] || "Sắp diễn ra";
 }
 
-// Mapping từ frontend display sang backend enum
 export function mapFrontendStatusToBackend(frontendStatus) {
   const statusMap = {
     upcoming: "UPCOMING",
@@ -41,14 +39,12 @@ export function mapFrontendStatusToBackend(frontendStatus) {
   return statusMap[frontendStatus] || "UPCOMING";
 }
 
-// Cắt bớt description nếu quá dài
 export function truncateDescription(description, maxLength = 400) {
   if (!description) return "";
   if (description.length <= maxLength) return description;
   return description.substring(0, maxLength) + "...";
 }
 
-// Cắt bớt title nếu quá dài
 export function truncateTitle(title, maxLength = 50) {
   if (!title) return "";
   if (title.length <= maxLength) return title;
@@ -68,3 +64,32 @@ export function formatTimeRemaining(hours) {
     return `${days} ngày ${remainingHours} giờ`;
   }
 }
+
+export const getDisplayStatus = (event) => {
+  if (!event) return "UNKNOWN";
+
+  if (event.status === "CANCELLED") return "CANCELLED";
+  if (event.status === "COMPLETED") return "COMPLETED";
+
+  if (!event.startTime || !event.endTime) {
+    return event.status || "UNKNOWN";
+  }
+
+  const now = new Date();
+  const startTime = new Date(event.startTime);
+  const endTime = new Date(event.endTime);
+
+  if (now < startTime) {
+    return "UPCOMING";
+  }
+
+  if (now >= startTime && now <= endTime) {
+    return "ONGOING";
+  }
+
+  if (now > endTime) {
+    return "COMPLETED";
+  }
+
+  return event.status;
+};

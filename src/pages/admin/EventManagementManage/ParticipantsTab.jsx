@@ -21,11 +21,10 @@ import {
   useDeleteParticipantMutation,
   useDeleteParticipantsMutation,
   useGetEventManagersByEventQuery,
-  useGetAttendantsByEventQuery,
+  useGetParticipantsByEventQuery,
 } from "@api/attendantApi";
 import { useAssignEventManagerMutation } from "@api/attendantApi";
 import { useRemoveEventManagerMutation } from "@api/attendantApi";
-import { useUploadBannerMutation } from "@api/eventApi";
 
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
@@ -77,25 +76,22 @@ const addParticipantsSchema = yup.object({
 });
 
 const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
-  const { data: attendantsData, isLoading: isLoadingAttendants, error: attendantsError, refetch: refetchAttendants } = useGetAttendantsByEventQuery(eventData?.id, {
-    skip: !eventData?.id
+  const {
+    data: participantsData,
+    isLoading: isLoadingParticipants,
+    refetch: refetchParticipants,
+  } = useGetParticipantsByEventQuery(eventData?.id, {
+    skip: !eventData?.id,
   });
 
-  const actualParticipants = (attendantsData?.data || attendantsData)?.length > 0
-    ? (attendantsData?.data || attendantsData)
-    : eventData?.participants?.length > 0
-      ? eventData.participants
-      : participants?.length > 0
-        ? participants
-        : [];
-
-  console.log('🔍 ParticipantsTab Debug:');
-  console.log('eventData?.id:', eventData?.id);
-  console.log('eventData?.participants:', eventData?.participants);
-  console.log('attendantsData:', attendantsData);
-  console.log('attendantsData?.data:', attendantsData?.data);
-  console.log('participants (props):', participants);
-  console.log('actualParticipants:', actualParticipants);
+  const actualParticipants =
+    (participantsData?.data || participantsData)?.length > 0
+      ? participantsData?.data || participantsData
+      : eventData?.participants?.length > 0
+        ? eventData.participants
+        : participants?.length > 0
+          ? participants
+          : [];
 
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,30 +112,10 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     { errorDelParticipants, isErrorDelParticipants, isSuccessDelParticipants },
   ] = useDeleteParticipantsMutation();
 
-  const [
-    assignManager,
-    {
-      error: errorAssignEventManager,
-      isError: isErrorAssignEventManager,
-      isSuccess: isSuccessAssignEventManager,
-    },
-  ] = useAssignEventManagerMutation();
+  const [assignManager, { error: errorAssignEventManager }] =
+    useAssignEventManagerMutation();
   const [removeManager, { error: errorRemoveManager }] =
     useRemoveEventManagerMutation();
-
-  const [uploadBanner, { isLoading: isUploadingBanner }] = useUploadBannerMutation();
-
-  const handleBannerChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      await uploadBanner({ eventId: eventData.id, file }).unwrap();
-      dispatch(openSnackbar({ message: "Tải lên banner thành công!" }));
-      if (refetchEvent) refetchEvent();
-    } catch (err) {
-      dispatch(openSnackbar({ message: err?.data?.message || "Tải lên banner thất bại!", type: "error" }));
-    }
-  };
 
   const {
     register,
@@ -233,7 +209,10 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Participants");
 
-    XLSX.writeFile(workbook, `event_participants_${eventData?.title || 'event'}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `event_participants_${eventData?.title || "event"}.xlsx`,
+    );
   };
 
   const onSubmit = async (data) => {
@@ -263,7 +242,9 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
     try {
       const emails = selectedParticipants
         .map((userId) => {
-          const participant = actualParticipants.find((p) => p.userId === userId);
+          const participant = actualParticipants.find(
+            (p) => p.userId === userId,
+          );
           return participant ? { email: participant.userEmail } : null;
         })
         .filter((email) => email !== null);
@@ -498,8 +479,8 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
       )}
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between flex-wrap">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center flex-wrap">
+        <div className="flex flex-col flex-wrap gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-center">
             <div className="relative">
               <FontAwesomeIcon
                 icon={faSearch}
@@ -524,7 +505,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
             </select>
           </div>
 
-          <div className="flex flex-row flex-wrap gap-2 items-center justify-start w-full sm:w-auto">
+          <div className="flex w-full flex-row flex-wrap items-center justify-start gap-2 sm:w-auto">
             <button
               onClick={() => setShowAddModal(true)}
               className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 px-3 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-green-700 hover:to-green-800 hover:shadow-xl focus:ring-4 focus:ring-green-500/30 focus:outline-none"
@@ -542,25 +523,23 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
               Xuất Excel
             </button>
             <button
-              onClick={() => refetchAttendants()}
-              disabled={isLoadingAttendants}
-              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 px-3 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-gray-700 hover:to-gray-800 hover:shadow-xl focus:ring-4 focus:ring-gray-500/30 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => refetchParticipants()}
+              disabled={isLoadingParticipants}
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 px-3 py-2 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-gray-700 hover:to-gray-800 hover:shadow-xl focus:ring-4 focus:ring-gray-500/30 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               <FontAwesomeIcon icon={faRefresh} />
-              {isLoadingAttendants ? 'Đang tải...' : 'Làm mới'}
+              {isLoadingParticipants ? "Đang tải..." : "Làm mới"}
             </button>
           </div>
         </div>
       </div>
 
-      {/* DÒNG NÀY ĐÃ ĐƯỢC SỬA: xóa class `mt-6` */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-lg">
         <div className="border-b border-gray-200 bg-gray-50/50 p-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">
               Danh sách người tham gia ({filteredParticipants.length})
-              {isLoadingAttendants && ' - Đang tải...'}
-
+              {isLoadingParticipants && " - Đang tải..."}
             </h3>
             {selectedParticipants.length > 0 && (
               <div className="flex items-center gap-2">
@@ -580,12 +559,12 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto max-h-96">
+        <div className="max-h-96 overflow-x-auto">
           <div className="min-w-max">
             <table className="w-full">
-              <thead className="bg-gray-50 sticky top-0">
+              <thead className="sticky top-0 bg-gray-50">
                 <tr>
-                  <th className="px-6 py-4 text-left w-16">
+                  <th className="w-16 px-6 py-4 text-left">
                     <input
                       type="checkbox"
                       checked={
@@ -597,52 +576,55 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                       className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
                     />
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-48">
+                  <th className="w-48 px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                     Họ tên
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-64">
+                  <th className="w-64 px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-32">
+                  <th className="w-32 px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                     Số điện thoại
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-40">
+                  <th className="w-40 px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                     Ngày đăng ký
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase w-32">
+                  <th className="w-32 px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold tracking-wider text-gray-600 uppercase w-40">
+                  <th className="w-40 px-6 py-4 text-center text-xs font-semibold tracking-wider text-gray-600 uppercase">
                     Thao tác
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
-                {isLoadingAttendants ? (
+                {isLoadingParticipants ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                    <td
+                      colSpan="7"
+                      className="px-6 py-8 text-center text-gray-500"
+                    >
                       <div className="flex items-center justify-center">
                         <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                        <span className="ml-2 text-sm">Đang tải danh sách người tham gia...</span>
+                        <span className="ml-2 text-sm">
+                          Đang tải danh sách người tham gia...
+                        </span>
                       </div>
                     </td>
                   </tr>
                 ) : filteredParticipants.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                    <td
+                      colSpan="7"
+                      className="px-6 py-8 text-center text-gray-500"
+                    >
                       <div className="text-center">
                         <div className="mb-2 text-3xl">👥</div>
-                        <p className="text-base font-medium">Chưa có người tham gia nào</p>
-                        <p className="text-xs text-gray-400">Hãy thêm người tham gia vào sự kiện</p>
-                        <div className="mt-3 text-xs text-gray-500">
-                          <p>Debug info:</p>
-                          <p>actualParticipants length: {actualParticipants.length}</p>
-                          <p>Raw attendantsData: {JSON.stringify(attendantsData)}</p>
-                          <p>eventData?.id: {eventData?.id}</p>
-                          <p>API URL: {eventData?.id ? `events/${eventData.id}/participants` : 'No event ID'}</p>
-                          <p>eventData.participants: {eventData?.participants ? `${eventData.participants.length} items` : 'None'}</p>
-                          <p>Data source: {(attendantsData?.data || attendantsData)?.length > 0 ? 'API' : eventData?.participants?.length > 0 ? 'Event Data' : participants?.length > 0 ? 'Props' : 'None'}</p>
-                        </div>
+                        <p className="text-base font-medium">
+                          Chưa có người tham gia nào
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Hãy thêm người tham gia vào sự kiện
+                        </p>
                       </div>
                     </td>
                   </tr>
@@ -652,7 +634,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                       key={participant.userId}
                       className="transition-all duration-200 hover:bg-blue-50/30"
                     >
-                      <td className="px-6 py-4 w-16">
+                      <td className="w-16 px-6 py-4">
                         <input
                           type="checkbox"
                           checked={selectedParticipants.includes(
@@ -664,7 +646,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                           className="h-4 w-4 rounded border-2 border-gray-300 text-blue-600 transition-colors focus:ring-2 focus:ring-blue-500"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap w-48">
+                      <td className="w-48 px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 font-bold text-white shadow-md">
@@ -678,16 +660,16 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600 w-64">
+                      <td className="w-64 px-6 py-4 text-sm whitespace-nowrap text-gray-600">
                         {participant.userEmail}
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600 w-32">
+                      <td className="w-32 px-6 py-4 text-sm whitespace-nowrap text-gray-600">
                         {participant.userPhone || "N/A"}
                       </td>
-                      <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600 w-40">
+                      <td className="w-40 px-6 py-4 text-sm whitespace-nowrap text-gray-600">
                         {formatDateTime(participant.joinedAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap w-32">
+                      <td className="w-32 px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
                           <span
                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(participant.isCheckedIn)}`}
@@ -717,7 +699,7 @@ const ParticipantsTab = ({ participants = [], eventData, refetchEvent }) => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap w-40">
+                      <td className="w-40 px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center justify-center gap-3">
                           <button
                             onClick={() =>

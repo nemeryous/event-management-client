@@ -71,3 +71,17 @@ export const formatJoinedTime = (joinedAt) => {
     minute: "2-digit",
   });
 };
+
+export const getPollState = (startTime, endTime) => {
+  const now = new Date();
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
+  if (now < start) {
+    return "UPCOMING";
+  }
+  if (now >= start && now <= end) {
+    return "ACTIVE";
+  }
+  return "ENDED";
+};

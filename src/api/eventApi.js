@@ -50,7 +50,7 @@ export const eventApi = rootApi.injectEndpoints({
     }),
     deleteEvent: builder.mutation({
       query: (id) => ({
-        url: `/events/delete/${id}`,
+        url: `/events/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: [{ type: "Event", id: "LIST" }],
@@ -112,43 +112,8 @@ export const eventApi = rootApi.injectEndpoints({
         url: `/events/join/${eventToken}`,
         method: "POST",
       }),
-      invalidatesTags: (result, error, arg) => [
+      invalidatesTags: (result) => [
         { type: "Events", id: result?.eventId },
-        ...eventListTags,
-      ],
-    }),
-    getEventQR: builder.query({
-      query: (id) => ({
-        url: `/attendants/get-qr-check/${id}`,
-        method: "GET",
-        responseHandler: (response) => response.blob(),
-      }),
-    }),
-    updateEvent: builder.mutation({
-      query: ({
-        eventId,
-        title,
-        description,
-        start_time,
-        end_time,
-        location,
-        url_docs,
-        max_participants,
-      }) => ({
-        url: `/events/${eventId}`,
-        body: {
-          title,
-          description,
-          start_time,
-          end_time,
-          location,
-          url_docs,
-          max_participants,
-        },
-        method: "PUT",
-      }),
-      invalidatesTags: (result, error, { eventId }) => [
-        { type: "Events", id: eventId },
         ...eventListTags,
       ],
     }),
@@ -167,32 +132,6 @@ export const eventApi = rootApi.injectEndpoints({
         ...eventListTags,
       ],
     }),
-    uploadBanner: builder.mutation({
-      query: ({ eventId, file, accessToken }) => {
-        const formData = new FormData();
-        const allowedExt = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
-        const ext = file.name.split(".").pop().toLowerCase();
-        if (!allowedExt.includes(ext)) {
-          throw new Error(
-            "File banner phải là ảnh (png, jpg, jpeg, gif, webp, svg)",
-          );
-        }
-        formData.append("banner", file);
-        return {
-          url: `/events/${eventId}/upload-banner`,
-          method: "PUT",
-          body: formData,
-          headers: accessToken
-            ? { Authorization: `Bearer ${accessToken}` }
-            : {},
-        };
-      },
-      invalidatesTags: (result, error, { eventId }) => [
-        { type: "Events", id: eventId },
-        ...eventListTags,
-      ],
-    }),
-
     removeEventManager: builder.mutation({
       query: (dto) => ({
         url: "/event-manager/remove-manager",
@@ -262,9 +201,7 @@ export const {
   useGetManagedEventsQuery,
   useGetAllManagedEventsQuery,
   useJoinEventMutation,
-  useGetEventQRQuery,
   useUploadEventBannerMutation,
-  useUploadBannerMutation,
   useRemoveEventManagerMutation,
   useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,

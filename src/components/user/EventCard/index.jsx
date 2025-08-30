@@ -9,6 +9,7 @@ import { FallbackImage } from "./FallbackBanner";
 import { useDispatch } from "react-redux";
 import { useJoinEventMutation } from "@api/eventApi";
 import { openSnackbar } from "@store/slices/snackbarSlice";
+import EventStatusBadge from "../EventStatusBadge";
 
 const EventCard = ({ event, isManageMode = false }) => {
   const dispatch = useDispatch();
@@ -26,56 +27,29 @@ const EventCard = ({ event, isManageMode = false }) => {
     }
   };
 
-  if (isJoining) {
-    dispatch(
-      openSnackbar({ message: "Đang tham gia sự kiện...", type: "info" }),
-    );
-  }
-
-  if (isJoined) {
-    dispatch(
-      openSnackbar({ message: "Tham gia sự kiện thành công", type: "success" }),
-    );
-  }
-
-  if (joinError) {
-    dispatch(
-      openSnackbar({
-        message: joinError?.data?.message || "Không thể tham gia sự kiện",
-        type: "error",
-      }),
-    );
-  }
-
-  const getBadgeText = (status) => {
-    switch (status) {
-      case "UPCOMING":
-        return "Sắp diễn ra";
-      case "ONGOING":
-        return "Đang diễn ra";
-      case "COMPLETED":
-        return "Đã hoàn thành";
-      case "CANCELLED":
-        return "Đã hủy";
-      default:
-        return "Sắp diễn ra";
+  useEffect(() => {
+    if (isJoining) {
+      dispatch(
+        openSnackbar({ message: "Đang tham gia sự kiện...", type: "info" }),
+      );
     }
-  };
-
-  const getBadgeColor = (status) => {
-    switch (status) {
-      case "UPCOMING":
-        return "bg-blue-500 text-white";
-      case "ONGOING":
-        return "bg-green-500 text-white animate-pulse";
-      case "COMPLETED":
-        return "bg-gray-500 text-white";
-      case "CANCELLED":
-        return "bg-red-500 text-white";
-      default:
-        return "bg-blue-500 text-white";
+    if (isJoined) {
+      dispatch(
+        openSnackbar({
+          message: "Tham gia sự kiện thành công",
+          type: "success",
+        }),
+      );
     }
-  };
+    if (joinError) {
+      dispatch(
+        openSnackbar({
+          message: joinError?.data?.message || "Không thể tham gia sự kiện",
+          type: "error",
+        }),
+      );
+    }
+  }, [isJoining, isJoined, joinError, dispatch]);
 
   const [imageState, setImageState] = useState({
     loaded: false,
@@ -141,10 +115,8 @@ const EventCard = ({ event, isManageMode = false }) => {
           </>
         )}
 
-        <div
-          className={`absolute top-4 right-4 z-20 rounded-full px-3 py-1 text-xs font-bold shadow-lg backdrop-blur-sm ${getBadgeColor(event.status)}`}
-        >
-          {getBadgeText(event.status)}
+        <div className="absolute top-4 right-4 z-20">
+          <EventStatusBadge event={event} />
         </div>
 
         {event.status === "UPCOMING" && (
