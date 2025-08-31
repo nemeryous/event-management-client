@@ -258,21 +258,27 @@ export const eventApi = rootApi.injectEndpoints({
             (draft) => {
               try {
                 if (!Array.isArray(draft)) return;
-                const exists = draft.some((m) => String(m.user_id) === String(dto.user_id));
+                const exists = draft.some(
+                  (m) => String(m.user_id) === String(dto.user_id),
+                );
                 if (!exists) {
-                  draft.push({ user_id: dto.user_id, roleType: dto.roleType || "MANAGE" });
+                  draft.push({
+                    user_id: dto.user_id,
+                    roleType: dto.roleType || "MANAGE",
+                  });
                 } else {
                   for (let i = 0; i < draft.length; i++) {
                     if (String(draft[i].user_id) === String(dto.user_id)) {
-                      draft[i].roleType = dto.roleType || draft[i].roleType || "MANAGE";
+                      draft[i].roleType =
+                        dto.roleType || draft[i].roleType || "MANAGE";
                     }
                   }
                 }
               } catch (_) {
                 // no-op
               }
-            }
-          )
+            },
+          ),
         );
         try {
           await queryFulfilled;
@@ -302,13 +308,15 @@ export const eventApi = rootApi.injectEndpoints({
             (draft) => {
               try {
                 if (!Array.isArray(draft)) return;
-                const idx = draft.findIndex((m) => String(m.user_id) === String(dto.user_id));
+                const idx = draft.findIndex(
+                  (m) => String(m.user_id) === String(dto.user_id),
+                );
                 if (idx !== -1) draft.splice(idx, 1);
               } catch (_) {
                 // no-op
               }
-            }
-          )
+            },
+          ),
         );
         try {
           await queryFulfilled;
@@ -323,11 +331,17 @@ export const eventApi = rootApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (response) => {
-        const list = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
-        return list.map((m) => ({
-          user_id: m.user_id ?? m.userId ?? m.id ?? m.managerId,
-          roleType: m.roleType ?? m.role ?? m.role_type ?? "MANAGE",
-        })).filter((m) => m.user_id);
+        const list = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray(response)
+            ? response
+            : [];
+        return list
+          .map((m) => ({
+            user_id: m.user_id ?? m.userId ?? m.id ?? m.managerId,
+            roleType: m.roleType ?? m.role ?? m.role_type ?? "MANAGE",
+          }))
+          .filter((m) => m.user_id);
       },
       providesTags: (result, error, eventId) => [
         { type: "EventManager", id: eventId },
@@ -364,4 +378,5 @@ export const {
   useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,
   useDeleteEventMutation,
+  useUpdateEventMutation,
 } = eventApi;
