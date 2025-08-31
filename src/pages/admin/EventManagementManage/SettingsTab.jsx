@@ -3,8 +3,8 @@ import {
   useUploadEventBannerMutation,
 } from "@api/eventApi";
 import FormField from "@components/common/FormField";
+import SunEditorEditor from "@components/common/SunEditorEditor";
 import TextInput from "@components/common/TextInput";
-import TinyMCEEditor from "@components/common/TinyMCEEditor";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -189,7 +189,7 @@ const SettingsTab = ({
                 name="description"
                 control={control}
                 render={({ field: { onChange, value } }) => (
-                  <TinyMCEEditor value={value} onChange={onChange} />
+                  <SunEditorEditor value={value} onChange={onChange} />
                 )}
               />
             </div>

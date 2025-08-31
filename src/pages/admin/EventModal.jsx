@@ -15,7 +15,11 @@ const EventModal = ({ open, onClose, initialData }) => {
         </h2>
 
         <div className="rounded-2xl bg-white p-6 shadow-lg">
-          <EventForm onSuccess={onClose} onCancel={onClose} initialData={initialData} />
+          <EventForm
+            onSuccess={onClose}
+            onCancel={onClose}
+            initialData={initialData}
+          />
         </div>
       </div>
     </div>

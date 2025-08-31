@@ -1,7 +1,7 @@
 import { useUpdateEventMutation } from "@api/eventApi";
 import FormField from "@components/common/FormField";
+import SunEditorEditor from "@components/common/SunEditorEditor";
 import TextInput from "@components/common/TextInput";
-import TinyMCEEditor from "@components/common/TinyMCEEditor";
 import BannerUpload from "@components/user/BannerUpload";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import React, { useEffect } from "react";
@@ -96,7 +96,11 @@ const SettingsTab = ({ eventData }) => {
               name="description"
               control={control}
               render={({ field: { onChange, value } }) => (
-                <TinyMCEEditor value={value} onChange={onChange} />
+                <SunEditorEditor
+                  value={value}
+                  onChange={onChange}
+                  placeholder={"Nhập mô tả sự kiện..."}
+                />
               )}
             />
             {errors.description && (
