@@ -59,11 +59,12 @@ const EventForm = ({ onSuccess, onCancel, initialData }) => {
       const eventId = updatedEvent.id || initialData?.id; // Lấy ID của sự kiện
 
       // 2. Nếu có file banner được chọn, tiến hành upload
+      console.log({ selectedBannerFile });
       if (selectedBannerFile) {
-        console.log(selectedBannerFile)
+        console.log({ selectedBannerFile });
         await uploadBanner({
           eventId: eventId,
-          file: selectedBannerFile,
+          bannerFile: selectedBannerFile,
         }).unwrap();
         dispatch(
           openSnackbar({
