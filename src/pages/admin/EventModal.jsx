@@ -3,21 +3,15 @@ import "./EventManagement.css";
 import {
   useGetEventByIdQuery,
   useUpdateEventMutation,
-  useCreateEventMutation,
-  useAssignEventManagerMutation,
   useGetEventManagersByEventIdQuery,
   useRemoveEventManagerMutation,
   useUploadBannerMutation,
 } from "../../api/eventApi";
+import { useAssignEventManagerMutation } from "@api/attendantApi";
 import { useGetUserNameQuery, useGetAllUsersQuery } from "../../api/authApi";
 import { useSelector, useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
-import {
-  mapBackendStatusToFrontend,
-  mapFrontendStatusToBackend,
-  truncateDescription,
-  truncateTitle,
-} from "../../utils/eventHelpers";
+import { truncateDescription, truncateTitle } from "../../utils/eventHelpers";
 import { Editor } from "@tinymce/tinymce-react";
 
 export default function EventModal({
@@ -45,7 +39,6 @@ export default function EventModal({
   const [foundUser, setFoundUser] = useState(null);
   const [managerError, setManagerError] = useState("");
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation();
-  const [createEvent] = useCreateEventMutation();
   const accessToken = useSelector((state) => state.auth.accessToken);
   const currentUserId = useSelector((state) => state.auth.userId);
   const dispatch = useDispatch();
@@ -537,6 +530,7 @@ export default function EventModal({
                 }}
               >
                 <Editor
+                  apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
                   initialValue={form.description}
                   onEditorChange={(content) => handleDescriptionChange(content)}
                   init={{

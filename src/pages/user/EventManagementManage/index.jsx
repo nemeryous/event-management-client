@@ -4,6 +4,7 @@ import {
   faUsers,
   faChartBar,
   faCog,
+  faPoll,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import OverviewTab from "./OverviewTab";
@@ -34,6 +35,7 @@ const EventManagementManage = () => {
     { id: "overview", label: "Tổng quan", icon: faChartBar },
     { id: "participants", label: "Người tham gia", icon: faUsers },
     { id: "checkin", label: "Điểm danh", icon: faQrcode },
+    { id: "polls", label: "Bình chọn", icon: faPoll },
     { id: "settings", label: "Cài đặt", icon: faCog },
   ];
 
@@ -52,6 +54,8 @@ const EventManagementManage = () => {
         return <ParticipantsTab {...commonProps} />;
       case "checkin":
         return <CheckinTab {...commonProps} />;
+      // case "polls":
+      //   return <PollsTab {...commonProps} />;
       case "settings":
         return <SettingsTab {...commonProps} />;
       default:

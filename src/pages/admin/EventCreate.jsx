@@ -65,8 +65,8 @@ export default function EventCreate() {
     defaultValues: {
       title: "Quốc Khánh",
       description: "<p><strong>2/9</strong></p>",
-      startTime: "2025-08-22T16:02",
-      endTime: "2025-08-30T16:02",
+      startTime: "2025-08-30T16:02",
+      endTime: "2025-09-02T16:02",
       location: "VKU",
       maxParticipants: "100",
       urlDocs: "https://example.com/docs",
