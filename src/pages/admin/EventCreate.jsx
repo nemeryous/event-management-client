@@ -14,7 +14,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { faUpload } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import FormField from "@components/common/FormField";
-import TinyMCEEditor from "@components/common/TinyMCEEditor";
+import SunEditorEditor from "@components/common/SunEditorEditor";
 
 const schema = yup.object().shape({
   title: yup.string().required("Tên sự kiện là bắt buộc"),
@@ -63,13 +63,13 @@ export default function EventCreate() {
     resolver: yupResolver(schema),
     mode: "onChange",
     defaultValues: {
-      title: "Quốc Khánh",
-      description: "<p><strong>2/9</strong></p>",
-      startTime: "2025-08-30T16:02",
-      endTime: "2025-09-02T16:02",
-      location: "VKU",
-      maxParticipants: "100",
-      urlDocs: "https://example.com/docs",
+      title: "",
+      description: "",
+      startTime: "",
+      endTime: "",
+      location: "",
+      maxParticipants: "",
+      urlDocs: "",
     },
   });
 
@@ -193,7 +193,7 @@ export default function EventCreate() {
               <Controller
                 name="description"
                 control={control}
-                render={({ field }) => <TinyMCEEditor {...field} />}
+                render={({ field }) => <SunEditorEditor {...field} />}
               />
               {errors.description && (
                 <p className="mt-1 text-sm text-red-500">

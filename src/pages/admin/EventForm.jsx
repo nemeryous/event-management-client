@@ -8,7 +8,7 @@ import {
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
-import TinyMCEEditor from "@components/common/TinyMCEEditor";
+import SunEditorEditor from "@components/common/SunEditorEditor";
 
 const EventForm = ({ onSuccess, onCancel, initialData }) => {
   console.log({ initialData });
@@ -135,7 +135,11 @@ const EventForm = ({ onSuccess, onCancel, initialData }) => {
           name="description"
           control={control}
           render={({ field }) => (
-            <TinyMCEEditor value={field.value} onChange={field.onChange} />
+            <SunEditorEditor
+              value={field.value}
+              onChange={field.onChange}
+              placeholder={"Nhập mô tả sự kiện..."}
+            />
           )}
         />
       </div>

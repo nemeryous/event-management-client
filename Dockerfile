@@ -1,22 +1,13 @@
-FROM node:18-alpine as build
-
+FROM node:20-slim AS build
 WORKDIR /app
-
 COPY package*.json ./
-
-RUN npm ci
-
+RUN npm install
 COPY . .
-ENV NODE_OPTIONS="--openssl-legacy-provider"
-
 RUN npm run build
 
-FROM nginx:alpine
-
-COPY --from=build /app/dist /usr/share/nginx/html
-
-COPY nginx.conf /etc/nginx/nginx.conf
-
+FROM nginx:1.25-alpine
+WORKDIR /usr/share/nginx/html
+RUN rm -rf ./*
+COPY --from=build /app/dist .
 EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
