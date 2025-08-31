@@ -8,10 +8,13 @@ const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_BASE_URL,
   credentials: "include",
   prepareHeaders: (headers, { getState }) => {
-    const state = getState();
-    const token = state.auth?.accessToken;
-    const tokenType = state.auth?.tokenType || "Bearer";
-    if (token) headers.set("Authorization", `${tokenType} ${token}`);
+    const token = getState().auth.accessToken;
+    const tokenType = getState().auth.tokenType;
+
+    if (token) {
+      headers.set("Authorization", `${tokenType} ${token}`);
+    }
+
     return headers;
   },
 });
@@ -24,7 +27,10 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
   if (result.error && result.error.status === 401) {
     if (!mutex.isLocked()) {
       const release = await mutex.acquire();
+
       try {
+        console.log("Access token hết hạn, đang làm mới...");
+
         const refreshResult = await baseQuery(
           {
             url: "/auth/refresh-token",
@@ -36,9 +42,15 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
 
         if (refreshResult.data) {
           api.dispatch(setToken(refreshResult.data));
+
           result = await baseQuery(args, api, extraOptions);
         } else {
+          console.log("Refresh token thất bại, đăng xuất người dùng.");
           api.dispatch(clearToken());
+
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
         }
       } finally {
         release();

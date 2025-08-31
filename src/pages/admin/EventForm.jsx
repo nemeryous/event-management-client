@@ -20,7 +20,6 @@ const EventForm = ({ onSuccess, onCancel, initialData }) => {
   console.log({ updatedEventData });
 
   const [selectedBannerFile, setSelectedBannerFile] = useState(null);
-
   const {
     control,
     handleSubmit,
@@ -33,7 +32,7 @@ const EventForm = ({ onSuccess, onCancel, initialData }) => {
       endTime: initialData?.end_time || "",
       location: initialData?.location || "",
       maxParticipants: initialData?.max_participants || "",
-      urlDocs: "",
+      urlDocs: initialData?.url_docs || "",
     },
   });
 
@@ -61,6 +60,7 @@ const EventForm = ({ onSuccess, onCancel, initialData }) => {
 
       // 2. Nếu có file banner được chọn, tiến hành upload
       if (selectedBannerFile) {
+        console.log(selectedBannerFile)
         await uploadBanner({
           eventId: eventId,
           file: selectedBannerFile,
