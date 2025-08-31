@@ -51,6 +51,12 @@ const Header = () => {
           >
             Đăng xuất
           </button>
+          <button
+            className="text-secondary ml-4 cursor-pointer text-sm hover:-translate-y-0.5"
+            onClick={() => navigate("/change-password")}
+          >
+            Đổi mật khẩu
+          </button>
           {canGoBack && (
             <Link
               to={"#"}

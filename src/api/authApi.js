@@ -48,6 +48,17 @@ export const authApi = rootApi.injectEndpoints({
       }),
       providesTags: ["UserList"],
     }),
+    changePassword: builder.mutation({
+      query: ({ oldPassword, newPassword, confirmPassword }) => ({
+        url: "/auth/change-password",
+        method: "POST",
+        body: {
+          old_password: oldPassword,
+          new_password: newPassword,
+          confirm_new_password: confirmPassword,
+        },
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -61,4 +72,5 @@ export const {
   useGetAllUsersQuery,
   useEnableUserMutation,
   useDeleteUserMutation,
+  useChangePasswordMutation,
 } = authApi;

@@ -30,6 +30,7 @@ export const eventApi = rootApi.injectEndpoints({
         location,
         url_docs,
         max_participants,
+        created_at,
       }) => ({
         url: `/events/${eventId}`,
         body: {
@@ -40,6 +41,7 @@ export const eventApi = rootApi.injectEndpoints({
           location,
           url_docs,
           max_participants,
+          created_at,
         },
         method: "PUT",
       }),

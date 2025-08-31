@@ -24,6 +24,7 @@ import CreatePoll from "@components/poll/CreatePoll";
 import PollAnalystic from "@pages/poll/PollAnalystic";
 import AdminRoute from "./AdminRoute";
 import RoleLanding from "./RoleLanding";
+import ChangePassword from "@pages/user/ChangePassword";
 
 const router = createBrowserRouter([
   {
@@ -80,6 +81,10 @@ const router = createBrowserRouter([
           {
             path: "/events/check-in/:eventToken",
             element: <CheckinResultPage />,
+          },
+          {
+            path: "change-password",
+            element: <ChangePassword />,
           },
         ],
       },

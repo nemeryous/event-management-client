@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import {
-  useCreateEventMutation,
+  useUpdateEventMutation,
   useUploadEventBannerMutation,
 } from "@api/eventApi";
 import { openSnackbar } from "@store/slices/snackbarSlice";
@@ -10,11 +10,14 @@ import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
 import TinyMCEEditor from "@components/common/TinyMCEEditor";
 
-const EventForm = ({ onSuccess, onCancel }) => {
+const EventForm = ({ onSuccess, onCancel, initialData }) => {
+  console.log({ initialData });
   const dispatch = useDispatch();
-  const [createEvent, { isLoading: isCreating }] = useCreateEventMutation();
+  const [updateEvent, { data: updatedEventData, isLoading: isUpdating }] =
+    useUpdateEventMutation();
   const [uploadBanner, { isLoading: isUploadingBanner }] =
     useUploadEventBannerMutation();
+  console.log({ updatedEventData });
 
   const [selectedBannerFile, setSelectedBannerFile] = useState(null);
 
@@ -24,12 +27,12 @@ const EventForm = ({ onSuccess, onCancel }) => {
     formState: { isSubmitting, errors },
   } = useForm({
     defaultValues: {
-      title: "",
-      description: "",
-      startTime: "",
-      endTime: "",
-      location: "",
-      maxParticipants: "",
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      startTime: initialData?.start_time || "",
+      endTime: initialData?.end_time || "",
+      location: initialData?.location || "",
+      maxParticipants: initialData?.max_participants || "",
       urlDocs: "",
     },
   });
@@ -42,47 +45,51 @@ const EventForm = ({ onSuccess, onCancel }) => {
     const payload = {
       title: formData.title,
       description: formData.description,
-      start_time: `${formData.startTime}:00`,
-      end_time: `${formData.endTime}:00`,
+      start_time: `${formData.startTime}`,
+      end_time: `${formData.endTime}`,
       location: formData.location,
       max_participants: Number(formData.maxParticipants) || null,
       url_docs: formData.urlDocs,
+      created_at: initialData?.created_at,
+      eventId: initialData?.id,
     };
 
     try {
-      // 1. Tạo sự kiện trước
-      const newEvent = await createEvent(payload).unwrap();
-      const newEventId = newEvent.id; // Lấy ID của sự kiện vừa tạo
+      // 1. Cập nhật sự kiện
+      const updatedEvent = await updateEvent(payload).unwrap();
+      const eventId = updatedEvent.id || initialData?.id; // Lấy ID của sự kiện
 
       // 2. Nếu có file banner được chọn, tiến hành upload
       if (selectedBannerFile) {
         await uploadBanner({
-          eventId: newEventId,
+          eventId: eventId,
           file: selectedBannerFile,
         }).unwrap();
         dispatch(
-          openSnackbar({ message: "Tạo sự kiện và tải banner thành công!" }),
+          openSnackbar({
+            message: "Cập nhật sự kiện và tải banner thành công!",
+          }),
         );
       } else {
-        dispatch(openSnackbar({ message: "Tạo sự kiện thành công!" }));
+        dispatch(openSnackbar({ message: "Cập nhật sự kiện thành công!" }));
       }
 
       if (onSuccess) onSuccess(); // Đóng modal sau khi hoàn tất
     } catch (error) {
       dispatch(
         openSnackbar({
-          message: error?.data?.message || "Đã xảy ra lỗi khi tạo sự kiện",
+          message: error?.data?.message || "Đã xảy ra lỗi khi cập nhật sự kiện",
           type: "error",
         }),
       );
     }
   };
 
-  const isLoading = isCreating || isUploadingBanner || isSubmitting;
+  const isLoading = isUpdating || isUploadingBanner || isSubmitting;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <h3 className="text-xl font-bold">Thông tin sự kiện mới</h3>
+      <h3 className="text-xl font-bold">Cập nhật thông tin sự kiện</h3>
       <FormField
         control={control}
         name="title"
@@ -189,11 +196,12 @@ const EventForm = ({ onSuccess, onCancel }) => {
           Hủy bỏ
         </button>
         <button
+          onClick={handleSubmit(onSubmit)}
           type="submit"
           disabled={isLoading}
           className="rounded-lg bg-blue-600 px-6 py-2 text-white disabled:cursor-not-allowed disabled:bg-blue-300"
         >
-          {isLoading ? "Đang xử lý..." : "Tạo Sự Kiện"}
+          {isLoading ? "Đang xử lý..." : "Cập nhật Sự Kiện"}
         </button>
       </div>
     </form>

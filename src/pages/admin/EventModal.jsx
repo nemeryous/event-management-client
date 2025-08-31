@@ -1,7 +1,7 @@
 import React from "react";
 import EventForm from "./EventForm";
 
-const EventModal = ({ open, onClose }) => {
+const EventModal = ({ open, onClose, initialData }) => {
   if (!open) return null;
 
   return (
@@ -11,11 +11,11 @@ const EventModal = ({ open, onClose }) => {
           &times;
         </span>
         <h2 id="modalTitle" style={{ color: "#c52032" }}>
-          Thêm Sự Kiện Mới
+          Cập nhật sự kiện
         </h2>
 
         <div className="rounded-2xl bg-white p-6 shadow-lg">
-          <EventForm onSuccess={onClose} onCancel={onClose} />
+          <EventForm onSuccess={onClose} onCancel={onClose} initialData={initialData} />
         </div>
       </div>
     </div>
