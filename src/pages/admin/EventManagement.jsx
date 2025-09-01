@@ -190,6 +190,7 @@ export default function EventManagement() {
   const handleModalSubmit = async (form, errorsFromModal) => {
     if (errorsFromModal && errorsFromModal.length > 0) {
       setModalErrors(errorsFromModal);
+      return;
     } else {
       setModalErrors([]);
     }
@@ -228,15 +229,8 @@ export default function EventManagement() {
     }
   };
 
-  useEffect(() => {
-    if (!modalOpen) {
-      refetch();
-    }
-  }, [modalOpen]);
-
   return (
     <div className="container">
-      {/* <TokenDebug /> */}
       <div className="header">
         <h1>🎉 Quản Lý Sự Kiện</h1>
         <p>Hệ thống quản lý sự kiện chuyên nghiệp</p>
@@ -356,6 +350,9 @@ export default function EventManagement() {
         key={editEvent ? editEvent.id : "new"}
         open={modalOpen}
         onClose={handleModalClose}
+        onUpdated={async () => {
+          await refetch();
+        }}
         onSubmit={(form, errors) => handleModalSubmit(form, errors)}
         initialData={editEvent}
         isEdit={!!editEvent}

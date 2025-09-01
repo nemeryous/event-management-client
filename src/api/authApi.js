@@ -48,37 +48,6 @@ export const authApi = rootApi.injectEndpoints({
       }),
       providesTags: ["UserList"],
     }),
-    getUserName: builder.query({
-      query: (userId) => {
-        console.log("getUserName API call - userId:", userId);
-        return {
-          url: `/users/${userId}/name`,
-          responseHandler: (response) => response.text(), // nhận kiểu text
-        };
-      },
-      providesTags: (result, error, userId) => [
-        { type: "UserName", id: userId },
-      ],
-      transformResponse: (response) => {
-        console.log("getUserName API response:", response);
-        // Nếu backend trả về chuỗi tên, trả về luôn
-        if (typeof response === "string") return response;
-        // Nếu backend trả về object JSON
-        if (response && typeof response === "object") {
-          return (
-            response.name ||
-            response.userName ||
-            response.displayName ||
-            JSON.stringify(response)
-          );
-        }
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.log("getUserName API error:", error);
-        return error;
-      },
-    }),
     changePassword: builder.mutation({
       query: ({ oldPassword, newPassword, confirmPassword }) => ({
         url: "/auth/change-password",
@@ -99,7 +68,6 @@ export const {
   useLoginMutation,
   useGetAuthUserQuery,
   useLogoutMutation,
-  useGetUserNameQuery,
   useGetAllUsersQuery,
   useEnableUserMutation,
   useDeleteUserMutation,

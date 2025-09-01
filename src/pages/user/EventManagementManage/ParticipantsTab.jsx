@@ -20,14 +20,16 @@ import {
   useAddParticipantsMutation,
   useDeleteParticipantMutation,
   useDeleteParticipantsMutation,
-  useGetEventManagersByEventQuery,
   useGetParticipantsByEventQuery,
 } from "@api/attendantApi";
-import { useAssignEventManagerMutation } from "@api/attendantApi";
-import { useRemoveEventManagerMutation } from "@api/attendantApi";
 
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
+import {
+  useAssignEventManagerMutation,
+  useGetEventManagersByEventIdQuery,
+  useRemoveEventManagerMutation,
+} from "@api/eventApi";
 
 const addParticipantsSchema = yup.object({
   emailList: yup
@@ -98,7 +100,6 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
   const [deleteParticipants, { isErrorDelParticipants }] =
     useDeleteParticipantsMutation();
 
-  // Thêm mutation cho assign-manager
   const [assignManager, { error: errorAssignEventManager }] =
     useAssignEventManagerMutation();
   const [removeManager, { error: errorRemoveManager }] =
@@ -322,7 +323,7 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
   };
 
   const { data: managersData, refetch: refetchManagers } =
-    useGetEventManagersByEventQuery(eventData.id);
+    useGetEventManagersByEventIdQuery(eventData.id);
 
   const staffIds = useMemo(() => {
     const managersArray = Array.isArray(managersData?.data)

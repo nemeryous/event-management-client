@@ -124,41 +124,27 @@ export const eventApi = rootApi.injectEndpoints({
         ...eventListTags,
       ],
     }),
-    removeEventManager: builder.mutation({
-      query: (dto) => ({
-        url: "/event-manager/remove-manager",
-        method: "DELETE",
-        body: dto,
+    assignEventManager: builder.mutation({
+      query: ({ user_id, event_id, roleType }) => ({
+        url: "event-manager/assign-manager",
+        method: "POST",
+        body: { user_id, event_id, roleType },
       }),
-      invalidatesTags: (result, error, dto) => [
-        { type: "EventManager", id: dto.event_id },
-        { type: "Event", id: dto.event_id },
-        ...eventListTags,
+      invalidatesTags: (result, error, { event_id }) => [
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
       ],
-      async onQueryStarted(dto, { dispatch, queryFulfilled }) {
-        const patchManagers = dispatch(
-          rootApi.util.updateQueryData(
-            "getEventManagersByEventId",
-            dto.event_id,
-            (draft) => {
-              try {
-                if (!Array.isArray(draft)) return;
-                const idx = draft.findIndex(
-                  (m) => String(m.user_id) === String(dto.user_id),
-                );
-                if (idx !== -1) draft.splice(idx, 1);
-              } catch {
-                // no-op
-              }
-            },
-          ),
-        );
-        try {
-          await queryFulfilled;
-        } catch {
-          patchManagers.undo();
-        }
-      },
+    }),
+    removeEventManager: builder.mutation({
+      query: ({ user_id, event_id, roleType }) => ({
+        url: "event-manager/remove-manager",
+        method: "DELETE",
+        body: { user_id, event_id, roleType },
+      }),
+      invalidatesTags: (result, error, { event_id }) => [
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
+      ],
     }),
     getEventManagersByEventId: builder.query({
       query: (eventId) => ({
@@ -192,9 +178,10 @@ export const {
   useGetManagedEventsQuery,
   useJoinEventMutation,
   useUploadEventBannerMutation,
-  useRemoveEventManagerMutation,
-  useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,
   useUpdateEventMutation,
   useDeleteEventMutation,
+  useAssignEventManagerMutation,
+  useRemoveEventManagerMutation,
+  useGetEventManagersByEventIdQuery,
 } = eventApi;

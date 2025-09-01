@@ -57,34 +57,6 @@ export const attendantApi = rootApi.injectEndpoints({
         controller.abort();
       },
     }),
-    getEventManagersByEvent: builder.query({
-      query: (eventId) => `event-manager/event-managers?eventId=${eventId}`,
-      providesTags: (result, error, eventId) => [
-        { type: "EventManagers", id: eventId },
-      ],
-    }),
-    assignEventManager: builder.mutation({
-      query: ({ user_id, event_id, roleType }) => ({
-        url: "event-manager/assign-manager",
-        method: "POST",
-        body: { user_id, event_id, roleType },
-      }),
-      invalidatesTags: (result, error, { event_id }) => [
-        { type: "EventManagers", id: event_id },
-        { type: "Events" },
-      ],
-    }),
-    removeEventManager: builder.mutation({
-      query: ({ user_id, event_id, roleType }) => ({
-        url: "event-manager/remove-manager",
-        method: "DELETE",
-        body: { user_id, event_id, roleType },
-      }),
-      invalidatesTags: (result, error, { event_id }) => [
-        { type: "EventManagers", id: event_id },
-        { type: "Events" },
-      ],
-    }),
     addParticipants: builder.mutation({
       query: ({ eventId, emails }) => ({
         url: `events/${eventId}/participants`,
@@ -149,13 +121,10 @@ export const attendantApi = rootApi.injectEndpoints({
 });
 
 export const {
-  useGetEventManagersByEventQuery,
   useGetParticipantsByEventQuery,
   useAddParticipantsMutation,
   useDeleteParticipantMutation,
   useCheckInEventMutation,
-  useAssignEventManagerMutation,
-  useRemoveEventManagerMutation,
   useGetEventQRQuery,
   useDeleteParticipantsMutation,
   useCancelMyRegistrationMutation,

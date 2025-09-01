@@ -92,8 +92,6 @@ export default function EventCreate() {
       url_docs: formData.urlDocs || null,
     };
 
-    console.log(`eventData: ${JSON.stringify(eventData)}`);
-
     try {
       const createResponse = await createEvent(eventData).unwrap();
       const newEventId = createResponse.id;
