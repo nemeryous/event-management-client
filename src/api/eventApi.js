@@ -124,34 +124,7 @@ export const eventApi = rootApi.injectEndpoints({
         responseHandler: (response) => response.blob(),
       }),
     }),
-    updateEvent: builder.mutation({
-      query: ({
-        eventId,
-        title,
-        description,
-        start_time,
-        end_time,
-        location,
-        url_docs,
-        max_participants,
-      }) => ({
-        url: `/events/${eventId}`,
-        body: {
-          title,
-          description,
-          start_time,
-          end_time,
-          location,
-          url_docs,
-          max_participants,
-        },
-        method: "PUT",
-      }),
-      invalidatesTags: (result, error, { eventId }) => [
-        { type: "Events", id: eventId },
-        ...eventListTags,
-      ],
-    }),
+
     uploadEventBanner: builder.mutation({
       query: ({ eventId, bannerFile }) => {
         const formData = new FormData();
@@ -268,7 +241,6 @@ export const {
   useRemoveEventManagerMutation,
   useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,
-  useUpdateEventMutation,
   useDeleteEventMutation,
   useUpdateEventMutation,
 } = eventApi;
