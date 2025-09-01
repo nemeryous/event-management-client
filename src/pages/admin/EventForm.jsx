@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
+  useGetEventManagersByEventIdQuery,
   useUpdateEventMutation,
   useUploadEventBannerMutation,
 } from "@api/eventApi";
@@ -9,17 +10,41 @@ import { openSnackbar } from "@store/slices/snackbarSlice";
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
 import SunEditorEditor from "@components/common/SunEditorEditor";
+import { useGetAllUsersQuery, useGetUserNameQuery } from "@api/authApi";
+import {
+  useAssignEventManagerMutation,
+  useRemoveEventManagerMutation,
+} from "@api/attendantApi";
 
 const EventForm = ({ onSuccess, onCancel, initialData }) => {
   console.log({ initialData });
   const dispatch = useDispatch();
+  const eventId = initialData ? initialData.id : null;
   const [updateEvent, { data: updatedEventData, isLoading: isUpdating }] =
     useUpdateEventMutation();
+  const [justAssignedName, setJustAssignedName] = useState("");
   const [uploadBanner, { isLoading: isUploadingBanner }] =
     useUploadEventBannerMutation();
+  const [removedNow, setRemovedNow] = useState(false);
+  const { data: managerRoles = [], refetch: refetchManagers } =
+    useGetEventManagersByEventIdQuery(eventId);
+  console.log({ managerRoles });
+  const managerUserId =
+    managerRoles.length > 0 ? managerRoles[0].user_id : null;
+  console.log({ managerUserId });
+  const { data: managerUserName } = useGetUserNameQuery(managerUserId, {
+    skip: !managerUserId,
+  });
+  const [foundUser, setFoundUser] = useState(null);
+  const [removeEventManager] = useRemoveEventManagerMutation();
+  const [tempManagerName, setTempManagerName] = useState("");
   console.log({ updatedEventData });
-
+  const [searchName, setSearchName] = useState("");
   const [selectedBannerFile, setSelectedBannerFile] = useState(null);
+  const [managerError, setManagerError] = useState("");
+  const { data: allUsers = [] } = useGetAllUsersQuery();
+  const [assignEventManager] = useAssignEventManagerMutation();
+  const currentUserId = useSelector((state) => state.auth.userId);
   const {
     control,
     handleSubmit,
@@ -35,11 +60,32 @@ const EventForm = ({ onSuccess, onCancel, initialData }) => {
       urlDocs: initialData?.url_docs || "",
     },
   });
-
   const handleFileChange = (e) => {
     setSelectedBannerFile(e.target.files[0]);
   };
+  useEffect(() => {
+    if (managerUserName) {
+      setJustAssignedName("");
+      setRemovedNow(false);
+      setTempManagerName("");
+    }
+  }, [managerUserName]);
 
+  // useEffect(() => {
+  //   if (
+  //     fetchError &&
+  //     (fetchError.status === 401 || fetchError.status === 403)
+  //   ) {
+  //     setErrorMsg("Bạn không có quyền truy cập sự kiện này.");
+  //     setErrorMessages((prev) => [
+  //       ...prev,
+  //       "Bạn không có quyền truy cập sự kiện này.",
+  //     ]);
+  //   } else if (fetchError) {
+  //     setErrorMsg("Lỗi khi tải thông tin sự kiện.");
+  //     setErrorMessages((prev) => [...prev, "Lỗi khi tải thông tin sự kiện."]);
+  //   }
+  // }, [fetchError]);
   const onSubmit = async (formData) => {
     const payload = {
       title: formData.title,
@@ -127,7 +173,237 @@ const EventForm = ({ onSuccess, onCancel, initialData }) => {
         )}
       </div>
       {/* Kết thúc phần Upload Banner mới */}
-
+      {!removedNow && (managerUserName || tempManagerName) ? (
+        <>
+          <div className="form-group">
+            <label>Manager hiện tại:</label>
+            <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>
+              Sự kiện:{" "}
+              {initialData?.title ||
+                initialData?.name ||
+                initialData?.eventName ||
+                "(Không rõ tên)"}
+            </div>
+            <div
+              style={{
+                fontWeight: 600,
+                color: "#223b73",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              {tempManagerName || managerUserName}
+              <button
+                type="button"
+                style={{
+                  marginLeft: 8,
+                  background: "#fff4f4",
+                  color: "#e53935",
+                  border: "1px solid #e53935",
+                  borderRadius: 6,
+                  padding: "2px 10px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+                onClick={async () => {
+                  try {
+                    await removeEventManager({
+                      user_id: managerUserId,
+                      event_id: eventId,
+                    });
+                    setFoundUser(null);
+                    setSearchName("");
+                    setJustAssignedName("");
+                    setTempManagerName("");
+                    setRemovedNow(true);
+                    await Promise.all([refetchManagers?.()]);
+                    dispatch(
+                      openSnackbar({
+                        message: "Xóa quản lý thành công!",
+                        type: "success",
+                      }),
+                    );
+                  } catch (err) {
+                    const msg =
+                      err?.data?.message ||
+                      err?.message ||
+                      "Xóa quản lý thất bại!";
+                    dispatch(openSnackbar({ message: msg, type: "error" }));
+                  }
+                }}
+              >
+                Xóa quản lý
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="form-group">
+          <label htmlFor="managerSearch">Nhập tên để tìm người quản lí:</label>
+          <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>
+            Sự kiện:{" "}
+            {initialData?.title ||
+              initialData?.name ||
+              initialData?.eventName ||
+              "(Không rõ tên)"}
+          </div>
+          {justAssignedName && (
+            <div
+              style={{
+                marginBottom: 8,
+                padding: 8,
+                background: "#e8f5e9",
+                border: "1px solid #81c784",
+                borderRadius: 6,
+                color: "#2e7d32",
+              }}
+            >
+              Đã gán quản lí: <strong>{justAssignedName}</strong>. Đang đồng bộ
+              dữ liệu...
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <input
+              type="text"
+              id="managerSearch"
+              placeholder="Nhập tên hoặc email để tìm..."
+              value={searchName}
+              onChange={(e) => {
+                setSearchName(e.target.value);
+                setFoundUser(null);
+                setManagerError("");
+              }}
+            />
+            {searchName && (
+              <div
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: 6,
+                  maxHeight: 200,
+                  overflowY: "auto",
+                }}
+              >
+                {allUsers
+                  .filter((u) => {
+                    const q = searchName.toLowerCase();
+                    return (
+                      (u.name && u.name.toLowerCase().includes(q)) ||
+                      (u.email && u.email.toLowerCase().includes(q))
+                    );
+                  })
+                  .slice(0, 8)
+                  .map((u) => (
+                    <div
+                      key={u.id}
+                      onClick={() => {
+                        setFoundUser(u);
+                        setSearchName(u.name || u.email || "");
+                        setManagerError("");
+                      }}
+                      style={{
+                        padding: "8px 10px",
+                        cursor: "pointer",
+                        borderBottom: "1px solid #eee",
+                      }}
+                    >
+                      {u.name || "Không rõ tên"} ({u.email})
+                    </div>
+                  ))}
+                {allUsers.filter((u) => {
+                  const q = searchName.toLowerCase();
+                  return (
+                    (u.name && u.name.toLowerCase().includes(q)) ||
+                    (u.email && u.email.toLowerCase().includes(q))
+                  );
+                }).length === 0 && (
+                  <div style={{ padding: "8px 10px", color: "#666" }}>
+                    Không tìm thấy người dùng phù hợp.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {managerError && (
+            <div style={{ color: "#e53935", marginTop: 6 }}>{managerError}</div>
+          )}
+          {foundUser && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: 8,
+                border: "1px solid #ccc",
+                borderRadius: 6,
+              }}
+            >
+              <div>
+                <strong>Người dùng:</strong>{" "}
+                {foundUser.name ||
+                  foundUser.fullName ||
+                  foundUser.username ||
+                  "Không rõ tên"}{" "}
+                ({foundUser.email})
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ marginTop: 8 }}
+                onClick={async () => {
+                  try {
+                    if (!eventId) {
+                      setManagerError(
+                        "Chỉ gán quản lí sau khi sự kiện đã tồn tại.",
+                      );
+                      return;
+                    }
+                    (await assignEventManager({
+                      user_id: foundUser.id,
+                      event_id: eventId,
+                      roleType: "MANAGE",
+                      assigned_by: currentUserId || "",
+                    }).unwrap?.()) ??
+                      assignEventManager({
+                        user_id: foundUser.id,
+                        event_id: eventId,
+                        roleType: "MANAGE",
+                        assigned_by: currentUserId || "",
+                      });
+                    setSearchName("");
+                    setFoundUser(null);
+                    setManagerError("");
+                    const displayName =
+                      foundUser.name ||
+                      foundUser.fullName ||
+                      foundUser.username ||
+                      foundUser.email ||
+                      "Người dùng";
+                    setJustAssignedName(displayName);
+                    setTempManagerName(displayName);
+                    setRemovedNow(false);
+                    await Promise.all([refetchManagers?.()]);
+                    dispatch(
+                      openSnackbar({
+                        message: "Gán quản lí thành công!",
+                        type: "success",
+                      }),
+                    );
+                  } catch (err) {
+                    const details =
+                      err?.data?.message ||
+                      err?.error ||
+                      err?.message ||
+                      "Không thể gán quyền quản lí.";
+                    setManagerError(details);
+                    dispatch(openSnackbar({ message: details, type: "error" }));
+                  }
+                }}
+              >
+                Gán làm quản lí
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <div>
         <label className="mb-2 block text-sm font-medium text-gray-700">
           Mô tả
