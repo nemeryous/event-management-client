@@ -1,9 +1,4 @@
-import {
-  useGetAllEventsQuery,
-  useGetAllManagedEventsQuery,
-  useGetEventsQuery,
-  useGetManagedEventsQuery,
-} from "@api/eventApi";
+import { useGetEventsQuery, useGetManagedEventsQuery } from "@api/eventApi";
 
 import EventCard from "@components/user/EventCard/index.jsx";
 import { EVENT_STATUS } from "@utils/constants";
@@ -17,15 +12,19 @@ const DashboardUser = () => {
   const [sortBy, setSortBy] = useState("date");
   const sortDir = "asc";
 
-  const tabs = Object.entries(EVENT_STATUS).map(([id, label]) => ({
-    id,
-    label,
-  }));
+  const tabs = useMemo(
+    () =>
+      Object.entries(EVENT_STATUS).map(([id, label]) => ({
+        id,
+        label,
+      })),
+    [],
+  );
 
   const isManageTab = activeTab === "MANAGE";
 
   const {
-    data: paginatedData,
+    data: normalData,
     isLoading: isLoadingNormal,
     error: errorNormal,
   } = useGetEventsQuery(
@@ -57,8 +56,12 @@ const DashboardUser = () => {
     },
   );
 
-  const { data: allEvents } = useGetAllEventsQuery();
-  const { data: allManagedEvents } = useGetAllManagedEventsQuery();
+  const dataForCurrentTab = isManageTab ? manageData : normalData;
+  const paginationInfo = dataForCurrentTab?.pagination;
+  const tabCounts = dataForCurrentTab?.counters;
+
+  const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
+  const error = isManageTab ? errorManage : errorNormal;
 
   const normalizePageData = (data) => {
     if (!data) return undefined;
@@ -86,29 +89,7 @@ const DashboardUser = () => {
     return undefined;
   };
 
-  const currentData = normalizePageData(
-    isManageTab ? manageData : paginatedData,
-  );
-  const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
-  const error = isManageTab ? errorManage : errorNormal;
-
-  const tabCounts = useMemo(() => {
-    if (!allEvents && !allManagedEvents) return {};
-
-    const counts = {};
-    tabs.forEach((tab) => {
-      if (tab.id === "MANAGE") {
-        counts[tab.id] =
-          allManagedEvents?.totalElements ||
-          allManagedEvents?.content?.length ||
-          (Array.isArray(allManagedEvents) ? allManagedEvents.length : 0);
-      } else {
-        counts[tab.id] =
-          allEvents?.filter((event) => event.status === tab.id).length || 0;
-      }
-    });
-    return counts;
-  }, [allEvents, allManagedEvents, tabs]);
+  const currentData = normalizePageData(paginationInfo);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -169,17 +150,19 @@ const DashboardUser = () => {
             <div className="absolute top-0 -left-full h-full w-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-all duration-500 group-hover:left-full"></div>
             <span className="relative z-10 flex items-center justify-center gap-2">
               {tab.label}
-              {tabCounts[tab.id] > 0 && (
-                <span
-                  className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${
-                    activeTab === tab.id
-                      ? "bg-red-100 text-red-600"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {tabCounts[tab.id]}
-                </span>
-              )}
+              {tabCounts &&
+                tabCounts[tab.id] !== undefined &&
+                tabCounts[tab.id] > 0 && (
+                  <span
+                    className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${
+                      activeTab === tab.id
+                        ? "bg-red-100 text-red-600"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {tabCounts[tab.id]}
+                  </span>
+                )}
             </span>
           </button>
         ))}

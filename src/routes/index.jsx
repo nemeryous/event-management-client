@@ -12,7 +12,6 @@ import AdminLayout from "@layouts/AdminLayout";
 import EventManagement from "@pages/admin/EventManagement";
 import EventCreate from "@pages/admin/EventCreate";
 import EventDetail from "@pages/admin/EventDetail";
-import Dashboard from "@pages/admin/Dashboard";
 import UserManagement from "@pages/admin/UserManagement";
 import NotFound from "@pages/NotFound";
 
@@ -105,10 +104,6 @@ const router = createBrowserRouter([
               {
                 path: "/admin/events/:id",
                 element: <EventDetail />,
-              },
-              {
-                path: "/admin/dashboard",
-                element: <Dashboard />,
               },
               {
                 path: "/admin/users",

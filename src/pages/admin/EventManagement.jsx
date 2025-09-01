@@ -32,7 +32,7 @@ const STATUS_FILTERS = [
   { value: "CANCELLED", label: "Đã hủy" },
 ];
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 6;
 
 export default function EventManagement() {
   const [page, setPage] = useState(0);
@@ -71,8 +71,8 @@ export default function EventManagement() {
     },
   );
 
-  const eventsFromApi = pageData?.content || [];
-  const totalPages = pageData?.totalPages || 0;
+  const eventsFromApi = pageData?.pagination?.content || [];
+  const totalPages = pageData?.pagination?.totalPages || 0;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
@@ -129,7 +129,7 @@ export default function EventManagement() {
     let filtered = events;
 
     if (statusFilter !== "all") {
-      const wanted = normalizeStatus(statusFilter); // "UPCOMING"
+      const wanted = normalizeStatus(statusFilter);
       filtered = filtered.filter((e) => e.status === wanted);
     }
 
@@ -157,14 +157,21 @@ export default function EventManagement() {
     });
   }, [events, statusFilter, searchInput]);
 
-  const stats = useMemo(() => {
-    return {
-      total: events.length,
-      active: events.filter((e) => e.status === "ongoing").length,
-      upcoming: events.filter((e) => e.status === "upcoming").length,
-      completed: events.filter((e) => e.status === "completed").length,
-    };
-  }, [events]);
+  const counters = pageData?.counters || {};
+  const stats = useMemo(
+    () => ({
+      total:
+        (counters.UPCOMING ?? 0) +
+        (counters.ONGOING ?? 0) +
+        (counters.COMPLETED ?? 0) +
+        (counters.CANCELLED ?? 0),
+      active: counters.ONGOING ?? 0,
+      upcoming: counters.UPCOMING ?? 0,
+      completed: counters.COMPLETED ?? 0,
+      cancelled: counters.CANCELLED ?? 0,
+    }),
+    [counters],
+  );
 
   const handleAdd = () => {
     navigate("/admin/events/create");
@@ -285,7 +292,7 @@ export default function EventManagement() {
           <EventControls
             onAdd={handleAdd}
             onExport={handleExport}
-            onRefresh={() => window.location.reload()}
+            onRefresh={() => refetch()}
             search={searchInput}
             setSearch={setSearchInput}
           />

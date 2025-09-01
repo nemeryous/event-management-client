@@ -51,7 +51,7 @@ const Login = () => {
 
       dispatch(setToken(loginData));
       dispatch(openSnackbar({ message: "Đăng nhập thành công" }));
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (err) {
       dispatch(
         openSnackbar({
@@ -59,7 +59,6 @@ const Login = () => {
           type: "error",
         }),
       );
-      console.error("Failed to login: ", err);
     }
   };
 
@@ -99,7 +98,7 @@ const Login = () => {
             />
             <div className="flex items-center justify-between">
               <Link
-                href="/forgot-password"
+                to="/forgot-password"
                 className="text-secondary text-sm font-medium hover:underline"
               >
                 Quên mật khẩu?

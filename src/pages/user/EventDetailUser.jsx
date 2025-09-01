@@ -210,7 +210,7 @@ const EventDetailUser = () => {
 
         <div className="p-7">
           <h1 className="text-secondary mb-5 text-2xl font-bold md:text-3xl">
-            {event?.name || "Tên sự kiện"}
+            {event?.title || "Tên sự kiện"}
           </h1>
 
           <div className="mb-7 grid grid-cols-1 gap-5 md:grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">

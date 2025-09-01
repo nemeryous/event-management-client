@@ -11,7 +11,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { clearToken } from "@store/slices/authSlice";
 import { useLogoutMutation } from "@api/authApi";
-import { rootApi } from "@api/rootApi";
 
 const HeaderUser = () => {
   const dispatch = useDispatch();
@@ -59,8 +58,6 @@ const HeaderUser = () => {
     } catch {
       // ignore error
     }
-    dispatch(rootApi.util.resetApiState());
-
     dispatch(clearToken());
     navigate("/login");
     setShowUserMenu(false);
@@ -132,19 +129,6 @@ const HeaderUser = () => {
                       <p className="text-xs text-gray-500">{email}</p>
                     </div>
                     <button
-                      onClick={() => {
-                        navigate("/change-password");
-                        setShowUserMenu(false);
-                      }}
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50"
-                    >
-                      <FontAwesomeIcon
-                        icon={faUser}
-                        className="h-4 w-4"
-                      />
-                      Đổi mật khẩu
-                    </button>
-                    <button
                       onClick={handleLogout}
                       className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                     >
@@ -196,17 +180,6 @@ const HeaderUser = () => {
                   <p className="text-xs text-gray-500">{email}</p>
                 </div>
               </div>
-
-              <button
-                onClick={() => {
-                  navigate("/change-password");
-                  setIsMobileMenuOpen(false);
-                }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50"
-              >
-                <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
-                Đổi mật khẩu
-              </button>
 
               <button
                 onClick={handleLogout}

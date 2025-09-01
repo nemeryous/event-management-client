@@ -30,7 +30,6 @@ export const eventApi = rootApi.injectEndpoints({
         location,
         url_docs,
         max_participants,
-        created_at,
       }) => ({
         url: `/events/${eventId}`,
         body: {
@@ -41,7 +40,6 @@ export const eventApi = rootApi.injectEndpoints({
           location,
           url_docs,
           max_participants,
-          created_at,
         },
         method: "PUT",
       }),
@@ -80,10 +78,6 @@ export const eventApi = rootApi.injectEndpoints({
       },
       providesTags: ["Events"],
     }),
-    getAllEvents: builder.query({
-      query: () => "/events/all",
-      providesTags: ["AllEvents"],
-    }),
     getManagedEvents: builder.query({
       query: ({
         page = 0,
@@ -100,10 +94,6 @@ export const eventApi = rootApi.injectEndpoints({
         return `/events/managed?${params.toString()}`;
       },
       providesTags: ["ManagedEvents"],
-    }),
-    getAllManagedEvents: builder.query({
-      query: () => "/events/managed/all",
-      providesTags: ["AllManagedEvents"],
     }),
     getEventById: builder.query({
       query: (id) => `/events/${id}`,
@@ -199,9 +189,7 @@ export const eventApi = rootApi.injectEndpoints({
 export const {
   useCreateEventMutation,
   useGetEventsQuery,
-  useGetAllEventsQuery,
   useGetManagedEventsQuery,
-  useGetAllManagedEventsQuery,
   useJoinEventMutation,
   useUploadEventBannerMutation,
   useRemoveEventManagerMutation,

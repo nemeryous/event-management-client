@@ -5,14 +5,17 @@ import "suneditor/dist/css/suneditor.min.css";
 export default function SunEditorEditor({ value, onChange, placeholder }) {
   const editorRef = useRef(null);
 
-  const handleLoad = (editor) => {
-    editorRef.current = editor;
-    if (value) editor.setContents(value);
+  const handleGetInstance = (sunEditor) => {
+    editorRef.current = sunEditor;
+    if (value != null) {
+      sunEditor.setContents(value || "");
+    }
   };
 
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
+
     const current = editor.getContents(true);
     if (value !== undefined && value !== current) {
       editor.setContents(value || "");
@@ -21,9 +24,9 @@ export default function SunEditorEditor({ value, onChange, placeholder }) {
 
   return (
     <SunEditor
-      onChange={(html) => onChange?.(html)}
-      onLoad={handleLoad}
-      setContents={value || ""}
+      getSunEditorInstance={handleGetInstance}
+      defaultValue={value || ""}
+      onChange={(html) => onChange?.(html ?? "")}
       setOptions={{
         height: "300px",
         placeholder: placeholder || "Nhập mô tả sự kiện...",

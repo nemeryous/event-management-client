@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 
 import { setUser, clearToken } from "@store/slices/authSlice";
 import Loading from "@components/common/Loading";
@@ -9,6 +9,7 @@ import { rootApi } from "@api/rootApi";
 
 const ProtectedRoute = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { accessToken, user: currentUser } = useSelector((state) => state.auth);
 
   const {
@@ -25,6 +26,10 @@ const ProtectedRoute = () => {
     if (isSuccess && user) {
       if (!currentUser || currentUser.id !== user.id) {
         dispatch(setUser(user));
+        const isAdmin = user.roles?.some((r) => r.roleName === "ROLE_ADMIN");
+        if (isAdmin && location.pathname.startsWith("/dashboard")) {
+          navigate("/admin/events", { replace: true });
+        }
       }
     }
   }, [isSuccess, user, currentUser, dispatch]);

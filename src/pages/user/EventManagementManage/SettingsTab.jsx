@@ -4,43 +4,80 @@ import SunEditorEditor from "@components/common/SunEditorEditor";
 import TextInput from "@components/common/TextInput";
 import BannerUpload from "@components/user/BannerUpload";
 import { openSnackbar } from "@store/slices/snackbarSlice";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
+const toDateInput = (v) => {
+  if (!v) return "";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return String(v).slice(0, 16);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const SettingsTab = ({ eventData }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [updateEvent, { isLoading: isUpdating, isError, error, isSuccess }] =
-    useUpdateEventMutation();
+  const [
+    updateEvent,
+    { isLoading: isUpdating, isError, error: updateError, isSuccess },
+  ] = useUpdateEventMutation();
+
+  const defaultValues = useMemo(
+    () => ({
+      title: eventData?.title || "",
+      description: eventData?.description || "",
+      startTime: toDateInput(eventData?.startTime),
+      endTime: toDateInput(eventData?.endTime),
+      location: eventData?.location || "",
+      maxParticipants: eventData?.maxParticipants ?? "",
+      urlDocs: eventData?.urlDocs || "",
+    }),
+    [eventData],
+  );
 
   const {
     control,
     handleSubmit,
     reset,
     formState: { isDirty, isSubmitting, errors },
-  } = useForm({
-    defaultValues: {
-      title: eventData.name,
-      description: eventData.description,
-      startTime: eventData.startTime.slice(0, 16),
-      endTime: eventData.endTime.slice(0, 16),
-      location: eventData.location,
-      maxParticipants: eventData.maxParticipants,
-      urlDocs: eventData.urlDocs || "",
-    },
-  });
+  } = useForm({ defaultValues });
+
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
 
   const onSubmit = async (formData) => {
+    if (
+      formData.startTime &&
+      formData.endTime &&
+      new Date(formData.endTime) < new Date(formData.startTime)
+    ) {
+      dispatch(
+        openSnackbar({
+          message: "Thời gian kết thúc phải sau thời gian bắt đầu",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
     const payload = {
       title: formData.title,
-      description: formData.description,
-      start_time: formData.startTime,
-      end_time: formData.endTime,
+      description: formData.description ?? "",
+      start_time: formData.startTime
+        ? new Date(formData.startTime).toISOString()
+        : null,
+      end_time: formData.endTime
+        ? new Date(formData.endTime).toISOString()
+        : null,
       location: formData.location,
-      max_participants: Number(formData.maxParticipants),
-      url_docs: formData.urlDocs,
+      max_participants: formData.maxParticipants
+        ? Number(formData.maxParticipants)
+        : null,
+      url_docs: formData.urlDocs || null,
     };
 
     try {
@@ -51,7 +88,7 @@ const SettingsTab = ({ eventData }) => {
   };
 
   const handleCancel = () => {
-    reset(); // Reset về defaultValues
+    reset();
   };
 
   useEffect(() => {
@@ -61,11 +98,13 @@ const SettingsTab = ({ eventData }) => {
     }
 
     if (isError) {
-      dispatch(openSnackbar({ message: error?.data?.message, type: "error" }));
+      dispatch(
+        openSnackbar({ message: updateError?.data?.message, type: "error" }),
+      );
     }
   }, [
     dispatch,
-    error?.data?.message,
+    updateError?.data?.message,
     eventData.id,
     isError,
     isSuccess,
@@ -95,10 +134,11 @@ const SettingsTab = ({ eventData }) => {
             <Controller
               name="description"
               control={control}
+              rules={{ required: "Mô tả không được để trống" }}
               render={({ field: { onChange, value } }) => (
                 <SunEditorEditor
-                  value={value}
-                  onChange={onChange}
+                  value={value ?? ""}
+                  onChange={(html) => onChange(html || "")}
                   placeholder={"Nhập mô tả sự kiện..."}
                 />
               )}
