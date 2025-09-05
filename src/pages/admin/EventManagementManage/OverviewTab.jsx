@@ -83,14 +83,16 @@ const OverviewTab = ({ eventData, stats = {} }) => {
             </div>
             <div className="p-6">
               <div className="relative">
-                <p
-                  className={`leading-[1.8] whitespace-pre-wrap text-[#666] ${
+                <div
+                  className={`leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold ${
                     !isDescriptionExpanded && shouldShowExpandButton
                       ? "line-clamp-4"
                       : ""
                   }`}
-                  dangerouslySetInnerHTML={{ __html: eventData.description }}
-                ></p>
+                  dangerouslySetInnerHTML={{
+                    __html: eventData.description,
+                  }}
+                ></div>
                 {shouldShowExpandButton && (
                   <div className="mt-4 text-center">
                     <button

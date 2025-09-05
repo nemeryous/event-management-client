@@ -129,6 +129,8 @@ const EventCard = ({ event, isManageMode = false }) => {
       <div className="relative z-20 p-6">
         <Link
           to={`/events/${event.id}`}
+          title={event.title}
+          aria-label={event.title}
           className="mb-4 line-clamp-2 cursor-pointer text-xl font-bold text-blue-600 transition-colors duration-300 group-hover:text-red-600"
         >
           {event.title}

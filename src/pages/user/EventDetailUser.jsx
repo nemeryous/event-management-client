@@ -114,7 +114,7 @@ const EventDetailUser = () => {
     if (!authUser?.id) return;
     try {
       await cancelRegistration(eventId).unwrap();
-    } catch (err) {
+    } catch {
       // unwrap đã tự xử lý
     }
   };
@@ -275,14 +275,16 @@ const EventDetailUser = () => {
               Mô tả sự kiện
             </h3>
             <div className="relative">
-              <p
-                className={`leading-[1.8] whitespace-pre-wrap text-[#666] ${
+              <div
+                className={`leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold ${
                   !isDescriptionExpanded && shouldShowExpandButton
                     ? "line-clamp-4"
                     : ""
                 }`}
-                dangerouslySetInnerHTML={{ __html: description }}
-              ></p>
+                dangerouslySetInnerHTML={{
+                  __html: description,
+                }}
+              ></div>
               {shouldShowExpandButton && (
                 <div className="mt-4 text-center">
                   <button

@@ -14,10 +14,12 @@ const DashboardUser = () => {
 
   const tabs = useMemo(
     () =>
-      Object.entries(EVENT_STATUS).map(([id, label]) => ({
-        id,
-        label,
-      })),
+      Object.entries(EVENT_STATUS)
+        .filter(([id]) => id !== "CANCELLED")
+        .map(([id, label]) => ({
+          id,
+          label,
+        })),
     [],
   );
 

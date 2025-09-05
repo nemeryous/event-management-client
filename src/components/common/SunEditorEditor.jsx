@@ -23,24 +23,29 @@ export default function SunEditorEditor({ value, onChange, placeholder }) {
   }, [value]);
 
   return (
-    <SunEditor
-      getSunEditorInstance={handleGetInstance}
-      defaultValue={value || ""}
-      onChange={(html) => onChange?.(html ?? "")}
-      setOptions={{
-        height: "300px",
-        placeholder: placeholder || "Nhập mô tả sự kiện...",
-        buttonList: [
-          ["undo", "redo"],
-          ["formatBlock"],
-          ["bold", "italic", "underline", "removeFormat"],
-          ["align", "list", "outdent", "indent"],
-          ["link", "image", "table"],
-          ["fullScreen", "codeView", "preview"],
-        ],
-        katex: null,
-        imageFileInput: true,
-      }}
-    />
+    <div className="editor-scope">
+      <SunEditor
+        className="suneditor-tailwind font-sans"
+        getSunEditorInstance={handleGetInstance}
+        defaultValue={value || ""}
+        onChange={(html) => onChange?.(html ?? "")}
+        setDefaultStyle="font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans';\
+     font-size: 15px; line-height: 1.8; font-weight: 400; color:#333;"
+        setOptions={{
+          minHeight: "600px",
+          placeholder: placeholder || "Nhập mô tả sự kiện...",
+          buttonList: [
+            ["undo", "redo"],
+            ["formatBlock"],
+            ["bold", "italic", "underline", "removeFormat"],
+            ["align", "list", "outdent", "indent"],
+            ["link", "image", "table"],
+            ["fullScreen", "codeView", "preview"],
+          ],
+          katex: null,
+          imageFileInput: true,
+        }}
+      />
+    </div>
   );
 }
