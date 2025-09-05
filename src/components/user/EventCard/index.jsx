@@ -59,7 +59,7 @@ const EventCard = ({ event, isManageMode = false }) => {
 
   useEffect(() => {
     const img = new Image();
-    img.src = import.meta.env.VITE_BASE_URL + `/events/${event.banner}`;
+    img.src = import.meta.env.VITE_BASE_URL + `/uploads/${event.banner}`;
 
     img.onload = () => {
       setImageState({
@@ -104,7 +104,7 @@ const EventCard = ({ event, isManageMode = false }) => {
         {imageState.loaded && (
           <>
             <img
-              src={import.meta.env.VITE_BASE_URL + `/events/${event.banner}`}
+              src={import.meta.env.VITE_BASE_URL + `/uploads/${event.banner}`}
               alt={`${event.title} Banner`}
               className="absolute inset-0 h-full w-full object-cover brightness-90 transition-transform duration-300 group-hover:scale-105"
             />

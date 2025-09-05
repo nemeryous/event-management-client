@@ -168,6 +168,17 @@ export const eventApi = rootApi.injectEndpoints({
         { type: "EventManager", id: eventId },
       ],
     }),
+    uploadEditorImage: builder.mutation({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append("image", file);
+        return {
+          url: "/medias/image-upload",
+          method: "POST",
+          body: formData,
+        };
+      },
+    }),
   }),
   overrideExisting: false,
 });
@@ -184,4 +195,5 @@ export const {
   useAssignEventManagerMutation,
   useRemoveEventManagerMutation,
   useGetEventManagersByEventIdQuery,
+  useUploadEditorImageMutation,
 } = eventApi;

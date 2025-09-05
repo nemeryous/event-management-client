@@ -60,7 +60,7 @@ const OverviewTab = ({ eventData, stats = {} }) => {
               <img
                 src={
                   eventData?.banner
-                    ? `${import.meta.env.VITE_BASE_URL}/events/${eventData.banner}`
+                    ? `${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`
                     : "https://via.placeholder.com/800x300?text=Event+Banner"
                 }
                 alt={eventData.title}

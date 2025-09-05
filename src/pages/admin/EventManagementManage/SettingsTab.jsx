@@ -170,7 +170,7 @@ const SettingsTab = ({
                     Banner hiện tại:
                   </p>
                   <img
-                    src={`${import.meta.env.VITE_BASE_URL}/events/${eventData.banner}`}
+                    src={`${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`}
                     alt="Banner"
                     className="h-auto max-w-full rounded-lg shadow-sm"
                     style={{ maxHeight: 200 }}

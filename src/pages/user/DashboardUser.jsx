@@ -7,10 +7,10 @@ import { useSelector } from "react-redux";
 
 const DashboardUser = () => {
   const user = useSelector((state) => state.auth.user);
-  const [activeTab, setActiveTab] = useState("UPCOMING");
+  const [activeTab, setActiveTab] = useState("ONGOING");
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("date");
-  const sortDir = "asc";
+  const sortDir = "desc";
 
   const tabs = useMemo(
     () =>
@@ -171,7 +171,6 @@ const DashboardUser = () => {
       </nav>
 
       <div className="min-h-[400px]">
-        {/* Thay đổi 4: Khu vực sắp xếp */}
         <div className="mb-6 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-gray-600">
             Tìm thấy{" "}

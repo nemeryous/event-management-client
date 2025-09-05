@@ -193,7 +193,7 @@ const EventDetailUser = () => {
           <img
             src={
               event?.banner
-                ? `${import.meta.env.VITE_BASE_URL}/events/${event.banner}`
+                ? `${import.meta.env.VITE_BASE_URL}/uploads/${event.banner}`
                 : "https://via.placeholder.com/800x300?text=Event+Banner"
             }
             alt="banner"

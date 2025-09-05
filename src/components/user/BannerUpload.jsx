@@ -56,7 +56,7 @@ const BannerUpload = ({ eventData }) => {
   }, [isSuccess, isError, error, dispatch]);
 
   const currentBannerUrl = eventData.banner
-    ? `${import.meta.env.VITE_BASE_URL}/events/${eventData.banner}`
+    ? `${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`
     : "https://placehold.co/1200x400/e2e8f0/a0aec0?text=No+Banner";
 
   return (

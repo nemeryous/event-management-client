@@ -53,12 +53,11 @@ const OverviewTab = ({ eventData, stats }) => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="overflow-hidden rounded-2xl bg-white shadow-lg">
-            {/* <div className="relative h-72"> */}
             <div className="relative h-[200px] overflow-hidden md:h-[300px]">
               <img
                 src={
                   eventData?.banner
-                    ? `${import.meta.env.VITE_BASE_URL}/events/${eventData.banner}`
+                    ? `${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`
                     : "https://via.placeholder.com/800x300?text=Event+Banner"
                 }
                 alt={eventData.name}
