@@ -14,26 +14,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 /* eslint-disable no-unused-vars */
 const CreatePoll = () => {
   const eventId = useParams().id;
-  const [polls, setPolls] = useState([
-    // {
-    //   id: 1,
-    //   title: "Bạn thích phần nào của sự kiện nhất?",
-    //   poll_type: "SINGLE_CHOICE",
-    //   options: [
-    //     { id: 1, content: "Phần thuyết trình", votes: 45 },
-    //     { id: 2, content: "Phần Q&A", votes: 23 },
-    //     { id: 3, content: "Networking", votes: 67 },
-    //     { id: 4, content: "Workshop", votes: 34 },
-    //   ],
-    //   status: "active",
-    //   start_time: "2024-12-15T09:00:00",
-    //   end_time: "2024-12-15T18:00:00",
-    // },
-  ]);
+  const navigate = useNavigate();
+  const [polls, setPolls] = useState([]);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingPoll, setEditingPoll] = useState(null);
@@ -80,10 +66,6 @@ const CreatePoll = () => {
           image_url: opt.image_url || null,
         })),
       };
-
-      console.log("PollDTO Data:", pollDTO);
-      console.log("Start Time:", newPoll.start_time);
-      console.log("End Time:", newPoll.end_time);
 
       // For UI display (with additional fields)
       const poll = {
@@ -220,7 +202,7 @@ const CreatePoll = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mt-3 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -231,13 +213,22 @@ const CreatePoll = () => {
             Tạo và quản lý các câu hỏi khảo sát cho sự kiện
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
-        >
-          <FontAwesomeIcon icon={faPlus} />
-          Tạo câu hỏi mới
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/poll-analytics/" + eventId)}
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          >
+            <FontAwesomeIcon icon={faPoll} />
+            Thống kê
+          </button>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          >
+            <FontAwesomeIcon icon={faPlus} />
+            Tạo câu hỏi mới
+          </button>
+        </div>
       </div>
 
       {/* Create Form */}

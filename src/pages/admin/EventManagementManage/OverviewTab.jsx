@@ -14,8 +14,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { formatDateTime } from "@utils/helpers";
 
 const OverviewTab = ({ eventData, stats = {} }) => {
-  if (!eventData) return <div>Đang tải...</div>;
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  if (!eventData) return <div>Đang tải...</div>;
+
   const shouldShowExpandButton = eventData.description?.length > 200;
 
   const quickActions = [

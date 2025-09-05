@@ -4,17 +4,14 @@ import { Mutex } from "async-mutex";
 
 const mutex = new Mutex();
 
-const baseQuery = fetchBaseQuery({
+const baseRaw = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_BASE_URL,
   credentials: "include",
   prepareHeaders: (headers, { getState }) => {
-    const token = getState().auth.accessToken;
-    const tokenType = getState().auth.tokenType;
-
-    if (token) {
-      headers.set("Authorization", `${tokenType} ${token}`);
-    }
-
+    const state = getState();
+    const token = state?.auth?.accessToken;
+    const tokenType = state?.auth?.tokenType || "Bearer";
+    if (token) headers.set("Authorization", `${tokenType} ${token}`);
     return headers;
   },
 });
@@ -27,49 +24,40 @@ const SKIP_REFRESH_PATHS = [
   "/auth/register",
 ];
 
-export const baseQueryWithReauth = async (args, api, extraOptions) => {
+export const baseQueryWithReauth = async (args, api, extra) => {
   await mutex.waitForUnlock();
 
+  let res = await baseRaw(args, api, extra);
   const url = getUrl(args);
-  let result = await baseQuery(args, api, extraOptions);
 
-  if (!result?.error || result.error.status !== 401) return result;
+  if (
+    res?.error &&
+    res.error.status === 401 &&
+    !SKIP_REFRESH_PATHS.some((p) => url.startsWith(p))
+  ) {
+    if (!mutex.isLocked()) {
+      const release = await mutex.acquire();
+      try {
+        const refresh = await baseRaw(
+          { url: "/auth/refresh-token", method: "POST" },
+          api,
+          extra,
+        );
 
-  const { accessToken } = api.getState().auth || {};
-  if (!accessToken) return result;
-
-  if (SKIP_REFRESH_PATHS.some((p) => url.startsWith(p))) {
-    return result;
-  }
-
-  if (!mutex.isLocked()) {
-    const release = await mutex.acquire();
-    try {
-      const refreshRes = await baseQuery(
-        { url: "/auth/refresh-token", method: "POST" },
-        api,
-        extraOptions,
-      );
-
-      if (refreshRes?.data) {
-        api.dispatch(setToken(refreshRes.data));
-        result = await baseQuery(args, api, extraOptions);
-      } else {
-        api.dispatch(clearToken());
-        if (
-          typeof window !== "undefined" &&
-          window.location.pathname !== "/login"
-        ) {
-          window.location.replace("/login");
+        if (refresh?.data) {
+          api.dispatch(setToken(refresh.data));
+          res = await baseRaw(args, api, extra);
+        } else {
+          api.dispatch(clearToken());
         }
+      } finally {
+        release();
       }
-    } finally {
-      release();
+    } else {
+      await mutex.waitForUnlock();
+      res = await baseRaw(args, api, extra);
     }
-  } else {
-    await mutex.waitForUnlock();
-    result = await baseQuery(args, api, extraOptions);
   }
 
-  return result;
+  return res;
 };

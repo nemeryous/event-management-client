@@ -57,13 +57,13 @@ export default function EventList({
               )}
               {event.created_by !== undefined && event.created_by !== null && (
                 <div>
-                  <b>Người tạo:</b>
+                  <b>Người tạo </b>
                   <span>{event.createdByName || "Không rõ"}</span>
                 </div>
               )}
               {/* Hiển thị tên người quản lý ngay dưới phần người tạo */}
               <div>
-                <b>Quản lý:</b>
+                <b>Quản lý: </b>
                 {event.managerName ? (
                   <span>{event.managerName}</span>
                 ) : (
@@ -74,12 +74,12 @@ export default function EventList({
               </div>
               {event.created_at && (
                 <div>
-                  <b>Ngày tạo:</b> {formatDate(event.created_at)}
+                  <b>Ngày tạo: </b> {formatDate(event.created_at)}
                 </div>
               )}
               {event.url_docs && (
                 <div>
-                  <b>Docs:</b>{" "}
+                  <b>Docs: </b>{" "}
                   <a
                     href={event.url_docs}
                     target="_blank"

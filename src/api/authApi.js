@@ -1,3 +1,4 @@
+import { clearToken, setToken, setUser } from "@store/slices/authSlice";
 import { rootApi } from "./rootApi";
 
 export const authApi = rootApi.injectEndpoints({
@@ -9,6 +10,7 @@ export const authApi = rootApi.injectEndpoints({
         body: { name, email, password, confirm_password, phone_number },
         method: "POST",
       }),
+      invalidatesTags: ["Auth"],
     }),
     login: builder.mutation({
       query: ({ email, password }) => ({
@@ -16,16 +18,47 @@ export const authApi = rootApi.injectEndpoints({
         body: { email, password },
         method: "POST",
       }),
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setToken(data));
+          dispatch(
+            authApi.util.getAuthUser.initiate(undefined, {
+              forceRefetch: true,
+            }),
+          );
+        } catch {
+          //
+        }
+      },
+      invalidatesTags: ["Auth"],
     }),
     getAuthUser: builder.query({
       query: () => "/auth/auth-user",
       providesTags: ["Auth"],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setUser(data));
+        } catch {
+          //
+        }
+      },
     }),
     logout: builder.mutation({
       query: () => ({
         url: "/auth/logout",
         method: "POST",
       }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+        } finally {
+          dispatch(clearToken());
+          dispatch(rootApi.util.resetApiState());
+        }
+      },
+      invalidatesTags: ["Auth"],
     }),
     enableUser: builder.mutation({
       query: (id) => ({

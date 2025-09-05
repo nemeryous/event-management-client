@@ -239,14 +239,6 @@ export default function EventManagement() {
 
       {isLoading && <LoadingState message="Đang tải dữ liệu sự kiện..." />}
 
-      {error && (
-        <div className="error-state">
-          <h3>❌ Lỗi khi tải dữ liệu</h3>
-          <p>{error.message || "Không thể kết nối đến máy chủ"}</p>
-          <p>Chi tiết lỗi: {JSON.stringify(error)}</p>
-        </div>
-      )}
-
       {!isLoading && !error && events.length === 0 && (
         <div className="no-events">
           <h3>📭 Không có sự kiện nào</h3>
