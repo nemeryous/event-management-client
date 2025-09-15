@@ -13,6 +13,7 @@ import EventManagement from "@pages/admin/EventManagement";
 import EventCreate from "@pages/admin/EventCreate";
 import EventDetail from "@pages/admin/EventDetail";
 import UserManagement from "@pages/admin/UserManagement";
+import DonViTenDonViManagement from "@pages/admin/DonViTenDonViManagement";
 import NotFound from "@pages/NotFound";
 
 import EventDetailUser from "@pages/user/EventDetailUser";
@@ -108,6 +109,10 @@ const router = createBrowserRouter([
               {
                 path: "/admin/users",
                 element: <UserManagement />,
+              },
+              {
+                path: "/admin/donvi",
+                element: <DonViTenDonViManagement />,
               },
 
               {

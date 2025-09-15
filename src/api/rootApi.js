@@ -12,6 +12,7 @@ export const rootApi = createApi({
     "AllManagedEvents",
     "EventManager",
     "UserList",
+    "DonVis",
   ],
 
   endpoints: () => ({}),

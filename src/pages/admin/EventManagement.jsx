@@ -7,7 +7,7 @@ import "./EventManagement.css";
 import EventModal from "./EventModal";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useGetEventsQuery, useDeleteEventMutation } from "../../api/eventApi";
+import { useGetAllEventsQuery, useDeleteEventMutation } from "../../api/eventApi";
 import dayjs from "dayjs";
 import {
   formatDate,
@@ -52,16 +52,12 @@ export default function EventManagement() {
   }, [debouncedSearch, statusFilter]);
 
   const {
-    data: pageData,
+    data: allEvents = [],
     isLoading,
     error,
     refetch,
-  } = useGetEventsQuery(
+  } = useGetAllEventsQuery(
     {
-      page: page,
-      size: PAGE_SIZE,
-      sortBy: "startTime",
-      sortDir: "asc",
       search: debouncedSearch || null,
       status: statusFilter === "all" ? null : statusFilter.toUpperCase(),
     },
@@ -71,9 +67,6 @@ export default function EventManagement() {
     },
   );
 
-  const eventsFromApi = pageData?.pagination?.content || [];
-  const totalPages = pageData?.pagination?.totalPages || 0;
-
   const [modalOpen, setModalOpen] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
   const navigate = useNavigate();
@@ -82,7 +75,8 @@ export default function EventManagement() {
   const events = useMemo(() => {
     const now = dayjs();
 
-    return (eventsFromApi || [])
+    const list = Array.isArray(allEvents) ? allEvents : [];
+    return list
       .map((event) => {
         const statusUpper = normalizeStatus(event.status); // <-- CHỐT UPPERCASE
 
@@ -111,19 +105,28 @@ export default function EventManagement() {
         };
       })
       .sort((a, b) => {
-        const order = { UPCOMING: 0, ONGOING: 1, COMPLETED: 2, CANCELLED: 3 };
+        // New desired order: ONGOING -> UPCOMING -> COMPLETED -> CANCELLED
+        const order = { ONGOING: 0, UPCOMING: 1, COMPLETED: 2, CANCELLED: 3 };
         const ao = order[a.status] ?? 99;
         const bo = order[b.status] ?? 99;
         if (ao !== bo) return ao - bo;
 
-        if (a.status === "UPCOMING") return a.timeRemaining - b.timeRemaining;
-        if (a.status === "ONGOING")
+        // Within same status, sort by time:
+        if (a.status === "ONGOING") {
+          // Earlier start first
           return dayjs(a.start_time).valueOf() - dayjs(b.start_time).valueOf();
-        if (a.status === "COMPLETED" || a.status === "CANCELLED")
+        }
+        if (a.status === "UPCOMING") {
+          // Sooner upcoming first
+          return dayjs(a.start_time).valueOf() - dayjs(b.start_time).valueOf();
+        }
+        if (a.status === "COMPLETED" || a.status === "CANCELLED") {
+          // Most recent finished first
           return dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf();
+        }
         return 0;
       });
-  }, [eventsFromApi]);
+  }, [allEvents]);
 
   const filteredEvents = useMemo(() => {
     let filtered = events;
@@ -157,7 +160,10 @@ export default function EventManagement() {
     });
   }, [events, statusFilter, searchInput]);
 
-  const counters = pageData?.counters || {};
+  const counters = events.reduce((acc, e) => {
+    acc[e.status] = (acc[e.status] || 0) + 1;
+    return acc;
+  }, {});
   const stats = useMemo(
     () => ({
       total:
@@ -286,7 +292,7 @@ export default function EventManagement() {
           {filteredEvents.length > 0 ? (
             <>
               <EventList
-                events={filteredEvents}
+                events={filteredEvents.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onView={(id) => navigate(`/admin/events/${id}`)}
@@ -297,7 +303,7 @@ export default function EventManagement() {
 
               <PaginationControls
                 currentPage={page}
-                totalPages={totalPages}
+                totalPages={Math.max(1, Math.ceil(filteredEvents.length / PAGE_SIZE))}
                 onPageChange={setPage}
               />
             </>

@@ -4,10 +4,26 @@ import { rootApi } from "./rootApi";
 export const authApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     register: builder.mutation({
-      query: ({ name, email, password, confirm_password, phone_number }) => ({
+      query: ({
+        name,
+        email,
+        password,
+        confirm_password,
+        phone_number,
+        donVi,
+        tenDonVi,
+      }) => ({
         url: "/auth/register",
 
-        body: { name, email, password, confirm_password, phone_number },
+        body: {
+          name,
+          email,
+          password,
+          confirm_password,
+          phone_number,
+          donVi,
+          tenDonVi,
+        },
         method: "POST",
       }),
       invalidatesTags: ["Auth"],

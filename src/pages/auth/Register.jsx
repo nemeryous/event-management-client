@@ -9,6 +9,7 @@ import { openSnackbar } from "@store/slices/snackbarSlice";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRegisterMutation } from "@api/authApi";
+import { useGetTenDonViByDonViQuery } from "@api/donViApi";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -37,11 +38,24 @@ const Register = () => {
       .string()
       .matches(/^\d{10}$/, "Số điện thoại phải có đúng 10 chữ số")
       .required("Số điện thoại là bắt buộc"),
+    donVi: yup
+      .string()
+      .oneOf(["CAN_BO_NHAN_VIEN", "SINH_VIEN", "DON_VI_NGOAI"], "Đơn vị không hợp lệ")
+      .required("Đơn vị là bắt buộc"),
+    tenDonVi: yup
+      .string()
+      .when("donVi", (donVi, schema) =>
+        donVi && donVi !== "DON_VI_NGOAI"
+          ? schema.required("Tên đơn vị là bắt buộc")
+          : schema,
+      ),
   });
 
   const {
     control,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, touchedFields },
   } = useForm({
     mode: "onChange",
@@ -51,6 +65,8 @@ const Register = () => {
       password: "",
       confirm_password: "",
       phone_number: "",
+      donVi: "",
+      tenDonVi: "",
     },
     resolver: yupResolver(formSchema),
   });
@@ -62,6 +78,19 @@ const Register = () => {
   function onSubmit(formData) {
     register(formData);
   }
+
+  // Watch Đơn vị selection
+  const watchDonVi = watch("donVi");
+  const { data: tenDonViOptions = [] } = useGetTenDonViByDonViQuery(watchDonVi, {
+    skip: !watchDonVi,
+  });
+
+  // Clear Tên đơn vị when Đơn vị is cleared or is Đơn vị ngoài
+  useEffect(() => {
+    if (!watchDonVi) {
+      setValue("tenDonVi", "");
+    }
+  }, [watchDonVi, setValue]);
 
   useEffect(() => {
     if (isSuccess) {
@@ -133,6 +162,50 @@ const Register = () => {
               Component={TextInput}
               error={errors["confirm_password"]}
               isValid={isFieldValid("confirm_password")}
+            />
+            {/* Đơn vị */}
+            <FormField
+              control={control}
+              label="Đơn vị"
+              name="donVi"
+              Component={({ value, onChange, ...rest }) => (
+                <select {...rest} value={value} onChange={onChange}>
+                  <option value="" disabled>
+                    Chọn đơn vị
+                  </option>
+                  <option value="CAN_BO_NHAN_VIEN">Cán bộ nhân viên</option>
+                  <option value="SINH_VIEN">Sinh viên</option>
+                  <option value="DON_VI_NGOAI">Đơn vị ngoài</option>
+                </select>
+              )}
+              error={errors["donVi"]}
+              isValid={isFieldValid("donVi")}
+            />
+            {/* Tên đơn vị (disabled until chọn Đơn vị; hidden options for Đơn vị ngoài) */}
+            <FormField
+              control={control}
+              label="Tên đơn vị"
+              name="tenDonVi"
+              Component={({ value, onChange, ...rest }) => (
+                <select
+                  {...rest}
+                  value={value}
+                  onChange={onChange}
+                  disabled={!watchDonVi}
+                >
+                  <option value="" disabled>
+                    {!watchDonVi ? "Chọn đơn vị trước" : "Chọn tên đơn vị"}
+                  </option>
+                  {watchDonVi &&
+                    tenDonViOptions.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                </select>
+              )}
+              error={errors["tenDonVi"]}
+              isValid={isFieldValid("tenDonVi")}
             />
             <button
               type="submit"
