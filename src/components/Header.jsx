@@ -78,6 +78,21 @@ function MobileMenu({ open, onClose, email, handleLogout }) {
             Quản lý người dùng
           </NavLink>
 
+          {/* New link to DonVi management (mobile) */}
+          <NavLink
+            to="/admin/donvi"
+            className={({ isActive }) =>
+              `rounded-lg px-4 py-2 font-semibold transition ${
+                isActive
+                  ? "bg-[#223b73] text-white"
+                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+              }`
+            }
+            onClick={onClose}
+          >
+            Quản lý tên đơn vị
+          </NavLink>
+
           <button
             onClick={handleLogout}
             className="mt-4 inline-flex w-full items-center gap-3 rounded-lg px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
@@ -176,6 +191,20 @@ export default function Header() {
             }
           >
             Quản lý người dùng
+          </NavLink>
+
+          {/* New link to DonVi management (desktop) */}
+          <NavLink
+            to="/admin/donvi"
+            className={({ isActive }) =>
+              `rounded-lg px-4 py-2 font-semibold transition ${
+                isActive
+                  ? "bg-[#ffd012] text-[#223b73]"
+                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+              }`
+            }
+          >
+            Quản lý tên đơn vị
           </NavLink>
 
           {/* User dropdown */}

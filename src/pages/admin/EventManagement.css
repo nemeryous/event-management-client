@@ -181,28 +181,29 @@
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 0.8rem;
-    font-weight: bold;
+    font-weight: 700;
     text-transform: uppercase;
-}
-.status-active {
-    background: #e8f5e8;
-    color: #2e7d32;
+    border: 2px solid transparent;
 }
 .status-ongoing {
-    background: #e8f5e8;
-    color: #2e7d32;
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
 }
 .status-upcoming {
-    background: #fff3e0;
-    color: #ef6c00;
+    background: #fffbeb;
+    color: #92400e;
+    border-color: #fde68a;
 }
 .status-completed {
-    background: #f3e5f5;
-    color: #7b1fa2;
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #e5e7eb;
 }
 .status-cancelled {
-    background: #ffebee;
-    color: #c62828;
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
 }
 .event-description {
     color: #2c3e50;

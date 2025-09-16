@@ -29,7 +29,7 @@ export default function EventList({
             <div className="event-date">
               📅 {formatDate(event.start_time)} - {formatDate(event.end_time)}
             </div>
-            {event.status === "upcoming" && event.timeRemaining > 0 && (
+            {event.status === "UPCOMING" && event.timeRemaining > 0 && (
               <div className="event-time-remaining">
                 ⏰ Còn {formatTimeRemaining(event.timeRemaining)}
               </div>
@@ -38,7 +38,7 @@ export default function EventList({
           <div className="event-body">
             <div className="event-info">
               <span>📍 {event.location}</span>
-              <span className={`event-status status-${event.status}`}>
+              <span className={`event-status status-${String(event.status || "").toLowerCase()}`}>
                 {getStatusText(event.status)}
               </span>
             </div>

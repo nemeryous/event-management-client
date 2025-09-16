@@ -56,6 +56,12 @@ function getRoleDisplayName(roleName) {
 }
 
 export default function UserManagement() {
+  const DON_VI_OPTIONS = [
+    { value: "CAN_BO_NHAN_VIEN", label: "Cán bộ nhân viên" },
+    { value: "SINH_VIEN", label: "Sinh viên" },
+    { value: "DON_VI_NGOAI", label: "Đơn vị ngoài" },
+  ];
+  const getDonViLabel = (value) => DON_VI_OPTIONS.find(o => o.value === value)?.label || value || '-';
   const { data: users = [], isLoading, error, refetch } = useGetAllUsersQuery();
   const [enableUser, { isLoading: isEnabling }] = useEnableUserMutation();
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -70,6 +76,17 @@ export default function UserManagement() {
   const userList = Array.isArray(users) ? users : (users?.content || []);
 
   const filtered = userList.filter(u => {
+    // Debug log each user row for don_vi/ten_don_vi
+    try {
+      // eslint-disable-next-line no-console
+      // console.debug("USER_ROW", {
+      //   id: u?.id,
+      //   name: u?.name,
+      //   donVi: u?.donVi,
+      //   tenDonVi: u?.tenDonVi,
+      //   raw: u,
+      // });
+    } catch {}
     if (search && !( `${u.name} ${u.email} ${u.phoneNumber}`.toLowerCase().includes(search.toLowerCase()))) return false;
     if (roleFilter !== "Tất cả" && !(u.roles && u.roles.some(r => r.name === roleFilter))) return false;
     if (statusFilter === "Đã kích hoạt" && !u.enabled) return false;
@@ -122,9 +139,11 @@ export default function UserManagement() {
 
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-2xl font-bold text-[#223b73] mb-6 flex items-center gap-2">
-        <FiUsers className="text-[#c52032]" /> Quản lý tài khoản người dùng
-      </h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-[#223b73] flex items-center gap-2">
+          <FiUsers className="text-[#c52032]" /> Quản lý tài khoản người dùng
+        </h1>
+      </div>
       {message && (
         <div className={`mb-4 px-4 py-2 rounded ${messageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{message}</div>
       )}
@@ -138,6 +157,8 @@ export default function UserManagement() {
             { key: 'name', label: 'Tên', render: (row) => <div className="flex items-center gap-2"><FiUser className="text-[#223b73]" /> {row.name}</div> },
             { key: 'email', label: 'Email' },
             { key: 'phoneNumber', label: 'SĐT' },
+            { key: 'donVi', label: 'Đơn vị', render: (row) => getDonViLabel(row?.donVi) },
+            { key: 'tenDonVi', label: 'Tên đơn vị', render: (row) => row?.tenDonVi || '-' },
             { key: 'enabled', label: 'Trạng thái', render: (row) => <StatusCell enabled={row.enabled} /> },
             { key: 'roles', label: 'Vai trò', render: (row) => (row.roles || []).map(r => getRoleDisplayName(r.roleName)).join(', ') },
             { key: 'actions', label: '', render: (row) => <UserActionButtons user={row} onToggle={handleToggleUser} /> }
@@ -147,7 +168,23 @@ export default function UserManagement() {
       {/* Card view cho mobile */}
       <div className="block md:hidden space-y-3">
         {filtered.map((user, idx) => (
-          <UserCard key={user.id} user={user} idx={idx} onToggle={handleToggleUser} />
+          <div key={user.id} className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2 font-bold text-[#223b73]">
+              <span className="text-xs text-gray-400">#{idx + 1}</span>
+              <FiUser className="text-[#c52032]" /> {user.name}
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <StatusCell enabled={user.enabled} />
+              <span className="ml-2">{user.votes} votes</span>
+            </div>
+            <div className="text-xs text-gray-500">{user.email} • {user.phone_number || user.phoneNumber}</div>
+            <div className="text-xs">{(user.roles || []).map(r => getRoleDisplayName(r.roleName)).join(', ')}</div>
+            <div className="text-xs text-gray-700">Đơn vị: {getDonViLabel(user?.donVi)}</div>
+            <div className="text-xs text-gray-700">Tên đơn vị: {user?.tenDonVi || '-'}</div>
+            <div>
+              <UserActionButtons user={user} onToggle={handleToggleUser} />
+            </div>
+          </div>
         ))}
         {filtered.length === 0 && (
           <div className="text-center text-gray-400 py-8">Không có dữ liệu phù hợp</div>

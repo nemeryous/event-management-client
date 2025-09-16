@@ -9,6 +9,24 @@ const eventListTags = [
 
 export const eventApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
+    getAllEvents: builder.query({
+      query: ({ status = null, search = null } = {}) => {
+        const params = new URLSearchParams();
+        if (status) params.append("status", status);
+        if (search) params.append("search", search);
+        const qs = params.toString();
+        return `/events/all${qs ? `?${qs}` : ""}`;
+      },
+      transformResponse: (response) => {
+        const res = response || {};
+        const data = res.data ?? res;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.content)) return data.content;
+        if (Array.isArray(data?.pagination?.content)) return data.pagination.content;
+        return [];
+      },
+      providesTags: ["AllEvents"],
+    }),
     createEvent: builder.mutation({
       query: (data) => ({
         url: "/events",
@@ -76,6 +94,40 @@ export const eventApi = rootApi.injectEndpoints({
 
         return `/events?${params.toString()}`;
       },
+      transformResponse: (response) => {
+        // Normalize various possible backend shapes into a consistent structure
+        // Expected output: { pagination: { content, totalPages, totalElements, number, size }, counters }
+        const res = response || {};
+        const data = res.data ?? res;
+
+        // Try to locate content array
+        const content = Array.isArray(data?.pagination?.content)
+          ? data.pagination.content
+          : Array.isArray(data?.content)
+            ? data.content
+            : Array.isArray(data)
+              ? data
+              : [];
+
+        // Determine pagination meta
+        const totalPages = data?.pagination?.totalPages ?? data?.totalPages ?? 0;
+        const totalElements = data?.pagination?.totalElements ?? data?.totalElements ?? content.length ?? 0;
+        const number = data?.pagination?.number ?? data?.number ?? 0;
+        const size = data?.pagination?.size ?? data?.size ?? content.length ?? 0;
+
+        const counters = data?.counters ?? res?.counters ?? {};
+
+        return {
+          pagination: {
+            content,
+            totalPages,
+            totalElements,
+            number,
+            size,
+          },
+          counters,
+        };
+      },
       providesTags: ["Events"],
     }),
     getManagedEvents: builder.query({
@@ -92,6 +144,24 @@ export const eventApi = rootApi.injectEndpoints({
           sortDir,
         });
         return `/events/managed?${params.toString()}`;
+      },
+      transformResponse: (response) => {
+        const res = response || {};
+        const data = res.data ?? res;
+        const content = Array.isArray(data?.pagination?.content)
+          ? data.pagination.content
+          : Array.isArray(data?.content)
+            ? data.content
+            : Array.isArray(data)
+              ? data
+              : [];
+        const totalPages = data?.pagination?.totalPages ?? data?.totalPages ?? 0;
+        const totalElements = data?.pagination?.totalElements ?? data?.totalElements ?? content.length ?? 0;
+        const number = data?.pagination?.number ?? data?.number ?? 0;
+        const size = data?.pagination?.size ?? data?.size ?? content.length ?? 0;
+        return {
+          pagination: { content, totalPages, totalElements, number, size },
+        };
       },
       providesTags: ["ManagedEvents"],
     }),
@@ -184,6 +254,7 @@ export const eventApi = rootApi.injectEndpoints({
 });
 
 export const {
+  useGetAllEventsQuery,
   useCreateEventMutation,
   useGetEventsQuery,
   useGetManagedEventsQuery,
