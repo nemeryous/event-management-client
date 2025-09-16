@@ -58,6 +58,8 @@ const DashboardUser = () => {
     },
   );
 
+  console.log("normalData:", normalData); // Debug
+  console.log("manageData:", manageData); // Debug
   const dataForCurrentTab = isManageTab ? manageData : normalData;
   const paginationInfo = dataForCurrentTab?.pagination;
   const tabCounts = dataForCurrentTab?.counters;
@@ -66,6 +68,7 @@ const DashboardUser = () => {
   const error = isManageTab ? errorManage : errorNormal;
 
   const normalizePageData = (data) => {
+    console.log("normalizePageData input:", data); // Debug
     if (!data) return undefined;
     if (Array.isArray(data)) {
       return {

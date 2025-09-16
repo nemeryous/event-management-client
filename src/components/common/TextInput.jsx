@@ -4,6 +4,7 @@ const TextInput = ({
   name,
   type = "text",
   className = "",
+  isValid,
   ...props
 }) => {
   return (
@@ -13,6 +14,7 @@ const TextInput = ({
       value={value}
       onChange={onChange}
       className={className}
+      data-isvalid={isValid} // Sử dụng như thuộc tính tùy chỉnh
       {...props}
     />
   );
