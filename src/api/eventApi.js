@@ -9,24 +9,6 @@ const eventListTags = [
 
 export const eventApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAllEvents: builder.query({
-      query: ({ status = null, search = null } = {}) => {
-        const params = new URLSearchParams();
-        if (status) params.append("status", status);
-        if (search) params.append("search", search);
-        const qs = params.toString();
-        return `/events/all${qs ? `?${qs}` : ""}`;
-      },
-      transformResponse: (response) => {
-        const res = response || {};
-        const data = res.data ?? res;
-        if (Array.isArray(data)) return data;
-        if (Array.isArray(data?.content)) return data.content;
-        if (Array.isArray(data?.pagination?.content)) return data.pagination.content;
-        return [];
-      },
-      providesTags: ["AllEvents"],
-    }),
     createEvent: builder.mutation({
       query: (data) => ({
         url: "/events",
@@ -95,40 +77,32 @@ export const eventApi = rootApi.injectEndpoints({
         return `/events?${params.toString()}`;
       },
       transformResponse: (response) => {
-        // Normalize various possible backend shapes into a consistent structure
-        // Expected output: { pagination: { content, totalPages, totalElements, number, size }, counters }
-        const res = response || {};
-        const data = res.data ?? res;
-
-        // Try to locate content array
-        const content = Array.isArray(data?.pagination?.content)
-          ? data.pagination.content
-          : Array.isArray(data?.content)
-            ? data.content
-            : Array.isArray(data)
-              ? data
-              : [];
-
-        // Determine pagination meta
-        const totalPages = data?.pagination?.totalPages ?? data?.totalPages ?? 0;
-        const totalElements = data?.pagination?.totalElements ?? data?.totalElements ?? content.length ?? 0;
-        const number = data?.pagination?.number ?? data?.number ?? 0;
-        const size = data?.pagination?.size ?? data?.size ?? content.length ?? 0;
-
-        const counters = data?.counters ?? res?.counters ?? {};
-
-        return {
-          pagination: {
-            content,
-            totalPages,
-            totalElements,
-            number,
-            size,
-          },
-          counters,
-        };
+        if (!response || !response.pagination || !response.counters) {
+          return {
+            pagination: {
+              content: [],
+              total_pages: 0,
+              total_elements: 0,
+              number: 0,
+              size: 0,
+            },
+            counters: {},
+          };
+        }
+        return response;
       },
-      providesTags: ["Events"],
+      providesTags: (result, error, arg) => {
+        const events = result?.pagination?.content;
+        if (events && events.length > 0) {
+          const eventTags = events.map((event) => ({
+            type: "Events",
+            id: event.id,
+          }));
+          const listTag = { type: "Events", id: "LIST" };
+          return [...eventTags, listTag];
+        }
+        return [{ type: "Events", id: "LIST" }];
+      },
     }),
     getManagedEvents: builder.query({
       query: ({
@@ -155,10 +129,16 @@ export const eventApi = rootApi.injectEndpoints({
             : Array.isArray(data)
               ? data
               : [];
-        const totalPages = data?.pagination?.totalPages ?? data?.totalPages ?? 0;
-        const totalElements = data?.pagination?.totalElements ?? data?.totalElements ?? content.length ?? 0;
+        const totalPages =
+          data?.pagination?.totalPages ?? data?.totalPages ?? 0;
+        const totalElements =
+          data?.pagination?.totalElements ??
+          data?.totalElements ??
+          content.length ??
+          0;
         const number = data?.pagination?.number ?? data?.number ?? 0;
-        const size = data?.pagination?.size ?? data?.size ?? content.length ?? 0;
+        const size =
+          data?.pagination?.size ?? data?.size ?? content.length ?? 0;
         return {
           pagination: { content, totalPages, totalElements, number, size },
         };
@@ -254,7 +234,6 @@ export const eventApi = rootApi.injectEndpoints({
 });
 
 export const {
-  useGetAllEventsQuery,
   useCreateEventMutation,
   useGetEventsQuery,
   useGetManagedEventsQuery,

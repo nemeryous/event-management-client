@@ -72,7 +72,7 @@ const OverviewTab = ({ eventData, stats = {} }) => {
                 <div className="flex items-center gap-4 text-sm opacity-90">
                   <div className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faCalendar} />
-                    <span>{formatDateTime(eventData.startTime)}</span>
+                    <span>{formatDateTime(eventData.start_time)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faMapMarkerAlt} />
@@ -134,7 +134,7 @@ const OverviewTab = ({ eventData, stats = {} }) => {
                 <span className="text-gray-600">Đã đăng ký</span>
                 <span className="font-bold text-blue-600">
                   {stats?.totalRegistered || 0}/
-                  {eventData?.maxParticipants || 0}
+                  {eventData?.max_participants || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -147,15 +147,15 @@ const OverviewTab = ({ eventData, stats = {} }) => {
                 <div
                   className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300"
                   style={{
-                    width: `${eventData?.maxParticipants > 0 ? ((stats?.totalRegistered || 0) / eventData.maxParticipants) * 100 : 0}%`,
+                    width: `${eventData?.max_participants > 0 ? ((stats?.totalRegistered || 0) / eventData.max_participants) * 100 : 0}%`,
                   }}
                 ></div>
               </div>
               <p className="text-center text-sm text-gray-500">
-                {eventData?.maxParticipants > 0
+                {eventData?.max_participants > 0
                   ? Math.round(
                       ((stats?.totalRegistered || 0) /
-                        eventData.maxParticipants) *
+                        eventData.max_participants) *
                         100,
                     )
                   : 0}

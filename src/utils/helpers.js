@@ -31,7 +31,11 @@ export const getTimeUntilEvent = (eventStartTime) => {
 };
 
 export const formatDateTime = (dateTimeString) => {
+  if (!dateTimeString) return "";
   const date = new Date(dateTimeString);
+
+  if (isNaN(date.getTime())) return "Ngày không hợp lệ";
+
   return date.toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -39,6 +43,7 @@ export const formatDateTime = (dateTimeString) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 };
 

@@ -8,7 +8,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import { setToken } from "@store/slices/authSlice";
-import ErrorMessage from "@components/user/ErrorMessage";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 import { CircularProgress } from "@mui/material";
 import { useLoginMutation } from "@api/authApi";
 

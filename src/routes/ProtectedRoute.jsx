@@ -2,8 +2,8 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 
-import Loading from "@components/common/Loading";
 import { useGetAuthUserQuery } from "@api/authApi";
+import Loading from "@/components/ui/Loading";
 
 const ProtectedRoute = () => {
   const { accessToken } = useSelector((state) => state.auth);

@@ -88,10 +88,11 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
   });
 
   const actualParticipants = participantsData || [];
-
   const dispatch = useDispatch();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterUnit, setFilterUnit] = useState("all");
   const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -118,6 +119,19 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
     },
   });
 
+  const uniqueUnits = useMemo(() => {
+    if (!actualParticipants) return [];
+    const unitMap = new Map();
+    actualParticipants.forEach((p) => {
+      if (p.user?.unit) {
+        unitMap.set(p.user.unit.id, p.user.unit);
+      }
+    });
+    return Array.from(unitMap.values()).sort((a, b) =>
+      a.unit_name.localeCompare(b.unit_name),
+    );
+  }, [actualParticipants]);
+
   const watchedEmailList = watch("emailList");
 
   const getStatusColor = (isCheckedIn) => {
@@ -128,22 +142,30 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
     }
   };
 
-  const filteredParticipants = actualParticipants.filter((participant) => {
-    const matchesSearch =
-      participant.user?.name
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      participant.user?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredParticipants = useMemo(() => {
+    return actualParticipants.filter((participant) => {
+      const matchesSearch =
+        participant.user?.name
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        participant.user?.email
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
 
-    let matchesFilter = true;
-    if (filterStatus === "checked") {
-      matchesFilter = participant.check_in_time !== null;
-    } else if (filterStatus === "registered") {
-      matchesFilter = participant.check_in_time === null;
-    }
+      let matchesStatus = true;
+      if (filterStatus === "checked") {
+        matchesStatus = participant.check_in_time !== null;
+      } else if (filterStatus === "registered") {
+        matchesStatus = participant.check_in_time === null;
+      }
 
-    return matchesSearch && matchesFilter;
-  });
+      const matchesUnit =
+        filterUnit === "all" ||
+        String(participant.user?.unit?.id) === filterUnit;
+
+      return matchesSearch && matchesStatus && matchesUnit;
+    });
+  }, [actualParticipants, searchTerm, filterStatus, filterUnit]);
 
   const handleSelectParticipant = (participantId) => {
     setSelectedParticipants((prev) =>
@@ -444,7 +466,7 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
 
       {/* Controls */}
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 lg:items-center lg:justify-between">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="relative">
               <FontAwesomeIcon
@@ -467,6 +489,18 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
               <option value="all">Tất cả trạng thái</option>
               <option value="checked">Đã điểm danh</option>
               <option value="registered">Đã đăng ký</option>
+            </select>
+            <select
+              value={filterUnit}
+              onChange={(e) => setFilterUnit(e.target.value)}
+              className="rounded-xl border-2 border-gray-200 px-4 py-2.5 transition-all duration-200 hover:border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none"
+            >
+              <option value="all">Tất cả đơn vị</option>
+              {uniqueUnits.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.unit_name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -550,6 +584,9 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
                   Số điện thoại
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                  Đơn vị
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
                   Ngày đăng ký
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-600 uppercase">
@@ -564,7 +601,7 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
               {isLoadingParticipants ? (
                 <tr>
                   <td
-                    colSpan="7"
+                    colSpan="8"
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     <div className="flex items-center justify-center">
@@ -578,7 +615,7 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
               ) : filteredParticipants.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="7"
+                    colSpan="8"
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     <div className="text-center">
@@ -628,7 +665,10 @@ const ParticipantsTab = ({ eventData, refetchEvent }) => {
                       {participant.user.email}
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
-                      {participant.user.phoneNumber || "N/A"}
+                      {participant.user.phone_number || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
+                      {participant.user.unit?.unit_name || "Chưa có"}
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
                       {formatDateTime(participant.joined_at)}

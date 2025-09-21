@@ -1,6 +1,6 @@
 import { useGetEventsQuery, useGetManagedEventsQuery } from "@api/eventApi";
 
-import EventCard from "@components/user/EventCard/index.jsx";
+import EventCard from "@/components/features/user/EventCard/index.jsx";
 import { EVENT_STATUS } from "@utils/constants";
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";

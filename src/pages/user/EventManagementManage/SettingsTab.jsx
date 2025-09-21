@@ -5,7 +5,7 @@ import {
 import FormField from "@components/common/FormField";
 import SunEditorEditor from "@components/common/SunEditorEditor";
 import TextInput from "@components/common/TextInput";
-import BannerUpload from "@components/user/BannerUpload";
+import BannerUpload from "@/components/features/user/BannerUpload";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import {
   prependApiUrlToImages,
@@ -56,11 +56,11 @@ const SettingsTab = ({ eventData }) => {
     return {
       title: eventData?.title || "",
       description: processedDescription,
-      startTime: toDateInput(eventData?.startTime),
-      endTime: toDateInput(eventData?.endTime),
+      start_time: toDateInput(eventData?.start_time),
+      end_time: toDateInput(eventData?.end_time),
       location: eventData?.location || "",
-      maxParticipants: eventData?.maxParticipants ?? "",
-      urlDocs: eventData?.urlDocs || "",
+      max_participants: eventData?.max_participants ?? "",
+      url_docs: eventData?.url_docs || "",
     };
   }, [eventData]);
 
@@ -77,9 +77,9 @@ const SettingsTab = ({ eventData }) => {
 
   const onSubmit = async (formData) => {
     if (
-      formData.startTime &&
-      formData.endTime &&
-      new Date(formData.endTime) < new Date(formData.startTime)
+      formData.start_time &&
+      formData.end_time &&
+      new Date(formData.end_time) < new Date(formData.start_time)
     ) {
       dispatch(
         openSnackbar({
@@ -109,13 +109,13 @@ const SettingsTab = ({ eventData }) => {
           .then((response) => {
             let returned = String(response?.url || "");
 
-            if (!returned.startsWith("/")) {
-              returned = returned.startsWith("images/")
-                ? `/${returned}`
-                : `/images/${returned}`;
-            }
+            // if (!returned.startsWith("/")) {
+            //   returned = returned.startsWith("images/")
+            //     ? `/${returned}`
+            //     : `/images/${returned}`;
+            // }
 
-            const relativeUrl = returned;
+            const relativeUrl = "/" + returned;
             base64ToUrlMap.set(base64String, relativeUrl);
           });
         uploadPromises.push(promise);
@@ -151,17 +151,17 @@ const SettingsTab = ({ eventData }) => {
     const payload = {
       title: formData.title,
       description: relativePathHtml,
-      start_time: formData.startTime
-        ? new Date(formData.startTime).toISOString()
+      start_time: formData.start_time
+        ? new Date(formData.start_time).toISOString()
         : null,
-      end_time: formData.endTime
-        ? new Date(formData.endTime).toISOString()
+      end_time: formData.end_time
+        ? new Date(formData.end_time).toISOString()
         : null,
       location: formData.location,
-      max_participants: formData.maxParticipants
-        ? Number(formData.maxParticipants)
+      max_participants: formData.max_participants
+        ? Number(formData.max_participants)
         : null,
-      url_docs: formData.urlDocs || null,
+      url_docs: formData.url_docs || null,
     };
 
     try {
@@ -236,18 +236,18 @@ const SettingsTab = ({ eventData }) => {
             <FormField
               control={control}
               label="Thời gian bắt đầu"
-              name="startTime"
+              name="start_time"
               type="datetime-local"
               Component={TextInput}
-              error={errors.startTime}
+              error={errors.start_time}
             />
             <FormField
               control={control}
               label="Thời gian kết thúc"
-              name="endTime"
+              name="end_time"
               type="datetime-local"
               Component={TextInput}
-              error={errors.endTime}
+              error={errors.end_time}
             />
           </div>
           <FormField
@@ -260,17 +260,17 @@ const SettingsTab = ({ eventData }) => {
           <FormField
             control={control}
             label="Số lượng tối đa"
-            name="maxParticipants"
+            name="max_participants"
             type="number"
             Component={TextInput}
-            error={errors.maxParticipants}
+            error={errors.max_participants}
           />
           <FormField
             control={control}
             label="Tài liệu"
-            name="urlDocs"
+            name="url_docs"
             Component={TextInput}
-            error={errors.urlDocs}
+            error={errors.url_docs}
           />
 
           <div className="flex justify-end gap-4">

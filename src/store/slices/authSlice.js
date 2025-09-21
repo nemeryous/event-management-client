@@ -14,8 +14,8 @@ export const counterSlice = createSlice({
   initialState,
   reducers: {
     setToken: (state, action) => {
-      state.accessToken = action.payload.accessToken;
-      state.tokenType = action.payload.tokenType;
+      state.accessToken = action.payload.access_token;
+      state.tokenType = action.payload.token_type;
     },
     clearToken: (state) => {
       state.accessToken = "";

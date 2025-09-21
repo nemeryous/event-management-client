@@ -148,7 +148,9 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-    } catch {}
+    } catch {
+      //
+    }
     dispatch(rootApi.util.resetApiState());
     dispatch(clearToken());
     navigate("/login", { replace: true });

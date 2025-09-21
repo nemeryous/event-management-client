@@ -6,7 +6,7 @@ import { openSnackbar } from "@store/slices/snackbarSlice";
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
 import SunEditorEditor from "@components/common/SunEditorEditor";
-import BannerUpload from "@components/user/BannerUpload";
+import BannerUpload from "@/components/features/user/BannerUpload";
 import EventManagerSection from "./EventManagementManage/EventManagerSection";
 
 const EventForm = ({ onSuccess, onCancel, initialData }) => {

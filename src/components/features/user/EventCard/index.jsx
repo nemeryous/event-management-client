@@ -121,7 +121,7 @@ const EventCard = ({ event, isManageMode = false }) => {
 
         {event.status === "UPCOMING" && (
           <div className="absolute top-4 left-4 z-20 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-gray-700 shadow-lg backdrop-blur-sm">
-            {getTimeUntilEvent(event.startTime)}
+            {getTimeUntilEvent(event.start_time)}
           </div>
         )}
       </div>
@@ -141,7 +141,7 @@ const EventCard = ({ event, isManageMode = false }) => {
             <span className="text-lg">📅</span>
             <div className="flex flex-col">
               <span className="text-sm font-medium">
-                {formatTimestampToDate(event.startTime)}
+                {formatTimestampToDate(event.start_time)}
               </span>
             </div>
           </div>
@@ -150,7 +150,7 @@ const EventCard = ({ event, isManageMode = false }) => {
             <span className="text-lg">⏰</span>
             <div className="flex flex-col">
               <span className="text-sm font-medium">
-                {formatTimestampToTime(event.startTime)}
+                {formatTimestampToTime(event.start_time)}
               </span>
             </div>
           </div>
@@ -205,7 +205,7 @@ const EventCard = ({ event, isManageMode = false }) => {
                 if (!canRegister) {
                   return;
                 }
-                handleJoinEvent(event.qrJoinToken);
+                handleJoinEvent(event.qr_join_token);
               }}
               disabled={!canRegister}
             >
@@ -215,7 +215,7 @@ const EventCard = ({ event, isManageMode = false }) => {
                 }`}
               ></div>
               <span className="relative z-10 flex items-center justify-center gap-2">
-                <span>{event.isRegistered ? "Đã đăng ký" : "Đăng ký"}</span>
+                <span>{event.is_registered ? "Đã đăng ký" : "Đăng ký"}</span>
               </span>
             </button>
           )}

@@ -1,210 +1,128 @@
 import React, { useState, useMemo, useEffect } from "react";
-import EventStats from "../../components/admin/EventStats";
-import EventControls from "../../components/admin/EventControls";
-import EventList from "../../components/admin/EventList";
-import LoadingState from "../../components/common/LoadingState";
-import "./EventManagement.css";
-import EventModal from "./EventModal";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { useGetAllEventsQuery, useDeleteEventMutation } from "../../api/eventApi";
-import dayjs from "dayjs";
+import { useDispatch, useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  formatDate,
-  getStatusText,
-  formatTimeRemaining,
-  truncateDescription,
-  truncateTitle,
-} from "../../utils/eventHelpers";
-import PaginationControls from "@components/admin/PaginationControls";
+  faCalendarAlt,
+  faDownload,
+  faFilter,
+  faPlus,
+  faSearch,
+  faSync,
+} from "@fortawesome/free-solid-svg-icons";
 
-const normalizeStatus = (s) => {
-  if (!s) return "";
-  const up = String(s).toUpperCase();
-  return up;
-};
+import { useDeleteEventMutation, useGetEventsQuery } from "@/api/eventApi";
+import EventStats from "@/components/features/admin/EventStats";
+import PaginationControls from "@/components/features/admin/PaginationControls";
+import LoadingState from "@/components/ui/LoadingState";
+import EventModal from "./EventModal";
 
-const STATUS_FILTERS = [
-  { value: "all", label: "Tất cả" },
-  { value: "UPCOMING", label: "Sắp diễn ra" },
-  { value: "ONGOING", label: "Đang diễn ra" },
-  { value: "COMPLETED", label: "Đã kết thúc" },
-  { value: "CANCELLED", label: "Đã hủy" },
-];
+import { STATUS_FILTERS } from "@/const/STATUS_FILTERS";
+import EventList from "@/components/features/admin/EventList";
+import { openSnackbar } from "@/store/slices/snackbarSlice";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 12;
 
 export default function EventManagement() {
   const [page, setPage] = useState(0);
-  const [modalErrors, setModalErrors] = useState([]);
-  const accessToken = useSelector((state) => state.auth.accessToken);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editEvent, setEditEvent] = useState(null);
+  const [modalErrors, setModalErrors] = useState([]);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  // Debounce search input
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
+    return () => clearTimeout(timer);
   }, [searchInput]);
 
+  // Reset page khi filter/search thay đổi
   useEffect(() => {
     setPage(0);
   }, [debouncedSearch, statusFilter]);
 
-  const {
-    data: allEvents = [],
-    isLoading,
-    error,
-    refetch,
-  } = useGetAllEventsQuery(
+  // Fetch events từ RTK Query
+  const { data, isLoading, error, refetch } = useGetEventsQuery(
     {
+      page,
+      size: PAGE_SIZE,
       search: debouncedSearch || null,
-      status: statusFilter === "all" ? null : statusFilter.toUpperCase(),
+      status: statusFilter === "all" ? null : statusFilter,
     },
-    {
-      refetchOnMountOrArgChange: true,
-      refetchOnReconnect: true,
-    },
+    { refetchOnMountOrArgChange: true },
   );
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editEvent, setEditEvent] = useState(null);
-  const navigate = useNavigate();
   const [deleteEvent] = useDeleteEventMutation();
 
+  // Chuẩn hóa dữ liệu sự kiện
   const events = useMemo(() => {
-    const now = dayjs();
+    const list = data?.pagination?.content || [];
+    return list.map((event) => ({
+      ...event,
+      status: event.status?.toUpperCase(),
+    }));
+  }, [data]);
 
-    const list = Array.isArray(allEvents) ? allEvents : [];
-    return list
-      .map((event) => {
-        const statusUpper = normalizeStatus(event.status); // <-- CHỐT UPPERCASE
-
-        return {
-          id: event.id,
-          title: event.title || event.name || "",
-          title_short: truncateTitle(event.title || event.name || "", 40),
-          description: event.description || "",
-          description_text: (event.description || "").replace(/<[^>]*>/g, " "),
-          description_short: truncateDescription(event.description || "", 400),
-          start_time: event.startTime,
-          end_time: event.endTime,
-          location: event.location || "",
-          status: statusUpper,
-          created_at: event.createdAt,
-          created_by: event.createdBy,
-          qr_join_token: event.qrJoinToken,
-          banner: event.banner,
-          url_docs: event.urlDocs,
-          max_participants: event.maxParticipants,
-          participants: event.participants,
-          enable: event.enabled,
-          timeRemaining: dayjs(event.startTime).diff(now, "hour", true),
-          createdByName: event.createdByName,
-          managerName: event.managerName,
-        };
-      })
-      .sort((a, b) => {
-        // New desired order: ONGOING -> UPCOMING -> COMPLETED -> CANCELLED
-        const order = { ONGOING: 0, UPCOMING: 1, COMPLETED: 2, CANCELLED: 3 };
-        const ao = order[a.status] ?? 99;
-        const bo = order[b.status] ?? 99;
-        if (ao !== bo) return ao - bo;
-
-        // Within same status, sort by time:
-        if (a.status === "ONGOING") {
-          // Earlier start first
-          return dayjs(a.start_time).valueOf() - dayjs(b.start_time).valueOf();
-        }
-        if (a.status === "UPCOMING") {
-          // Sooner upcoming first
-          return dayjs(a.start_time).valueOf() - dayjs(b.start_time).valueOf();
-        }
-        if (a.status === "COMPLETED" || a.status === "CANCELLED") {
-          // Most recent finished first
-          return dayjs(b.start_time).valueOf() - dayjs(a.start_time).valueOf();
-        }
-        return 0;
-      });
-  }, [allEvents]);
-
-  const filteredEvents = useMemo(() => {
-    let filtered = events;
-
-    if (statusFilter !== "all") {
-      const wanted = normalizeStatus(statusFilter);
-      filtered = filtered.filter((e) => e.status === wanted);
-    }
-
-    if (!searchInput?.trim()) return filtered;
-    const normalizeVi = (s = "") =>
-      s
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
-    const q = normalizeVi(searchInput);
-
-    return filtered.filter((e) => {
-      const haystacks = [
-        e.title,
-        e.location,
-        e.description_text,
-        e.createdByName,
-        e.managerName,
-      ]
-        .filter(Boolean)
-        .map((x) => normalizeVi(String(x)));
-      return haystacks.some((h) => h.includes(q));
-    });
-  }, [events, statusFilter, searchInput]);
-
-  const counters = events.reduce((acc, e) => {
-    acc[e.status] = (acc[e.status] || 0) + 1;
-    return acc;
-  }, {});
+  // Thống kê trạng thái
   const stats = useMemo(
     () => ({
       total:
-        (counters.UPCOMING ?? 0) +
-        (counters.ONGOING ?? 0) +
-        (counters.COMPLETED ?? 0) +
-        (counters.CANCELLED ?? 0),
-      active: counters.ONGOING ?? 0,
-      upcoming: counters.UPCOMING ?? 0,
-      completed: counters.COMPLETED ?? 0,
-      cancelled: counters.CANCELLED ?? 0,
+        (data?.counters?.UPCOMING ?? 0) +
+        (data?.counters?.ONGOING ?? 0) +
+        (data?.counters?.COMPLETED ?? 0) +
+        (data?.counters?.CANCELLED ?? 0),
+      upcoming: data?.counters?.UPCOMING ?? 0,
+      active: data?.counters?.ONGOING ?? 0,
+      completed: data?.counters?.COMPLETED ?? 0,
+      cancelled: data?.counters?.CANCELLED ?? 0,
     }),
-    [counters],
+    [data],
   );
 
-  const handleAdd = () => {
-    navigate("/admin/events/create");
-  };
-
+  // Xử lý modal
+  const handleAdd = () => setModalOpen(true);
   const handleEdit = (event) => {
     setEditEvent(event);
     setModalOpen(true);
   };
-
   const handleModalClose = () => {
     setModalOpen(false);
     setEditEvent(null);
+    setModalErrors([]);
   };
-
   const handleModalSubmit = async (form, errorsFromModal) => {
     if (errorsFromModal && errorsFromModal.length > 0) {
       setModalErrors(errorsFromModal);
       return;
-    } else {
-      setModalErrors([]);
     }
+    setModalErrors([]);
     await refetch();
     setModalOpen(false);
     setEditEvent(null);
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
+      try {
+        await deleteEvent(id).unwrap();
+        dispatch(openSnackbar({ message: "Đã xóa sự kiện thành công!" }));
+      } catch (err) {
+        dispatch(
+          openSnackbar({
+            message: err?.data?.message || "Xóa sự kiện thất bại!",
+            type: "error",
+          }),
+        );
+      }
+    }
+  };
+
+  // Xuất dữ liệu
   const handleExport = () => {
     const dataStr = JSON.stringify(events, null, 2);
     const dataUri =
@@ -216,145 +134,172 @@ export default function EventManagement() {
     linkElement.click();
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
-      if (!accessToken) {
-        alert("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
-        return;
-      }
-      try {
-        await deleteEvent(id).unwrap();
-        alert("Đã xóa sự kiện thành công!");
-        await refetch();
-      } catch (err) {
-        alert(
-          "Xóa sự kiện thất bại!\n" +
-            (err?.data?.message || err?.message || ""),
-        );
-      }
-    }
+  // Pagination
+  const totalPages = data?.pagination?.total_pages || 1;
+
+  // Xem chi tiết
+  const handleView = (id) => {
+    navigate(`/admin/events/${id}`);
   };
 
   return (
-    <div className="container">
-      <div className="header">
-        <h1>🎉 Quản Lý Sự Kiện</h1>
-        <p>Hệ thống quản lý sự kiện chuyên nghiệp</p>
-        <div className="admin-badge">👑 ADMIN</div>
-      </div>
-
-      {isLoading && <LoadingState message="Đang tải dữ liệu sự kiện..." />}
-
-      {!isLoading && !error && events.length === 0 && (
-        <div className="no-events">
-          <h3>📭 Không có sự kiện nào</h3>
-          <p>Chưa có sự kiện nào được tạo hoặc API không trả về dữ liệu.</p>
-        </div>
-      )}
-
-      {!isLoading && !error && (
-        <>
-          <EventStats stats={stats} />
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              marginBottom: 16,
-            }}
-          >
-            <label htmlFor="statusFilter" style={{ fontWeight: 600 }}>
-              Lọc theo trạng thái:
-            </label>
-            <select
-              id="statusFilter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ padding: 6, borderRadius: 6, border: "1px solid #ccc" }}
-            >
-              {STATUS_FILTERS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <EventControls
-            onAdd={handleAdd}
-            onExport={handleExport}
-            onRefresh={() => refetch()}
-            search={searchInput}
-            setSearch={setSearchInput}
-          />
-
-          {filteredEvents.length > 0 ? (
-            <>
-              <EventList
-                events={filteredEvents.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onView={(id) => navigate(`/admin/events/${id}`)}
-                formatDate={formatDate}
-                formatTimeRemaining={formatTimeRemaining}
-                getStatusText={getStatusText}
-              />
-
-              <PaginationControls
-                currentPage={page}
-                totalPages={Math.max(1, Math.ceil(filteredEvents.length / PAGE_SIZE))}
-                onPageChange={setPage}
-              />
-            </>
-          ) : (
-            <div className="no-events">
-              <h3>📭 Không tìm thấy sự kiện nào</h3>
-              <p>Hãy thử tìm với từ khóa khác hoặc tạo sự kiện mới.</p>
-            </div>
-          )}
-        </>
-      )}
-      {modalErrors.length > 0 && (
-        <div
-          style={{
-            background: "#fff4f4",
-            border: "1.5px solid #e53935",
-            borderRadius: 8,
-            padding: "12px 18px",
-            margin: "18px 0",
-            color: "#c52032",
-            fontWeight: 600,
-            boxShadow: "0 2px 8px rgba(229,57,53,0.08)",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 12,
-          }}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-6 py-8">
+        {/* Header */}
+        <motion.div
+          className="mb-8 text-center"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <span style={{ fontSize: 22, marginRight: 8 }}>⚠️</span>
-          <div>
-            <div style={{ fontSize: 16, marginBottom: 4 }}>Thông báo lỗi:</div>
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
+          <h1 className="mb-4 flex items-center justify-center gap-3 text-4xl font-bold text-gray-800">
+            🎉 Quản Lý Sự Kiện
+          </h1>
+          <p className="mb-4 text-lg text-gray-600">
+            Hệ thống quản lý sự kiện chuyên nghiệp
+          </p>
+          <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 px-6 py-2 font-semibold text-white shadow-lg">
+            👑 ADMIN DASHBOARD
+          </div>
+        </motion.div>
+
+        {/* Statistics */}
+        <EventStats stats={stats} />
+
+        {/* Controls */}
+        <motion.div
+          className="mb-8 rounded-xl bg-white p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            {/* Search */}
+            <div className="relative max-w-md flex-1">
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Tìm kiếm sự kiện..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 py-3 pr-4 pl-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faFilter} className="text-gray-500" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              >
+                {STATUS_FILTERS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleAdd}
+                className="flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-blue-600"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+                Thêm mới
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleExport}
+                className="flex items-center gap-2 rounded-lg bg-green-500 px-6 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-green-600"
+              >
+                <FontAwesomeIcon icon={faDownload} />
+                Xuất file
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={refetch}
+                className="rounded-lg bg-gray-500 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-gray-600"
+              >
+                <FontAwesomeIcon icon={faSync} />
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Events Grid */}
+        {isLoading ? (
+          <LoadingState message="Đang tải dữ liệu sự kiện..." />
+        ) : events.length > 0 ? (
+          <>
+            <EventList
+              events={events}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onView={handleView}
+            />
+
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </>
+        ) : (
+          <motion.div
+            className="rounded-xl bg-white py-12 text-center shadow-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <FontAwesomeIcon
+              icon={faCalendarAlt}
+              className="mb-4 text-6xl text-gray-300"
+            />
+            <h3 className="mb-2 text-xl font-semibold text-gray-600">
+              Không tìm thấy sự kiện nào
+            </h3>
+            <p className="text-gray-500">
+              Hãy thử tìm kiếm với từ khóa khác hoặc tạo sự kiện mới
+            </p>
+          </motion.div>
+        )}
+
+        {/* Modal lỗi */}
+        {modalErrors.length > 0 && (
+          <div className="my-4 rounded border border-red-400 bg-red-50 px-4 py-3 text-red-700">
+            <div className="mb-2 font-semibold">Thông báo lỗi:</div>
+            <ul className="list-disc pl-5">
               {modalErrors.map((msg, idx) => (
-                <li key={idx} style={{ marginBottom: 2 }}>
-                  {msg}
-                </li>
+                <li key={idx}>{msg}</li>
               ))}
             </ul>
           </div>
-        </div>
-      )}
-      <EventModal
-        key={editEvent ? editEvent.id : "new"}
-        open={modalOpen}
-        onClose={handleModalClose}
-        onUpdated={async () => {
-          await refetch();
-        }}
-        onSubmit={(form, errors) => handleModalSubmit(form, errors)}
-        initialData={editEvent}
-        isEdit={!!editEvent}
-      />
+        )}
+
+        {/* Modal tạo/sửa sự kiện */}
+        <EventModal
+          key={editEvent ? editEvent.id : "new"}
+          open={modalOpen}
+          onClose={handleModalClose}
+          onUpdated={async () => await refetch()}
+          onSubmit={handleModalSubmit}
+          initialData={editEvent}
+          isEdit={!!editEvent}
+        />
+      </div>
     </div>
   );
 }

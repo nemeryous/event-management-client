@@ -13,7 +13,7 @@ import CheckinTab from "./CheckinTab";
 import SettingsTab from "./SettingsTab";
 import { Navigate, useParams } from "react-router-dom";
 import { useGetEventByIdQuery } from "@api/eventApi";
-import Loading from "@components/common/Loading";
+import Loading from "@/components/ui/Loading";
 
 const EventManagementManage = () => {
   const { eventId } = useParams();

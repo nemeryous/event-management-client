@@ -10,8 +10,7 @@ export const authApi = rootApi.injectEndpoints({
         password,
         confirm_password,
         phone_number,
-        donVi,
-        tenDonVi,
+        unit_id,
       }) => ({
         url: "/auth/register",
 
@@ -21,8 +20,7 @@ export const authApi = rootApi.injectEndpoints({
           password,
           confirm_password,
           phone_number,
-          donVi,
-          tenDonVi,
+          unit_id,
         },
         method: "POST",
       }),

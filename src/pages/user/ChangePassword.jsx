@@ -7,7 +7,7 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
-import ErrorMessage from "@components/user/ErrorMessage";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 import { CircularProgress } from "@mui/material";
 import { useChangePasswordMutation } from "@api/authApi";
 

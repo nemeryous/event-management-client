@@ -1,9 +1,9 @@
 import { useGetEventByIdQuery, useJoinEventMutation } from "@api/eventApi";
-import Loading from "@components/common/Loading";
+import Loading from "@/components/ui/Loading";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { openSnackbar } from "@store/slices/snackbarSlice";
-import Error from "@components/common/Error";
+import Error from "@/components/ui/Error";
 import {
   formatDateTime,
   formatJoinedTime,
@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { useGetPollsByEventQuery } from "@api/pollApi";
 import PollPageUser from "./PollPageUser";
-import EventStatusBadge from "@components/user/EventStatusBadge";
+import EventStatusBadge from "@/components/features/user/EventStatusBadge";
 import { useCancelMyRegistrationMutation } from "@api/attendantApi";
 import { getDisplayStatus } from "@utils/eventHelpers";
 
@@ -104,7 +104,7 @@ const EventDetailUser = () => {
 
   const handleJoinEvent = async () => {
     try {
-      await joinEvent(event.qrJoinToken).unwrap();
+      await joinEvent(event.qr_join_token).unwrap();
     } catch {
       // ignore error
     }
@@ -223,8 +223,8 @@ const EventDetailUser = () => {
                   Thời gian bắt đầu
                 </h4>
                 <p className="text-sm text-[#666]">
-                  {event?.startTime
-                    ? formatDateTime(event.startTime)
+                  {event?.start_time
+                    ? formatDateTime(event.start_time)
                     : "Chưa có thông tin"}
                 </p>
               </div>
@@ -238,8 +238,8 @@ const EventDetailUser = () => {
                   Thời gian kết thúc
                 </h4>
                 <p className="text-sm text-[#666]">
-                  {event?.endTime
-                    ? formatDateTime(event.endTime)
+                  {event?.end_time
+                    ? formatDateTime(event.end_time)
                     : "Chưa có thông tin"}
                 </p>
               </div>
@@ -264,7 +264,7 @@ const EventDetailUser = () => {
                   Số lượng tham gia
                 </h4>
                 <p className="text-sm text-[#666]">
-                  {currentParticipants} / {event?.maxParticipants || 0} người
+                  {currentParticipants} / {event?.max_participants || 0} người
                 </p>
               </div>
             </div>
@@ -327,7 +327,7 @@ const EventDetailUser = () => {
           </h3>
 
           {(() => {
-            if (event.isUserRegistered) {
+            if (event.is_user_registered) {
               return (
                 <div className="text-center">
                   <div className="mb-4 rounded-full bg-green-100 px-4 py-3 font-bold text-green-800">
@@ -481,11 +481,11 @@ const EventDetailUser = () => {
                   className="flex items-center gap-3 border-b border-b-[#f0f0f0] p-2 hover:bg-[#f8f9fa]"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-300 font-bold text-gray-600">
-                    {participant.userName.charAt(0).toUpperCase()}
+                    {participant.user_name?.charAt(0).toUpperCase()}
                   </div>
                   <div className="participant-info">
                     <h4 className="mb-0.5 text-sm font-bold text-[#333]">
-                      {participant.userName}
+                      {participant.user_name}
                     </h4>
                     <p className="text-[12px] text-[#666]">
                       Đã đăng ký lúc {formatJoinedTime(participant.joinedAt)}

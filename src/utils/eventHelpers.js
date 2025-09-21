@@ -93,3 +93,11 @@ export const getDisplayStatus = (event) => {
 
   return event.status;
 };
+
+export const truncateText = (text, maxLength) => {
+  if (!text) return "";
+  const cleanText = text.replace(/<[^>]*>/g, "");
+  return cleanText.length > maxLength
+    ? cleanText.substring(0, maxLength) + "..."
+    : cleanText;
+};

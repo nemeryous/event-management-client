@@ -1,21 +1,23 @@
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
-import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import ErrorMessage from "@components/user/ErrorMessage";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRegisterMutation } from "@api/authApi";
-import { useGetTenDonViByDonViQuery } from "@api/donViApi";
+import { useListUnitsQuery } from "@/api/unitApi";
 
 const Register = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [register, { data = {}, isLoading, error, isError, isSuccess }] =
     useRegisterMutation();
+
+  const [selectedParentId, setSelectedParentId] = useState("");
 
   const formSchema = yup.object().shape({
     name: yup.string().required("Tên là bắt buộc"),
@@ -29,32 +31,21 @@ const Register = () => {
       .required("Mật khẩu là bắt buộc"),
     confirm_password: yup
       .string()
-      .oneOf(
-        [yup.ref("password"), null],
-        "Mật khẩu xác nhận phải khớp với mật khẩu",
-      )
+      .oneOf([yup.ref("password"), null], "Mật khẩu xác nhận phải khớp")
       .required("Mật khẩu xác nhận là bắt buộc"),
     phone_number: yup
       .string()
       .matches(/^\d{10}$/, "Số điện thoại phải có đúng 10 chữ số")
       .required("Số điện thoại là bắt buộc"),
-    donVi: yup
-      .string()
-      .oneOf(["CAN_BO_NHAN_VIEN", "SINH_VIEN", "DON_VI_NGOAI"], "Đơn vị không hợp lệ")
+    unit_id: yup
+      .number()
+      .typeError("Vui lòng chọn đơn vị")
       .required("Đơn vị là bắt buộc"),
-    tenDonVi: yup
-      .string()
-      .when("donVi", (donVi, schema) =>
-        donVi && donVi !== "DON_VI_NGOAI"
-          ? schema.required("Tên đơn vị là bắt buộc")
-          : schema,
-      ),
   });
 
   const {
     control,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, touchedFields },
   } = useForm({
@@ -65,8 +56,7 @@ const Register = () => {
       password: "",
       confirm_password: "",
       phone_number: "",
-      donVi: "",
-      tenDonVi: "",
+      unit_id: "",
     },
     resolver: yupResolver(formSchema),
   });
@@ -75,29 +65,57 @@ const Register = () => {
     return touchedFields[fieldName] && !errors[fieldName];
   };
 
+  const { data: unitsPage, isLoading: isLoadingUnits } = useListUnitsQuery(
+    { page: 0, size: 1000, sort: "unitName,asc" },
+    { refetchOnMountOrArgChange: true },
+  );
+  const allUnits = unitsPage?.content ?? [];
+
+  const parentUnits = useMemo(() => {
+    if (!allUnits.length) return [];
+    const parentsMap = new Map();
+    allUnits.forEach((unit) => {
+      if (!parentsMap.has(unit.parent_id)) {
+        parentsMap.set(unit.parent_id, unit.parent_name);
+      }
+    });
+    return Array.from(parentsMap, ([id, name]) => ({ id, name }));
+  }, [allUnits]);
+
+  const childUnits = useMemo(() => {
+    if (!selectedParentId || !allUnits.length) return [];
+    return allUnits.filter(
+      (unit) =>
+        unit.parent_id === selectedParentId && unit.id !== unit.parent_id,
+    );
+  }, [selectedParentId, allUnits]);
+
+  const handleParentChange = (e) => {
+    const parentId = Number(e.target.value);
+    setSelectedParentId(parentId);
+    setValue("unit_id", "", { shouldValidate: true });
+  };
+
   function onSubmit(formData) {
-    register(formData);
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      confirm_password: formData.confirm_password,
+      phone_number: formData.phone_number,
+      unit_id: Number(formData.unit_id),
+    };
+    register(payload);
   }
-
-  // Watch Đơn vị selection
-  const watchDonVi = watch("donVi");
-  const { data: tenDonViOptions = [] } = useGetTenDonViByDonViQuery(watchDonVi, {
-    skip: !watchDonVi,
-  });
-
-  // Clear Tên đơn vị when Đơn vị is cleared or is Đơn vị ngoài
-  useEffect(() => {
-    if (!watchDonVi) {
-      setValue("tenDonVi", "");
-    }
-  }, [watchDonVi, setValue]);
 
   useEffect(() => {
     if (isSuccess) {
-      dispatch(openSnackbar({ message: data.message }));
+      dispatch(
+        openSnackbar({ message: data?.message || "Đăng ký thành công!" }),
+      );
       navigate("/login");
     }
-  }, [isSuccess, data.message, dispatch, navigate]);
+  }, [isSuccess, data?.message, dispatch, navigate]);
 
   return (
     <div className="flex w-full items-center justify-center px-8 py-12 lg:w-1/2">
@@ -163,50 +181,63 @@ const Register = () => {
               error={errors["confirm_password"]}
               isValid={isFieldValid("confirm_password")}
             />
-            {/* Đơn vị */}
-            <FormField
-              control={control}
-              label="Đơn vị"
-              name="donVi"
-              Component={({ value, onChange, ...rest }) => (
-                <select {...rest} value={value} onChange={onChange}>
-                  <option value="" disabled>
-                    Chọn đơn vị
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Loại tài khoản
+              </label>
+              <select
+                onChange={handleParentChange}
+                value={selectedParentId}
+                disabled={isLoadingUnits}
+                className="w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="" disabled>
+                  {isLoadingUnits
+                    ? "Đang tải..."
+                    : "--- Chọn loại tài khoản ---"}
+                </option>
+                {parentUnits.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
                   </option>
-                  <option value="CAN_BO_NHAN_VIEN">Cán bộ nhân viên</option>
-                  <option value="SINH_VIEN">Sinh viên</option>
-                  <option value="DON_VI_NGOAI">Đơn vị ngoài</option>
-                </select>
-              )}
-              error={errors["donVi"]}
-              isValid={isFieldValid("donVi")}
-            />
-            {/* Tên đơn vị (disabled until chọn Đơn vị; hidden options for Đơn vị ngoài) */}
-            <FormField
-              control={control}
-              label="Tên đơn vị"
-              name="tenDonVi"
-              Component={({ value, onChange, ...rest }) => (
-                <select
-                  {...rest}
-                  value={value}
-                  onChange={onChange}
-                  disabled={!watchDonVi}
-                >
-                  <option value="" disabled>
-                    {!watchDonVi ? "Chọn đơn vị trước" : "Chọn tên đơn vị"}
-                  </option>
-                  {watchDonVi &&
-                    tenDonViOptions.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
+                ))}
+              </select>
+            </div>
+
+            {selectedParentId && (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Đơn vị / Lớp
+                </label>
+                <Controller
+                  name="unit_id"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      className={`w-full rounded-lg border p-3 focus:border-blue-500 focus:ring-blue-500 ${errors.unit_id ? "border-red-500" : "border-gray-300"}`}
+                    >
+                      <option value="" disabled>
+                        --- Chọn đơn vị / lớp ---
                       </option>
-                    ))}
-                </select>
-              )}
-              error={errors["tenDonVi"]}
-              isValid={isFieldValid("tenDonVi")}
-            />
+                      {childUnits.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.unit_name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+                {errors.unit_id && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.unit_id.message}
+                  </p>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
