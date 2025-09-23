@@ -1,158 +1,312 @@
-import React, { useState } from "react";
-import { FiUser, FiCheckCircle, FiXCircle, FiUsers, FiSearch } from "react-icons/fi";
-import DataTable from '../../components/admin/DataTable';
-import FilterBar from '../../components/admin/FilterBar';
-import ActionButtons from '../../components/admin/ActionButtons';
-import { useGetAllUsersQuery, useEnableUserMutation, useDeleteUserMutation } from '../../api/authApi';
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  useGetAllUsersQuery,
+  useEnableUserMutation,
+  useDeleteUserMutation,
+} from "../../api/authApi";
+import { useDispatch } from "react-redux";
+import { openSnackbar } from "@/store/slices/snackbarSlice";
+import {
+  faSearch,
+  faUserCheck,
+  faUsers,
+  faUserSlash,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { motion } from "framer-motion";
+import StatCard from "@/components/features/admin/StatCard";
+import LoadingState from "@/components/ui/LoadingState";
+import StatusBadge from "@/components/features/admin/StatusBadge";
 
-function StatusCell({ enabled }) {
-  return (
-    <span className={`flex items-center gap-1 font-semibold ${enabled ? 'text-green-600' : 'text-gray-400'}`}>
-      {enabled ? <FiCheckCircle /> : <FiXCircle />}
-      {enabled ? 'Kích hoạt' : 'Vô hiệu hóa'}
-    </span>
-  );
-}
-
-function UserActionButtons({ user, onToggle }) {
-  return (
-    <ActionButtons
-      actions={[{
-        label: user.enabled ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
-        color: user.enabled ? 'text-gray-400' : 'text-[#c52032]',
-        onClick: () => onToggle(user)
-      }]}
-    />
-  );
-}
-
-function UserCard({ user, idx, onToggle }) {
-  return (
-    <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-2">
-      <div className="flex items-center gap-2 font-bold text-[#223b73]">
-        <span className="text-xs text-gray-400">#{idx + 1}</span>
-        <FiUser className="text-[#c52032]" /> {user.name}
-      </div>
-      <div className="flex items-center gap-2 text-sm">
-        <StatusCell enabled={user.enabled} />
-        <span className="ml-2">{user.votes} votes</span>
-      </div>
-      <div className="text-xs text-gray-500">{user.email} • {user.phone_number}</div>
-      <div className="text-xs">{(user.roles || []).map(r => getRoleDisplayName(r.roleName)).join(', ')}</div>
-      <div>
-        <UserActionButtons user={user} onToggle={onToggle} />
-      </div>
-    </div>
-  );
-}
-
-// Helper để chuyển roleName sang tên hiển thị
-function getRoleDisplayName(roleName) {
-  if (!roleName) return '';
-  const raw = roleName.replace(/^ROLE_/, '');
-  if (raw === 'ADMIN') return 'Quản trị viên';
-  if (raw === 'USER') return 'Người dùng';
+const getRoleDisplayName = (roleName) => {
+  if (!roleName) return "";
+  const raw = roleName.replace(/^ROLE_/, "");
+  if (raw === "ADMIN") return "Quản trị viên";
+  if (raw === "USER") return "Người dùng";
+  if (raw === "STAFF") return "Nhân viên";
   return raw.charAt(0) + raw.slice(1).toLowerCase();
-}
+};
 
 export default function UserManagement() {
-  const { data: users = [], isLoading, error, refetch } = useGetAllUsersQuery();
-  const [enableUser, { isLoading: isEnabling }] = useEnableUserMutation();
-  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
-  const [search, setSearch] = useState("");
-  // Hiển thị thông báo trạng thái
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // 'success' | 'error'
-  const [roleFilter, setRoleFilter] = useState("Tất cả");
-  const [statusFilter, setStatusFilter] = useState("Tất cả");
+  const {
+    data: usersResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllUsersQuery();
+  const [enableUser] = useEnableUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
 
-  // Chuẩn hóa dữ liệu từ API (nếu trả về object có .content thì lấy .content)
-  const userList = Array.isArray(users) ? users : (users?.content || []);
+  const dispatch = useDispatch();
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const filtered = userList.filter(u => {
-    if (search && !( `${u.name} ${u.email} ${u.phoneNumber}`.toLowerCase().includes(search.toLowerCase()))) return false;
-    if (roleFilter !== "Tất cả" && !(u.roles && u.roles.some(r => r.name === roleFilter))) return false;
-    if (statusFilter === "Đã kích hoạt" && !u.enabled) return false;
-    if (statusFilter === "Đã vô hiệu hóa" && u.enabled) return false;
-    return true;
-  });
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
-  // Lấy danh sách vai trò duy nhất từ userList
-  const roles = ["Tất cả", ...Array.from(new Set(userList.flatMap(u => (u.roles || []).map(r => r.name))) )];
+  const allUsers = useMemo(
+    () =>
+      Array.isArray(usersResponse)
+        ? usersResponse
+        : usersResponse?.content || [],
+    [usersResponse],
+  );
 
-  const statusOptions = ["Tất cả", "Đã kích hoạt", "Đã vô hiệu hóa"];
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter((u) => {
+      const searchLower = debouncedSearch.toLowerCase();
+      const roleName = u.roles?.[0]?.roleName;
 
-  const filters = [
-    { key: 'search', type: 'input', label: 'Tìm theo tên, email, SĐT...', value: search, icon: <FiSearch />, placeholder: 'Tìm kiếm...' },
-    { key: 'role', type: 'select', label: 'Vai trò', value: roleFilter, options: roles },
-    { key: 'status', type: 'select', label: 'Trạng thái', value: statusFilter, options: statusOptions }
-  ];
+      const matchesSearch = debouncedSearch
+        ? `${u.name} ${u.email} ${u.phone_number}`
+            .toLowerCase()
+            .includes(searchLower)
+        : true;
+      const matchesRole = roleFilter === "all" || roleName === roleFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && u.enabled) ||
+        (statusFilter === "inactive" && !u.enabled);
 
-  const handleFilterChange = (key, value) => {
-    if (key === 'search') setSearch(value);
-    else if (key === 'role') setRoleFilter(value);
-    else if (key === 'status') setStatusFilter(value);
-  };
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [allUsers, debouncedSearch, roleFilter, statusFilter]);
 
-  if (isLoading) return <div className="p-8 text-center text-gray-500">Đang tải danh sách người dùng...</div>;
-  if (error) return <div className="p-8 text-center text-red-500">Lỗi tải dữ liệu: {error?.data?.message || error?.message || 'Không thể kết nối API'}</div>;
+  const roles = useMemo(
+    () => [
+      "all",
+      ...Array.from(
+        new Set(
+          allUsers.flatMap((u) => (u.roles || []).map((r) => r.roleName)),
+        ),
+      ),
+    ],
+    [allUsers],
+  );
 
-  // Hàm xử lý khóa/mở tài khoản
-  const handleToggleUser = async (user) => {
+  const stats = useMemo(() => {
+    const total = allUsers.length;
+    const active = allUsers.filter((u) => u.enabled).length;
+    return {
+      total,
+      active,
+      inactive: total - active,
+    };
+  }, [allUsers]);
+
+  const handleToggleUserStatus = async (user) => {
+    const action = user.enabled ? "Khóa" : "Mở khóa";
+    if (
+      !window.confirm(
+        `Bạn có chắc muốn ${action.toLowerCase()} tài khoản ${user.name}?`,
+      )
+    )
+      return;
+
     try {
       if (user.enabled) {
-        // Khóa tài khoản (gọi API xóa user)
         await deleteUser(user.id).unwrap();
-        setMessage(`Đã khóa tài khoản cho ${user.name}`);
-        setMessageType('success');
       } else {
-        // Mở khóa tài khoản (gọi API enable user)
         await enableUser(user.id).unwrap();
-        setMessage(`Đã mở khóa tài khoản cho ${user.name}`);
-        setMessageType('success');
       }
+      dispatch(openSnackbar({ message: `${action} tài khoản thành công!` }));
       refetch();
     } catch (err) {
-      setMessage(err?.data?.message || 'Có lỗi xảy ra');
-      setMessageType('error');
+      dispatch(
+        openSnackbar({
+          message:
+            err?.data?.message ||
+            `Có lỗi xảy ra khi ${action.toLowerCase()} tài khoản`,
+          type: "error",
+        }),
+      );
     }
-    // Ẩn thông báo sau 2s
-    setTimeout(() => setMessage(''), 2000);
   };
 
   return (
-    <div className="p-4 md:p-8">
-      <h1 className="text-2xl font-bold text-[#223b73] mb-6 flex items-center gap-2">
-        <FiUsers className="text-[#c52032]" /> Quản lý tài khoản người dùng
-      </h1>
-      {message && (
-        <div className={`mb-4 px-4 py-2 rounded ${messageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{message}</div>
-      )}
-      <FilterBar filters={filters} onChange={handleFilterChange} />
-      {/* Table cho desktop */}
-      <div className="hidden md:block">
-        <DataTable
-          data={filtered}
-          columns={[
-            { key: 'stt', label: 'STT', render: (row, idx) => idx + 1 },
-            { key: 'name', label: 'Tên', render: (row) => <div className="flex items-center gap-2"><FiUser className="text-[#223b73]" /> {row.name}</div> },
-            { key: 'email', label: 'Email' },
-            { key: 'phoneNumber', label: 'SĐT' },
-            { key: 'enabled', label: 'Trạng thái', render: (row) => <StatusCell enabled={row.enabled} /> },
-            { key: 'roles', label: 'Vai trò', render: (row) => (row.roles || []).map(r => getRoleDisplayName(r.roleName)).join(', ') },
-            { key: 'actions', label: '', render: (row) => <UserActionButtons user={row} onToggle={handleToggleUser} /> }
-          ]}
-        />
-      </div>
-      {/* Card view cho mobile */}
-      <div className="block md:hidden space-y-3">
-        {filtered.map((user, idx) => (
-          <UserCard key={user.id} user={user} idx={idx} onToggle={handleToggleUser} />
-        ))}
-        {filtered.length === 0 && (
-          <div className="text-center text-gray-400 py-8">Không có dữ liệu phù hợp</div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-6 py-8">
+        <motion.div
+          className="mb-8 text-center"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="mb-4 flex items-center justify-center gap-3 text-4xl font-bold text-gray-800">
+            <FontAwesomeIcon icon={faUsers} /> Quản Lý Người Dùng
+          </h1>
+          <p className="text-lg text-gray-600">
+            Theo dõi, tìm kiếm và quản lý tất cả tài khoản trong hệ thống.
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}
+        >
+          <StatCard
+            icon={faUsers}
+            label="Tổng số tài khoản"
+            value={stats.total}
+            color={{ border: "border-blue-500", text: "text-blue-600" }}
+          />
+          <StatCard
+            icon={faUserCheck}
+            label="Đang hoạt động"
+            value={stats.active}
+            color={{ border: "border-green-500", text: "text-green-600" }}
+          />
+          <StatCard
+            icon={faUserSlash}
+            label="Đã khóa"
+            value={stats.inactive}
+            color={{ border: "border-gray-500", text: "text-gray-600" }}
+          />
+        </motion.div>
+
+        <motion.div
+          className="mb-8 rounded-xl bg-white p-6 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.4 } }}
+        >
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <div className="relative w-full flex-1 md:max-w-md">
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo tên, email..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 py-3 pr-4 pl-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Tất cả vai trò</option>
+                {roles
+                  .filter((r) => r !== "all")
+                  .map((role) => (
+                    <option key={role} value={role}>
+                      {getRoleDisplayName(role)}
+                    </option>
+                  ))}
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Đã khóa</option>
+              </select>
+            </div>
+          </div>
+        </motion.div>
+
+        {isLoading ? (
+          <LoadingState message="Đang tải danh sách người dùng..." />
+        ) : error ? (
+          <div className="text-center text-red-500">Lỗi: {error.message}</div>
+        ) : (
+          <motion.div
+            className="overflow-hidden rounded-xl bg-white shadow-lg"
+            layout
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                      Họ tên
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                      Đơn vị
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                      Trạng thái
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                      Vai trò
+                    </th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                      Hành động
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-gray-900">
+                            {user.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user.email}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {user.tenDonVi || user.unit?.unit_name || "Chưa có"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <StatusBadge enabled={user.enabled} />
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {(user.roles || [])
+                            .map((r) => getRoleDisplayName(r.roleName))
+                            .join(", ")}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() => handleToggleUserStatus(user)}
+                            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+                              user.enabled
+                                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                : "bg-red-100 text-red-700 hover:bg-red-200"
+                            }`}
+                          >
+                            {user.enabled ? "Khóa" : "Mở khóa"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="py-12 text-center text-gray-500"
+                      >
+                        <FontAwesomeIcon
+                          icon={faSearch}
+                          className="mb-2 text-4xl text-gray-300"
+                        />
+                        <p className="font-semibold">
+                          Không tìm thấy người dùng
+                        </p>
+                        <p className="text-sm">
+                          Hãy thử thay đổi bộ lọc của bạn.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
         )}
       </div>
     </div>
   );
-} 
+}

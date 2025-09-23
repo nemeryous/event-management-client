@@ -1,71 +1,201 @@
-import { useUpdateEventMutation } from "@api/eventApi";
+import {
+  useUpdateEventMutation,
+  useUploadEditorImageMutation,
+} from "@api/eventApi";
 import FormField from "@components/common/FormField";
+import SunEditorEditor from "@components/common/SunEditorEditor";
 import TextInput from "@components/common/TextInput";
-import TinyMCEEditor from "@components/common/TinyMCEEditor";
-import BannerUpload from "@components/user/BannerUpload";
+import BannerUpload from "@/components/features/user/BannerUpload";
 import { openSnackbar } from "@store/slices/snackbarSlice";
-import React, { useEffect } from "react";
+import {
+  prependApiUrlToImages,
+  stripApiUrlFromImages,
+} from "@utils/htmlProcessor";
+import React, { useEffect, useMemo, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
+const toDateInput = (v) => {
+  if (!v) return "";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return String(v).slice(0, 16);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const base64ToFile = (base64String, filename = "image.png") => {
+  const arr = base64String.split(",");
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
+
 const SettingsTab = ({ eventData }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [updateEvent, { isLoading: isUpdating, isError, error, isSuccess }] =
-    useUpdateEventMutation();
+  const editorRef = useRef(null);
+
+  const [uploadImage, { isLoading: isUploadingImage }] =
+    useUploadEditorImageMutation();
+  const [
+    updateEvent,
+    { isLoading: isUpdating, isError, error: updateError, isSuccess },
+  ] = useUpdateEventMutation();
+
+  const defaultValues = useMemo(() => {
+    const processedDescription = prependApiUrlToImages(
+      eventData?.description || "",
+    );
+
+    return {
+      title: eventData?.title || "",
+      description: processedDescription,
+      start_time: toDateInput(eventData?.start_time),
+      end_time: toDateInput(eventData?.end_time),
+      location: eventData?.location || "",
+      max_participants: eventData?.max_participants ?? "",
+      url_docs: eventData?.url_docs || "",
+    };
+  }, [eventData]);
 
   const {
     control,
     handleSubmit,
     reset,
     formState: { isDirty, isSubmitting, errors },
-  } = useForm({
-    defaultValues: {
-      title: eventData.name,
-      description: eventData.description,
-      startTime: eventData.startTime.slice(0, 16),
-      endTime: eventData.endTime.slice(0, 16),
-      location: eventData.location,
-      maxParticipants: eventData.maxParticipants,
-      urlDocs: eventData.urlDocs || "",
-    },
-  });
+  } = useForm({ defaultValues });
+
+  useEffect(() => {
+    reset(defaultValues);
+  }, [defaultValues, reset]);
 
   const onSubmit = async (formData) => {
+    if (
+      formData.start_time &&
+      formData.end_time &&
+      new Date(formData.end_time) < new Date(formData.start_time)
+    ) {
+      dispatch(
+        openSnackbar({
+          message: "Thời gian kết thúc phải sau thời gian bắt đầu",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
+    let finalHtmlContent =
+      editorRef.current?.getContentWithRelativeUrls() ||
+      formData.description ||
+      "";
+
+    const base64Images = editorRef.current?.getAllBase64ImagesInContent();
+
+    if (base64Images && base64Images.size > 0) {
+      const uploadPromises = [];
+      const base64ToUrlMap = new Map();
+
+      base64Images.forEach((file, base64String) => {
+        const imageFile = file || base64ToFile(base64String);
+
+        const promise = uploadImage(imageFile)
+          .unwrap()
+          .then((response) => {
+            let returned = String(response?.url || "");
+
+            // if (!returned.startsWith("/")) {
+            //   returned = returned.startsWith("images/")
+            //     ? `/${returned}`
+            //     : `/images/${returned}`;
+            // }
+
+            const relativeUrl = "/" + returned;
+            base64ToUrlMap.set(base64String, relativeUrl);
+          });
+        uploadPromises.push(promise);
+      });
+
+      try {
+        await Promise.all(uploadPromises);
+
+        base64ToUrlMap.forEach((relativeUrl, base64String) => {
+          const safeBase64 = base64String.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&",
+          );
+          finalHtmlContent = finalHtmlContent.replace(
+            new RegExp(`src="${safeBase64}"`, "g"),
+            `src="${relativeUrl}"`,
+          );
+        });
+      } catch (uploadError) {
+        console.error("Lỗi khi upload ảnh:", uploadError);
+        dispatch(
+          openSnackbar({
+            message: "Upload một hoặc nhiều ảnh thất bại!",
+            type: "error",
+          }),
+        );
+        return;
+      }
+    }
+
+    const relativePathHtml = stripApiUrlFromImages(finalHtmlContent);
+
     const payload = {
       title: formData.title,
-      description: formData.description,
-      start_time: formData.startTime,
-      end_time: formData.endTime,
+      description: relativePathHtml,
+      start_time: formData.start_time
+        ? new Date(formData.start_time).toISOString()
+        : null,
+      end_time: formData.end_time
+        ? new Date(formData.end_time).toISOString()
+        : null,
       location: formData.location,
-      max_participants: Number(formData.maxParticipants),
-      url_docs: formData.urlDocs,
+      max_participants: formData.max_participants
+        ? Number(formData.max_participants)
+        : null,
+      url_docs: formData.url_docs || null,
     };
 
     try {
       await updateEvent({ eventId: eventData.id, ...payload }).unwrap();
-    } catch {
-      //
+      dispatch(openSnackbar({ message: "Cập nhật sự kiện thành công" }));
+      navigate(`/events/${eventData.id}`);
+    } catch (updateError) {
+      dispatch(
+        openSnackbar({
+          message: updateError?.data?.message || "Cập nhật thất bại",
+          type: "error",
+        }),
+      );
     }
   };
 
   const handleCancel = () => {
-    reset(); // Reset về defaultValues
+    reset();
   };
 
   useEffect(() => {
     if (isSuccess) {
-      dispatch(openSnackbar({ message: "Cập nhập sự kiện thành công" }));
+      dispatch(openSnackbar({ message: "Cập nhật sự kiện thành công" }));
       navigate(`/events/${eventData.id}`);
     }
 
     if (isError) {
-      dispatch(openSnackbar({ message: error?.data?.message, type: "error" }));
+      dispatch(
+        openSnackbar({ message: updateError?.data?.message, type: "error" }),
+      );
     }
   }, [
     dispatch,
-    error?.data?.message,
+    updateError?.data?.message,
     eventData.id,
     isError,
     isSuccess,
@@ -83,48 +213,43 @@ const SettingsTab = ({ eventData }) => {
             control={control}
             label="Tên sự kiện"
             name="title"
-            type="text"
             Component={TextInput}
             error={errors.title}
           />
-
-          <div className="mb-4">
+          <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Mô tả
             </label>
             <Controller
               name="description"
               control={control}
-              render={({ field: { onChange, value } }) => (
-                <TinyMCEEditor value={value} onChange={onChange} />
+              render={({ field }) => (
+                <SunEditorEditor
+                  ref={editorRef}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               )}
             />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-500">
-                {errors.description.message}
-              </p>
-            )}
           </div>
-
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               control={control}
               label="Thời gian bắt đầu"
-              name="startTime"
+              name="start_time"
               type="datetime-local"
               Component={TextInput}
-              error={errors.startTime}
+              error={errors.start_time}
             />
             <FormField
               control={control}
               label="Thời gian kết thúc"
-              name="endTime"
+              name="end_time"
               type="datetime-local"
               Component={TextInput}
-              error={errors.endTime}
+              error={errors.end_time}
             />
           </div>
-
           <FormField
             control={control}
             label="Địa điểm"
@@ -132,38 +257,38 @@ const SettingsTab = ({ eventData }) => {
             Component={TextInput}
             error={errors.location}
           />
-
           <FormField
             control={control}
             label="Số lượng tối đa"
-            name="maxParticipants"
+            name="max_participants"
             type="number"
             Component={TextInput}
-            error={errors.maxParticipants}
+            error={errors.max_participants}
           />
-
           <FormField
             control={control}
             label="Tài liệu"
-            name="urlDocs"
+            name="url_docs"
             Component={TextInput}
-            error={errors.urlDocs}
+            error={errors.url_docs}
           />
 
           <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="rounded-lg border border-gray-300 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-50"
-            >
+            <button type="button" onClick={handleCancel} className="...">
               Hủy bỏ
             </button>
             <button
               type="submit"
-              disabled={isUpdating || isSubmitting || !isDirty}
+              disabled={
+                isUploadingImage || isUpdating || isSubmitting || !isDirty
+              }
               className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
             >
-              {isUpdating ? "Đang lưu..." : "Lưu thay đổi"}
+              {isUploadingImage
+                ? "Đang tải ảnh..."
+                : isUpdating
+                  ? "Đang lưu..."
+                  : "Lưu thay đổi"}
             </button>
           </div>
         </form>

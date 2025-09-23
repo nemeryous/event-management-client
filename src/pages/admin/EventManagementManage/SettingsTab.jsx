@@ -1,12 +1,14 @@
-import { useUpdateEventMutation, useCreateEventMutation, useUploadBannerMutation } from "@api/eventApi";
+import {
+  useUpdateEventMutation,
+  useUploadEventBannerMutation,
+} from "@api/eventApi";
 import FormField from "@components/common/FormField";
+import SunEditorEditor from "@components/common/SunEditorEditor";
 import TextInput from "@components/common/TextInput";
-import TinyMCEEditor from "@components/common/TinyMCEEditor";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
-// import { useNavigate } from "react-router-dom";
 
 const SettingsTab = ({
   eventData,
@@ -20,8 +22,8 @@ const SettingsTab = ({
   // const navigate = useNavigate();
   const [updateEvent, { isLoading: isUpdating, isError, error, isSuccess }] =
     useUpdateEventMutation();
-  const [createEvent, { isLoading: isCreating }] = useCreateEventMutation();
-  const [uploadBanner, { isLoading: isUploadingBanner }] = useUploadBannerMutation();
+  const [uploadBanner, { isLoading: isUploadingBanner }] =
+    useUploadEventBannerMutation();
 
   const defaultValues = eventData
     ? {
@@ -70,7 +72,9 @@ const SettingsTab = ({
     };
     try {
       await updateEvent({ eventId: eventData.id, ...payload }).unwrap();
-    } catch {}
+    } catch {
+      //
+    }
   };
 
   const handleCancel = () => {
@@ -89,7 +93,12 @@ const SettingsTab = ({
       dispatch(openSnackbar({ message: "Tải lên banner thành công!" }));
       if (typeof window !== "undefined") window.location.reload(); // hoặc refetch event nếu có
     } catch (err) {
-      dispatch(openSnackbar({ message: err?.data?.message || "Tải lên banner thất bại!", type: "error" }));
+      dispatch(
+        openSnackbar({
+          message: err?.data?.message || "Tải lên banner thất bại!",
+          type: "error",
+        }),
+      );
     }
   };
 
@@ -113,17 +122,16 @@ const SettingsTab = ({
   ]);
 
   return (
-    <div className="space-y-6 w-full max-w-6xl">
+    <div className="w-full max-w-6xl space-y-6">
       <div className="rounded-2xl bg-white p-8 shadow-lg">
-        <div className="mb-8 pb-6 border-b border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+        <div className="mb-8 border-b border-gray-200 pb-6">
+          <h3 className="mb-2 text-2xl font-bold text-gray-900">
             {mode === "edit" ? "Cài đặt sự kiện" : "Tạo sự kiện"}
           </h3>
           <p className="text-gray-600">
-            {mode === "edit" 
-              ? "Cập nhật thông tin và cài đặt cho sự kiện này" 
-              : "Tạo sự kiện mới với đầy đủ thông tin cần thiết"
-            }
+            {mode === "edit"
+              ? "Cập nhật thông tin và cài đặt cho sự kiện này"
+              : "Tạo sự kiện mới với đầy đủ thông tin cần thiết"}
           </p>
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -137,15 +145,17 @@ const SettingsTab = ({
           />
           {/* Upload banner ngay dưới tên sự kiện */}
           {mode === "edit" && eventData && (
-            <div className="mb-6 p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-              <label className="mb-3 block text-sm font-semibold text-gray-700">Banner sự kiện</label>
+            <div className="mb-6 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-6">
+              <label className="mb-3 block text-sm font-semibold text-gray-700">
+                Banner sự kiện
+              </label>
               <div className="flex items-center gap-4">
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleBannerChange}
                   disabled={isUploadingBanner}
-                  className="flex-1 p-3 border-2 border-gray-300 rounded-lg bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                  className="flex-1 rounded-lg border-2 border-gray-300 bg-white p-3 transition-all duration-200 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 />
                 {isUploadingBanner && (
                   <div className="flex items-center gap-2 text-blue-600">
@@ -155,12 +165,14 @@ const SettingsTab = ({
                 )}
               </div>
               {eventData.banner && (
-                <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Banner hiện tại:</p>
-                  <img 
-                    src={`${import.meta.env.VITE_BASE_URL}/events/${eventData.banner}`} 
-                    alt="Banner" 
-                    className="max-w-full h-auto rounded-lg shadow-sm" 
+                <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+                  <p className="mb-2 text-sm font-medium text-gray-700">
+                    Banner hiện tại:
+                  </p>
+                  <img
+                    src={`${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`}
+                    alt="Banner"
+                    className="h-auto max-w-full rounded-lg shadow-sm"
                     style={{ maxHeight: 200 }}
                   />
                 </div>
@@ -172,12 +184,12 @@ const SettingsTab = ({
             <label className="mb-3 block text-sm font-semibold text-gray-700">
               Mô tả
             </label>
-            <div className="border-2 border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all duration-200">
+            <div className="overflow-hidden rounded-xl border-2 border-gray-200 transition-all duration-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 hover:border-gray-300">
               <Controller
                 name="description"
                 control={control}
                 render={({ field: { onChange, value } }) => (
-                  <TinyMCEEditor value={value} onChange={onChange} />
+                  <SunEditorEditor value={value} onChange={onChange} />
                 )}
               />
             </div>
@@ -237,7 +249,7 @@ const SettingsTab = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="rounded-xl border-2 border-gray-300 px-8 py-3 text-gray-700 font-medium transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md"
+              className="rounded-xl border-2 border-gray-300 px-8 py-3 font-medium text-gray-700 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 hover:shadow-md"
             >
               Hủy bỏ
             </button>
@@ -246,17 +258,17 @@ const SettingsTab = ({
               disabled={
                 isLoadingProp ||
                 isUpdating ||
-                isCreating ||
+                isUploadingBanner ||
                 isSubmitting ||
                 (mode === "edit" && !isDirty)
               }
-              className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-white font-medium shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none"
+              className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoadingProp || isUpdating || isCreating || isSubmitting
+              {isLoadingProp || isUpdating || isUploadingBanner || isSubmitting
                 ? "Đang lưu..."
                 : mode === "edit"
-                ? "Lưu thay đổi"
-                : "Tạo sự kiện"}
+                  ? "Lưu thay đổi"
+                  : "Tạo sự kiện"}
             </button>
           </div>
         </form>

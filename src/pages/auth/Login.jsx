@@ -1,6 +1,6 @@
 import FormField from "@components/common/FormField";
 import TextInput from "@components/common/TextInput";
-import React, { useEffect } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import * as yup from "yup";
@@ -8,15 +8,14 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useDispatch } from "react-redux";
 import { openSnackbar } from "@store/slices/snackbarSlice";
 import { setToken } from "@store/slices/authSlice";
-import ErrorMessage from "@components/user/ErrorMessage";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 import { CircularProgress } from "@mui/material";
 import { useLoginMutation } from "@api/authApi";
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [login, { data = {}, isLoading, error, isError, isSuccess }] =
-    useLoginMutation();
+  const [login, { isLoading, error, isError }] = useLoginMutation();
 
   const formSchema = yup.object().shape({
     email: yup
@@ -36,8 +35,8 @@ const Login = () => {
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      email: "nhatnguyen4369@gmail.com",
-      password: "nhat12345",
+      email: "",
+      password: "",
     },
     resolver: yupResolver(formSchema),
   });
@@ -46,22 +45,22 @@ const Login = () => {
     return touchedFields[fieldName] && !errors[fieldName];
   };
 
-  function onSubmit(formData) {
-    login(formData);
-  }
+  const onSubmit = async (formData) => {
+    try {
+      const loginData = await login(formData).unwrap();
 
-  useEffect(() => {
-    if (isError) {
-      dispatch(openSnackbar({ message: error?.data?.message, type: "error" }));
-    }
-
-    if (isSuccess) {
+      dispatch(setToken(loginData));
       dispatch(openSnackbar({ message: "Đăng nhập thành công" }));
-      dispatch(setToken(data));
-
-      navigate("/admin/events");
+      navigate("/", { replace: true });
+    } catch (err) {
+      dispatch(
+        openSnackbar({
+          message: err.data?.message || "Đăng nhập thất bại",
+          type: "error",
+        }),
+      );
     }
-  }, [isError, isSuccess, data, error?.data?.message, dispatch, navigate]);
+  };
 
   return (
     <div className="flex w-full items-center justify-center px-8 py-12 lg:w-1/2">
@@ -98,15 +97,16 @@ const Login = () => {
               isValid={isFieldValid("password")}
             />
             <div className="flex items-center justify-between">
-              <a
-                href="#"
+              <Link
+                to="/forgot-password"
                 className="text-secondary text-sm font-medium hover:underline"
               >
                 Quên mật khẩu?
-              </a>
+              </Link>
             </div>
             <button
               type="submit"
+              disabled={isLoading}
               className="bg-primary w-full transform cursor-pointer rounded-xl px-4 py-3 text-base font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-red-500/40 active:scale-95"
             >
               {isLoading && <CircularProgress size={20} className="mr-1" />}

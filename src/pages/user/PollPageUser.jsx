@@ -1,13 +1,25 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useGetPollQuery, useVotePollMutation, useGetMyVotedOptionsQuery } from "@api/pollApi";
+import {
+  useGetPollQuery,
+  useVotePollMutation,
+  useGetMyVotedOptionsQuery,
+} from "@api/pollApi";
 
 const PollPageUser = ({ pollId: propPollId, onClose }) => {
   const params = useParams();
   const pollId = propPollId || params.pollId;
   const navigate = useNavigate();
-  const { data: poll, isLoading, refetch: refetchPoll } = useGetPollQuery(pollId);
-  const { data: myVotedOptions, isLoading: isLoadingMyOptions, refetch: refetchMyVotedOptions } = useGetMyVotedOptionsQuery(pollId, { skip: !pollId });
+  const {
+    data: poll,
+    isLoading,
+    refetch: refetchPoll,
+  } = useGetPollQuery(pollId);
+  const {
+    data: myVotedOptions,
+    isLoading: isLoadingMyOptions,
+    refetch: refetchMyVotedOptions,
+  } = useGetMyVotedOptionsQuery(pollId, { skip: !pollId });
   const [votePoll, { isLoading: isVoting }] = useVotePollMutation();
   const [selectedOptions, setSelectedOptions] = useState([]);
   const [message, setMessage] = useState("");
@@ -28,7 +40,7 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
       setSelectedOptions((prev) =>
         prev.includes(optionId)
           ? prev.filter((id) => id !== optionId)
-          : [...prev, optionId]
+          : [...prev, optionId],
       );
     } else {
       setSelectedOptions([optionId]);
@@ -43,8 +55,15 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
       return;
     }
     try {
-      const response = await votePoll({ pollId, optionIds: selectedOptions }).unwrap();
-      if (typeof response === "object" && response !== null && response.message) {
+      const response = await votePoll({
+        pollId,
+        optionIds: selectedOptions,
+      }).unwrap();
+      if (
+        typeof response === "object" &&
+        response !== null &&
+        response.message
+      ) {
         setMessage(response.message);
       } else if (typeof response === "string") {
         setMessage(response);
@@ -56,7 +75,7 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
       refetchMyVotedOptions();
       setTimeout(() => {
         setSuccess(false);
-        if (onClose) onClose(); 
+        if (onClose) onClose();
       }, 1800);
     } catch (err) {
       let errorMsg = "";
@@ -74,21 +93,25 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4">{poll.title}</h2>
+      <h2 className="mb-4 text-xl font-bold">{poll.title}</h2>
       {isMultiple && (
-        <div className="mb-2 text-blue-600 text-sm">
+        <div className="mb-2 text-sm text-blue-600">
           (Bạn có thể chọn nhiều đáp án)
         </div>
       )}
       {message && (
-        <div className={`mb-4 text-center text-base font-medium ${success ? "text-green-600" : "text-red-600"}`}>{message}</div>
+        <div
+          className={`mb-4 text-center text-base font-medium ${success ? "text-green-600" : "text-red-600"}`}
+        >
+          {message}
+        </div>
       )}
       <form onSubmit={handleSubmit}>
-        <div className="space-y-3 mb-6">
+        <div className="mb-6 space-y-3">
           {poll.options.map((option) => (
             <label
               key={option.id}
-              className="flex items-center gap-2 cursor-pointer"
+              className="flex cursor-pointer items-center gap-2"
             >
               <input
                 type={isMultiple ? "checkbox" : "radio"}
@@ -104,10 +127,14 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
         </div>
         <button
           type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          className="rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
           disabled={isVoting}
         >
-          {isVoting ? "Đang gửi..." : poll.hasVoted ? "Cập nhật lựa chọn" : "Gửi bình chọn"}
+          {isVoting
+            ? "Đang gửi..."
+            : poll.hasVoted
+              ? "Cập nhật lựa chọn"
+              : "Gửi bình chọn"}
         </button>
       </form>
     </div>
@@ -126,15 +153,18 @@ const ParentComponent = () => {
   return (
     <div>
       {showPollModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center ">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
               onClick={() => setShowPollModal(false)}
             >
               ×
             </button>
-            <PollPageUser pollId={selectedPollId} onClose={() => setShowPollModal(false)} />
+            <PollPageUser
+              pollId={selectedPollId}
+              onClose={() => setShowPollModal(false)}
+            />
           </div>
         </div>
       )}

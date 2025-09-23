@@ -4,62 +4,60 @@ import { Mutex } from "async-mutex";
 
 const mutex = new Mutex();
 
-const baseQuery = fetchBaseQuery({
+const baseRaw = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_BASE_URL,
   credentials: "include",
   prepareHeaders: (headers, { getState }) => {
-    const token = getState().auth.accessToken;
-    const tokenType = getState().auth.tokenType;
-
-    if (token) {
-      headers.set("Authorization", `${tokenType} ${token}`);
-    }
-
+    const state = getState();
+    const token = state?.auth?.accessToken;
+    const tokenType = state?.auth?.tokenType || "Bearer";
+    if (token) headers.set("Authorization", `${tokenType} ${token}`);
     return headers;
   },
 });
 
-export const baseQueryWithReauth = async (args, api, extraOptions) => {
+const getUrl = (args) => (typeof args === "string" ? args : args?.url || "");
+
+const SKIP_REFRESH_PATHS = [
+  "/auth/login",
+  "/auth/refresh-token",
+  "/auth/register",
+];
+
+export const baseQueryWithReauth = async (args, api, extra) => {
   await mutex.waitForUnlock();
 
-  let result = await baseQuery(args, api, extraOptions);
+  let res = await baseRaw(args, api, extra);
+  const url = getUrl(args);
 
-  if (result.error && result.error.status === 401) {
+  if (
+    res?.error &&
+    res.error.status === 401 &&
+    !SKIP_REFRESH_PATHS.some((p) => url.startsWith(p))
+  ) {
     if (!mutex.isLocked()) {
       const release = await mutex.acquire();
-
       try {
-        console.log("Access token hết hạn, đang làm mới...");
-
-        const refreshResult = await baseQuery(
-          {
-            url: "/auth/refresh-token",
-            method: "POST",
-          },
+        const refresh = await baseRaw(
+          { url: "/auth/refresh-token", method: "POST" },
           api,
-          extraOptions,
+          extra,
         );
 
-        if (refreshResult.data) {
-          api.dispatch(setToken(refreshResult.data));
-
-          result = await baseQuery(args, api, extraOptions);
+        if (refresh?.data) {
+          api.dispatch(setToken(refresh.data));
+          res = await baseRaw(args, api, extra);
         } else {
-          console.log("Refresh token thất bại, đăng xuất người dùng.");
           api.dispatch(clearToken());
-
-          if (typeof window !== "undefined") {
-            window.location.href = "/login";
-          }
         }
       } finally {
         release();
       }
     } else {
       await mutex.waitForUnlock();
-      result = await baseQuery(args, api, extraOptions);
+      res = await baseRaw(args, api, extra);
     }
   }
 
-  return result;
+  return res;
 };

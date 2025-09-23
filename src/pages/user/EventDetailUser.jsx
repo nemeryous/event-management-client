@@ -1,48 +1,121 @@
 import { useGetEventByIdQuery, useJoinEventMutation } from "@api/eventApi";
-import Loading from "@components/common/Loading";
+import Loading from "@/components/ui/Loading";
 import { faArrowDown, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { openSnackbar } from "@store/slices/snackbarSlice";
-import Error from "@components/common/Error";
+import Error from "@/components/ui/Error";
 import {
   formatDateTime,
   formatJoinedTime,
-  getStatusColor,
-  getStatusText,
+  getPollState,
 } from "../../utils/helpers";
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { useGetPollsByEventQuery } from "@api/pollApi";
 import PollPageUser from "./PollPageUser";
+import EventStatusBadge from "@/components/features/user/EventStatusBadge";
+import { useCancelMyRegistrationMutation } from "@api/attendantApi";
+import { getDisplayStatus } from "@utils/eventHelpers";
+
+const PollStatusBadge = ({ status }) => {
+  switch (status) {
+    case "UPCOMING":
+      return (
+        <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800">
+          Sắp diễn ra
+        </span>
+      );
+    case "ENDED":
+      return (
+        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-800">
+          Đã kết thúc
+        </span>
+      );
+    default:
+      return (
+        <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">
+          Đang diễn ra
+        </span>
+      );
+  }
+};
+
+const PollActionButton = ({ status, poll, handleOpenPoll }) => {
+  switch (status) {
+    case "UPCOMING":
+      return (
+        <button
+          className="cursor-not-allowed rounded-md bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
+          disabled
+        >
+          Sắp diễn ra
+        </button>
+      );
+    case "ENDED":
+      return (
+        <button
+          className="cursor-not-allowed rounded-md bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
+          disabled
+        >
+          Đã kết thúc
+        </button>
+      );
+    default: // ONGOING
+      return (
+        <button
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-105 hover:bg-blue-700"
+          onClick={() => handleOpenPoll(poll.id)}
+        >
+          Bình chọn
+        </button>
+      );
+  }
+};
 
 const EventDetailUser = () => {
-  const { id } = useParams();
-  const { data: event, isLoading, error } = useGetEventByIdQuery(id);
+  const { eventId } = useParams();
+  const { data: event, isLoading, error } = useGetEventByIdQuery(eventId);
   const { data: polls, isLoading: isLoadingPolls } =
-    useGetPollsByEventQuery(id);
+    useGetPollsByEventQuery(eventId);
+  const { user: authUser } = useSelector((state) => state.auth);
+
   const dispatch = useDispatch();
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showPollModal, setShowPollModal] = useState(false);
   const [selectedPollId, setSelectedPollId] = useState(null);
 
-  const currentParticipants = event?.participants?.length || 0;
-  const remainingSlots = (event?.maxParticipants || 0) - currentParticipants;
-
-  const isEventPassed = new Date(event?.startTime) < new Date();
-  const canRegister =
-    event?.status === "UPCOMING" && !isEventPassed && !event?.isRegistered;
-
   const [
     joinEvent,
-    { isLoading: isJoining, error: joinError, isSuccess: isJoined },
+    { isLoading: isJoining, error: joinError, isSuccess: isJoinedSuccess },
   ] = useJoinEventMutation();
 
-  const handleJoinEvent = async (qrJoinToken) => {
+  const [
+    cancelRegistration,
+    { isLoading: isCancelling, isSuccess: isCancelSuccess, error: cancelError },
+  ] = useCancelMyRegistrationMutation();
+
+  const currentParticipants = event?.participants?.length || 0;
+  const remainingSlots =
+    (event?.maxParticipants || Infinity) - currentParticipants;
+  const isFull = remainingSlots <= 0;
+  const canInteract = getDisplayStatus(event) === "UPCOMING";
+  const isLoadingAction = isJoining || isCancelling;
+
+  const handleJoinEvent = async () => {
     try {
-      await joinEvent(qrJoinToken).unwrap();
+      await joinEvent(event.qr_join_token).unwrap();
     } catch {
       // ignore error
+    }
+  };
+
+  const handleCancelRegistration = async () => {
+    if (!authUser?.id) return;
+    try {
+      await cancelRegistration(eventId).unwrap();
+    } catch {
+      // unwrap đã tự xử lý
     }
   };
 
@@ -51,26 +124,35 @@ const EventDetailUser = () => {
     setShowPollModal(true);
   };
 
-  if (isJoining) {
-    dispatch(
-      openSnackbar({ message: "Đang tham gia sự kiện...", type: "info" }),
-    );
-  }
-
-  if (isJoined) {
-    dispatch(
-      openSnackbar({ message: "Tham gia sự kiện thành công", type: "success" }),
-    );
-  }
-
-  if (joinError) {
-    dispatch(
-      openSnackbar({
-        message: joinError?.data?.message || "Không thể tham gia sự kiện",
-        type: "error",
-      }),
-    );
-  }
+  useEffect(() => {
+    if (isJoinedSuccess) {
+      dispatch(
+        openSnackbar({
+          message: "Đăng ký tham gia thành công!",
+          type: "success",
+        }),
+      );
+    }
+    if (isCancelSuccess) {
+      dispatch(openSnackbar({ message: "Đã hủy đăng ký.", type: "info" }));
+    }
+    if (joinError) {
+      dispatch(
+        openSnackbar({
+          message: joinError?.data?.message || "Đăng ký thất bại",
+          type: "error",
+        }),
+      );
+    }
+    if (cancelError) {
+      dispatch(
+        openSnackbar({
+          message: cancelError?.data?.message || "Hủy đăng ký thất bại",
+          type: "error",
+        }),
+      );
+    }
+  }, [isJoinedSuccess, isCancelSuccess, joinError, cancelError, dispatch]);
 
   if (isLoading) {
     return <Loading message={"Đang tải thông tin sự kiện..."} />;
@@ -111,7 +193,7 @@ const EventDetailUser = () => {
           <img
             src={
               event?.banner
-                ? `${import.meta.env.VITE_BASE_URL}/events/${event.banner}`
+                ? `${import.meta.env.VITE_BASE_URL}/uploads/${event.banner}`
                 : "https://via.placeholder.com/800x300?text=Event+Banner"
             }
             alt="banner"
@@ -121,16 +203,14 @@ const EventDetailUser = () => {
                 "https://via.placeholder.com/800x300?text=Event+Banner";
             }}
           />
-          <div
-            className={`absolute top-5 right-5 rounded-[20px] px-4 py-2 text-sm font-bold ${getStatusColor(event?.status || "UPCOMING")}`}
-          >
-            {getStatusText(event?.status || "UPCOMING")}
+          <div className="absolute top-5 right-5">
+            <EventStatusBadge event={event} />
           </div>
         </div>
 
         <div className="p-7">
           <h1 className="text-secondary mb-5 text-2xl font-bold md:text-3xl">
-            {event?.name || "Tên sự kiện"}
+            {event?.title || "Tên sự kiện"}
           </h1>
 
           <div className="mb-7 grid grid-cols-1 gap-5 md:grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
@@ -143,8 +223,8 @@ const EventDetailUser = () => {
                   Thời gian bắt đầu
                 </h4>
                 <p className="text-sm text-[#666]">
-                  {event?.startTime
-                    ? formatDateTime(event.startTime)
+                  {event?.start_time
+                    ? formatDateTime(event.start_time)
                     : "Chưa có thông tin"}
                 </p>
               </div>
@@ -158,8 +238,8 @@ const EventDetailUser = () => {
                   Thời gian kết thúc
                 </h4>
                 <p className="text-sm text-[#666]">
-                  {event?.endTime
-                    ? formatDateTime(event.endTime)
+                  {event?.end_time
+                    ? formatDateTime(event.end_time)
                     : "Chưa có thông tin"}
                 </p>
               </div>
@@ -184,7 +264,7 @@ const EventDetailUser = () => {
                   Số lượng tham gia
                 </h4>
                 <p className="text-sm text-[#666]">
-                  {currentParticipants} / {event?.maxParticipants || 0} người
+                  {currentParticipants} / {event?.max_participants || 0} người
                 </p>
               </div>
             </div>
@@ -195,14 +275,16 @@ const EventDetailUser = () => {
               Mô tả sự kiện
             </h3>
             <div className="relative">
-              <p
-                className={`leading-[1.8] whitespace-pre-wrap text-[#666] ${
+              <div
+                className={`leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold ${
                   !isDescriptionExpanded && shouldShowExpandButton
                     ? "line-clamp-4"
                     : ""
                 }`}
-                dangerouslySetInnerHTML={{ __html: description }}
-              ></p>
+                dangerouslySetInnerHTML={{
+                  __html: description,
+                }}
+              ></div>
               {shouldShowExpandButton && (
                 <div className="mt-4 text-center">
                   <button
@@ -240,47 +322,71 @@ const EventDetailUser = () => {
       <div className="flex flex-col gap-6">
         {/* Registration Section */}
         <div className="rounded-2xl bg-white p-6 shadow">
-          <h3 className="text-secondary mb-5 flex items-center gap-2 text-xl leading-1.5 font-bold">
-            🎯 Đăng ký tham gia
+          <h3 className="text-secondary mb-5 flex items-center gap-2 text-xl font-bold">
+            🎯 Trạng thái tham gia
           </h3>
 
-          {event?.isUserRegistered ? (
-            <div className="text-center">
-              <div className="mb-4 rounded-full bg-green-100 px-4 py-3 font-bold text-green-800">
-                ✅ Đã đăng ký
-              </div>
-              <p className="text-sm text-[#666]">
-                Bạn đã đăng ký tham gia sự kiện này
-              </p>
-            </div>
-          ) : remainingSlots > 0 ? (
-            <>
-              <button
-                onClick={() => handleJoinEvent(event.qrJoinToken)}
-                className={`${canRegister ? "bg-primary text-white hover:translate-y-0.5" : "bg-gray-400 text-gray-900"} group relative w-full cursor-pointer overflow-hidden rounded-full border-none p-4 text-sm font-bold transition-all hover:opacity-90`}
-                disabled={!canRegister}
-              >
-                Đăng ký ngay
-              </button>
-              <p className="mt-4 text-center text-sm text-[#666]">
-                Còn lại {remainingSlots} suất tham gia
-              </p>
-              {isEventPassed && (
-                <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-600">
-                  ⚠️ Sự kiện đã qua, không thể đăng ký
+          {(() => {
+            if (event.is_user_registered) {
+              return (
+                <div className="text-center">
+                  <div className="mb-4 rounded-full bg-green-100 px-4 py-3 font-bold text-green-800">
+                    ✅ Đã đăng ký
+                  </div>
+                  {canInteract && (
+                    <button
+                      onClick={handleCancelRegistration}
+                      disabled={isLoadingAction}
+                      className="w-full rounded-full bg-red-100 px-4 py-3 font-bold text-red-800 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isCancelling ? "Đang hủy..." : "Hủy đăng ký"}
+                    </button>
+                  )}
+                </div>
+              );
+            }
+
+            if (isFull) {
+              return (
+                <div className="text-center">
+                  <div className="mb-4 rounded-full bg-red-100 px-4 py-3 font-bold text-red-800">
+                    Đã hết chỗ
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Sự kiện đã đạt số lượng tối đa.
+                  </p>
+                </div>
+              );
+            }
+
+            if (canInteract) {
+              return (
+                <div className="text-center">
+                  <button
+                    onClick={handleJoinEvent}
+                    disabled={isLoadingAction}
+                    className="group relative w-full overflow-hidden rounded-full bg-blue-600 p-4 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isJoining ? "Đang xử lý..." : "Đăng ký ngay"}
+                  </button>
+                  <p className="mt-4 text-center text-sm text-gray-600">
+                    Còn lại {remainingSlots} suất tham gia
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="text-center">
+                <div className="mb-4 rounded-full bg-gray-100 px-4 py-3 font-bold text-gray-800">
+                  Không thể đăng ký
+                </div>
+                <p className="text-sm text-gray-600">
+                  Đã hết thời gian đăng ký cho sự kiện này.
                 </p>
-              )}
-            </>
-          ) : (
-            <div className="text-center">
-              <div className="mb-4 rounded-full bg-red-100 px-4 py-3 font-bold text-red-800">
-                Đã hết chỗ
               </div>
-              <p className="text-sm text-[#666]">
-                Sự kiện đã đạt số lượng tối đa
-              </p>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Polls Section */}
@@ -289,87 +395,51 @@ const EventDetailUser = () => {
             🗳️ Cuộc bình chọn
           </h3>
           {isLoadingPolls ? (
-            <div>Đang tải...</div>
+            <div className="py-4 text-center text-gray-500">Đang tải...</div>
           ) : (
             <div
               className="space-y-3 overflow-y-auto"
-              style={{ maxHeight: "200px" }}
+              style={{ maxHeight: "300px" }}
             >
-              {polls &&
-              polls.filter((poll) => poll.status !== "DRAFT").length > 0 ? (
-                polls
-                  .filter((poll) => poll.status !== "DRAFT")
-                  .map((poll) => (
-                    <div
-                      key={poll.id}
-                      className="flex items-center justify-between rounded-[10px] bg-[#f8f9fa] p-4"
-                    >
-                      <div>
-                        <div className="font-bold">{poll.title}</div>
-                        <div className="text-sm text-gray-500">
-                          Trạng thái: {poll.status}
+              {(() => {
+                const visiblePolls =
+                  polls?.filter((poll) => !poll.is_delete) || [];
+
+                if (visiblePolls.length > 0) {
+                  return visiblePolls.map((poll) => {
+                    const status = getPollState(poll.start_time, poll.end_time);
+
+                    return (
+                      <div
+                        key={poll.id}
+                        className="flex items-center justify-between rounded-[10px] bg-[#f8f9fa] p-4 transition-shadow hover:shadow-md"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="font-bold text-gray-800">
+                            {poll.title}
+                          </div>
+                          <PollStatusBadge status={status} />
                         </div>
+                        <PollActionButton
+                          status={status}
+                          poll={poll}
+                          handleOpenPoll={handleOpenPoll}
+                        />
                       </div>
-                      {poll.status === "OPEN" ? (
-                        <button
-                          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                          onClick={() => handleOpenPoll(poll.id)}
-                        >
-                          Tham gia
-                        </button>
-                      ) : (
-                        <button
-                          className="cursor-not-allowed rounded bg-gray-400 px-4 py-2 text-white"
-                          disabled
-                        >
-                          Đã đóng
-                        </button>
-                      )}
+                    );
+                  });
+                } else {
+                  return (
+                    <div className="py-4 text-center text-gray-500">
+                      Chưa có cuộc bình chọn nào.
                     </div>
-                  ))
-              ) : (
-                <div className="text-center text-gray-500">
-                  Chưa có cuộc bình chọn nào
-                </div>
-              )}
+                  );
+                }
+              })()}
             </div>
           )}
         </div>
 
-        {/* Manager Section */}
-        <div className="rounded-2xl bg-white p-6 shadow">
-          <h3 className="text-secondary mb-5 flex items-center gap-2 text-xl leading-1.5 font-bold">
-            👨‍💼 Người quản lý
-          </h3>
-          {event?.manager && event.manager.length > 0 ? (
-            <div className="space-y-3">
-              {event?.manager?.map((manager, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 rounded-[10px] bg-[#f8f9fa] p-4"
-                >
-                  <div className="bg-primary flex h-12 w-12 items-center justify-center rounded-full font-bold text-white">
-                    {manager.userName.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h4 className="mb-1 font-bold text-[#333]">
-                      {manager.userName}
-                    </h4>
-                    <p className="text-sm text-[#666]">
-                      📧 {manager.userEmail}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-sm text-[#666]">
-              Chưa có thông tin người quản lý
-            </p>
-          )}
-        </div>
-
-        {/* Secretaries Section */}
         {event?.secretaries && event.secretaries.length > 0 && (
           <div className="rounded-2xl bg-white p-6 shadow">
             <h3 className="text-secondary mb-5 flex items-center gap-2 text-xl leading-1.5 font-bold">
@@ -411,11 +481,11 @@ const EventDetailUser = () => {
                   className="flex items-center gap-3 border-b border-b-[#f0f0f0] p-2 hover:bg-[#f8f9fa]"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-300 font-bold text-gray-600">
-                    {participant.userName.charAt(0).toUpperCase()}
+                    {participant.user_name?.charAt(0).toUpperCase()}
                   </div>
                   <div className="participant-info">
                     <h4 className="mb-0.5 text-sm font-bold text-[#333]">
-                      {participant.userName}
+                      {participant.user_name}
                     </h4>
                     <p className="text-[12px] text-[#666]">
                       Đã đăng ký lúc {formatJoinedTime(participant.joinedAt)}

@@ -50,7 +50,7 @@ export const eventApi = rootApi.injectEndpoints({
     }),
     deleteEvent: builder.mutation({
       query: (id) => ({
-        url: `/events/delete/${id}`,
+        url: `/events/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: [{ type: "Event", id: "LIST" }],
@@ -76,11 +76,33 @@ export const eventApi = rootApi.injectEndpoints({
 
         return `/events?${params.toString()}`;
       },
-      providesTags: ["Events"],
-    }),
-    getAllEvents: builder.query({
-      query: () => "/events/all",
-      providesTags: ["AllEvents"],
+      transformResponse: (response) => {
+        if (!response || !response.pagination || !response.counters) {
+          return {
+            pagination: {
+              content: [],
+              total_pages: 0,
+              total_elements: 0,
+              number: 0,
+              size: 0,
+            },
+            counters: {},
+          };
+        }
+        return response;
+      },
+      providesTags: (result, error, arg) => {
+        const events = result?.pagination?.content;
+        if (events && events.length > 0) {
+          const eventTags = events.map((event) => ({
+            type: "Events",
+            id: event.id,
+          }));
+          const listTag = { type: "Events", id: "LIST" };
+          return [...eventTags, listTag];
+        }
+        return [{ type: "Events", id: "LIST" }];
+      },
     }),
     getManagedEvents: builder.query({
       query: ({
@@ -97,11 +119,31 @@ export const eventApi = rootApi.injectEndpoints({
         });
         return `/events/managed?${params.toString()}`;
       },
+      transformResponse: (response) => {
+        const res = response || {};
+        const data = res.data ?? res;
+        const content = Array.isArray(data?.pagination?.content)
+          ? data.pagination.content
+          : Array.isArray(data?.content)
+            ? data.content
+            : Array.isArray(data)
+              ? data
+              : [];
+        const totalPages =
+          data?.pagination?.totalPages ?? data?.totalPages ?? 0;
+        const totalElements =
+          data?.pagination?.totalElements ??
+          data?.totalElements ??
+          content.length ??
+          0;
+        const number = data?.pagination?.number ?? data?.number ?? 0;
+        const size =
+          data?.pagination?.size ?? data?.size ?? content.length ?? 0;
+        return {
+          pagination: { content, totalPages, totalElements, number, size },
+        };
+      },
       providesTags: ["ManagedEvents"],
-    }),
-    getAllManagedEvents: builder.query({
-      query: () => "/events/man foroaged/all",
-      providesTags: ["AllManagedEvents"],
     }),
     getEventById: builder.query({
       query: (id) => `/events/${id}`,
@@ -112,19 +154,11 @@ export const eventApi = rootApi.injectEndpoints({
         url: `/events/join/${eventToken}`,
         method: "POST",
       }),
-      invalidatesTags: (result, error, arg) => [
+      invalidatesTags: (result) => [
         { type: "Events", id: result?.eventId },
         ...eventListTags,
       ],
     }),
-    getEventQR: builder.query({
-      query: (id) => ({
-        url: `/attendants/get-qr-check/${id}`,
-        method: "GET",
-        responseHandler: (response) => response.blob(),
-      }),
-    }),
-
     uploadEventBanner: builder.mutation({
       query: ({ eventId, bannerFile }) => {
         const formData = new FormData();
@@ -140,67 +174,27 @@ export const eventApi = rootApi.injectEndpoints({
         ...eventListTags,
       ],
     }),
-    uploadBanner: builder.mutation({
-      query: ({ eventId, file, accessToken }) => {
-        const formData = new FormData();
-        const allowedExt = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
-        const ext = file.name.split(".").pop().toLowerCase();
-        if (!allowedExt.includes(ext)) {
-          throw new Error(
-            "File banner phải là ảnh (png, jpg, jpeg, gif, webp, svg)",
-          );
-        }
-        formData.append("banner", file);
-        return {
-          url: `/events/${eventId}/upload-banner`,
-          method: "PUT",
-          body: formData,
-          headers: accessToken
-            ? { Authorization: `Bearer ${accessToken}` }
-            : {},
-        };
-      },
-      invalidatesTags: (result, error, { eventId }) => [
-        { type: "Events", id: eventId },
-        ...eventListTags,
+    assignEventManager: builder.mutation({
+      query: ({ user_id, event_id, roleType }) => ({
+        url: "event-manager/assign-manager",
+        method: "POST",
+        body: { user_id, event_id, roleType },
+      }),
+      invalidatesTags: (result, error, { event_id }) => [
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
       ],
     }),
-
     removeEventManager: builder.mutation({
-      query: (dto) => ({
-        url: "/event-manager/remove-manager",
+      query: ({ user_id, event_id, roleType }) => ({
+        url: "event-manager/remove-manager",
         method: "DELETE",
-        body: dto,
+        body: { user_id, event_id, roleType },
       }),
-      invalidatesTags: (result, error, dto) => [
-        { type: "EventManager", id: dto.event_id },
-        { type: "Event", id: dto.event_id },
-        ...eventListTags,
+      invalidatesTags: (result, error, { event_id }) => [
+        { type: "EventManagers", id: event_id },
+        { type: "Events" },
       ],
-      async onQueryStarted(dto, { dispatch, queryFulfilled }) {
-        const patchManagers = dispatch(
-          rootApi.util.updateQueryData(
-            "getEventManagersByEventId",
-            dto.event_id,
-            (draft) => {
-              try {
-                if (!Array.isArray(draft)) return;
-                const idx = draft.findIndex(
-                  (m) => String(m.user_id) === String(dto.user_id),
-                );
-                if (idx !== -1) draft.splice(idx, 1);
-              } catch (_) {
-                // no-op
-              }
-            },
-          ),
-        );
-        try {
-          await queryFulfilled;
-        } catch (_) {
-          patchManagers.undo();
-        }
-      },
     }),
     getEventManagersByEventId: builder.query({
       query: (eventId) => ({
@@ -224,6 +218,17 @@ export const eventApi = rootApi.injectEndpoints({
         { type: "EventManager", id: eventId },
       ],
     }),
+    uploadEditorImage: builder.mutation({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append("image", file);
+        return {
+          url: "/medias/image-upload",
+          method: "POST",
+          body: formData,
+        };
+      },
+    }),
   }),
   overrideExisting: false,
 });
@@ -231,16 +236,15 @@ export const eventApi = rootApi.injectEndpoints({
 export const {
   useCreateEventMutation,
   useGetEventsQuery,
-  useGetAllEventsQuery,
   useGetManagedEventsQuery,
-  useGetAllManagedEventsQuery,
   useJoinEventMutation,
-  useGetEventQRQuery,
   useUploadEventBannerMutation,
-  useUploadBannerMutation,
-  useRemoveEventManagerMutation,
-  useGetEventManagersByEventIdQuery,
   useGetEventByIdQuery,
   useDeleteEventMutation,
   useUpdateEventMutation,
+  useDeleteEventMutation,
+  useAssignEventManagerMutation,
+  useRemoveEventManagerMutation,
+  useGetEventManagersByEventIdQuery,
+  useUploadEditorImageMutation,
 } = eventApi;

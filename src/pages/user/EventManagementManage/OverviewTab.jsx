@@ -53,24 +53,23 @@ const OverviewTab = ({ eventData, stats }) => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="overflow-hidden rounded-2xl bg-white shadow-lg">
-            {/* <div className="relative h-72"> */}
             <div className="relative h-[200px] overflow-hidden md:h-[300px]">
               <img
                 src={
                   eventData?.banner
-                    ? `${import.meta.env.VITE_BASE_URL}/events/${eventData.banner}`
+                    ? `${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`
                     : "https://via.placeholder.com/800x300?text=Event+Banner"
                 }
-                alt={eventData.name}
+                alt={eventData.title}
                 className="absolute inset-0 h-full w-full object-cover brightness-50"
               />
               <div className="absolute inset-0 bg-black/20"></div>
               <div className="absolute bottom-4 left-6 text-white">
-                <h1 className="mb-2 text-2xl font-bold">{eventData.name}</h1>
+                <h1 className="mb-2 text-2xl font-bold">{eventData.title}</h1>
                 <div className="flex items-center gap-4 text-sm opacity-90">
                   <div className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faCalendar} />
-                    <span>{formatDateTime(eventData.startTime)}</span>
+                    <span>{formatDateTime(eventData.start_time)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FontAwesomeIcon icon={faMapMarkerAlt} />
@@ -81,14 +80,16 @@ const OverviewTab = ({ eventData, stats }) => {
             </div>
             <div className="p-6">
               <div className="relative">
-                <p
-                  className={`leading-[1.8] whitespace-pre-wrap text-[#666] ${
+                <div
+                  className={`leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold ${
                     !isDescriptionExpanded && shouldShowExpandButton
                       ? "line-clamp-4"
                       : ""
                   }`}
-                  dangerouslySetInnerHTML={{ __html: eventData.description }}
-                ></p>
+                  dangerouslySetInnerHTML={{
+                    __html: eventData.description,
+                  }}
+                ></div>
                 {shouldShowExpandButton && (
                   <div className="mt-4 text-center">
                     <button
@@ -129,7 +130,7 @@ const OverviewTab = ({ eventData, stats }) => {
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Đã đăng ký</span>
                 <span className="font-bold text-blue-600">
-                  {stats.totalRegistered}/{eventData?.maxParticipants}
+                  {stats.totalRegistered}/{eventData?.max_participants}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -142,13 +143,13 @@ const OverviewTab = ({ eventData, stats }) => {
                 <div
                   className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300"
                   style={{
-                    width: `${(stats.totalRegistered / eventData?.maxParticipants) * 100}%`,
+                    width: `${(stats.totalRegistered / eventData?.max_participants) * 100}%`,
                   }}
                 ></div>
               </div>
               <p className="text-center text-sm text-gray-500">
                 {Math.round(
-                  (stats.totalRegistered / eventData?.maxParticipants) * 100,
+                  (stats.totalRegistered / eventData?.max_participants) * 100,
                 )}
                 % đã đăng ký
               </p>

@@ -5,7 +5,7 @@ export function formatDate(dateString) {
     month: "long",
     day: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
   });
 }
 
@@ -14,41 +14,37 @@ export function getStatusText(status) {
     upcoming: "Sắp diễn ra",
     ongoing: "Đang diễn ra",
     completed: "Đã kết thúc",
-    cancelled: "Đã hủy"
+    cancelled: "Đã hủy",
   };
   return statusMap[status] || status;
 }
 
-// Mapping từ backend enum sang frontend display
 export function mapBackendStatusToFrontend(backendStatus) {
   const statusMap = {
-    "UPCOMING": "upcoming",
-    "ONGOING": "ongoing", 
-    "COMPLETED": "completed",
-    "CANCELLED": "cancelled"
+    UPCOMING: "Sắp diễn ra",
+    ONGOING: "Đang diễn ra",
+    COMPLETED: "Đã kết thúc",
+    CANCELLED: "Đã hủy",
   };
-  return statusMap[backendStatus] || "upcoming";
+  return statusMap[backendStatus] || "Sắp diễn ra";
 }
 
-// Mapping từ frontend display sang backend enum
 export function mapFrontendStatusToBackend(frontendStatus) {
   const statusMap = {
-    "upcoming": "UPCOMING",
-    "ongoing": "ONGOING",
-    "completed": "COMPLETED", 
-    "cancelled": "CANCELLED"
+    upcoming: "UPCOMING",
+    ongoing: "ONGOING",
+    completed: "COMPLETED",
+    cancelled: "CANCELLED",
   };
   return statusMap[frontendStatus] || "UPCOMING";
 }
 
-// Cắt bớt description nếu quá dài
 export function truncateDescription(description, maxLength = 400) {
   if (!description) return "";
   if (description.length <= maxLength) return description;
   return description.substring(0, maxLength) + "...";
 }
 
-// Cắt bớt title nếu quá dài
 export function truncateTitle(title, maxLength = 50) {
   if (!title) return "";
   if (title.length <= maxLength) return title;
@@ -68,3 +64,40 @@ export function formatTimeRemaining(hours) {
     return `${days} ngày ${remainingHours} giờ`;
   }
 }
+
+export const getDisplayStatus = (event) => {
+  if (!event) return "UNKNOWN";
+
+  if (event.status === "CANCELLED") return "CANCELLED";
+  if (event.status === "COMPLETED") return "COMPLETED";
+
+  if (!event.startTime || !event.endTime) {
+    return event.status || "UNKNOWN";
+  }
+
+  const now = new Date();
+  const startTime = new Date(event.startTime);
+  const endTime = new Date(event.endTime);
+
+  if (now < startTime) {
+    return "UPCOMING";
+  }
+
+  if (now >= startTime && now <= endTime) {
+    return "ONGOING";
+  }
+
+  if (now > endTime) {
+    return "COMPLETED";
+  }
+
+  return event.status;
+};
+
+export const truncateText = (text, maxLength) => {
+  if (!text) return "";
+  const cleanText = text.replace(/<[^>]*>/g, "");
+  return cleanText.length > maxLength
+    ? cleanText.substring(0, maxLength) + "..."
+    : cleanText;
+};

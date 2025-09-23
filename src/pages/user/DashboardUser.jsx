@@ -1,38 +1,39 @@
-import {
-  useGetAllEventsQuery,
-  useGetAllManagedEventsQuery,
-  useGetEventsQuery,
-  useGetManagedEventsQuery,
-} from "@api/eventApi";
+import { useGetEventsQuery, useGetManagedEventsQuery } from "@api/eventApi";
 
-import EventCard from "@components/user/EventCard/index.jsx";
+import EventCard from "@/components/features/user/EventCard/index.jsx";
 import { EVENT_STATUS } from "@utils/constants";
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 
 const DashboardUser = () => {
   const user = useSelector((state) => state.auth.user);
-  const [activeTab, setActiveTab] = useState("UPCOMING");
+  const [activeTab, setActiveTab] = useState("ONGOING");
   const [currentPage, setCurrentPage] = useState(0);
   const [sortBy, setSortBy] = useState("date");
-  const sortDir = "asc";
+  const sortDir = "desc";
 
-  const tabs = Object.entries(EVENT_STATUS).map(([id, label]) => ({
-    id,
-    label,
-  }));
+  const tabs = useMemo(
+    () =>
+      Object.entries(EVENT_STATUS)
+        .filter(([id]) => id !== "CANCELLED")
+        .map(([id, label]) => ({
+          id,
+          label,
+        })),
+    [],
+  );
 
   const isManageTab = activeTab === "MANAGE";
 
   const {
-    data: paginatedData,
+    data: normalData,
     isLoading: isLoadingNormal,
     error: errorNormal,
   } = useGetEventsQuery(
     {
       page: currentPage,
       size: 6,
-      sortBy: sortBy === "date" ? "startTime" : "name",
+      sortBy: sortBy === "date" ? "startTime" : "title",
       sortDir,
       status: activeTab,
     },
@@ -49,7 +50,7 @@ const DashboardUser = () => {
     {
       page: currentPage,
       size: 6,
-      sortBy: sortBy === "date" ? "startTime" : "name",
+      sortBy: sortBy === "date" ? "startTime" : "title",
       sortDir,
     },
     {
@@ -57,10 +58,13 @@ const DashboardUser = () => {
     },
   );
 
-  const { data: allEvents } = useGetAllEventsQuery();
-  const { data: allManagedEvents } = useGetAllManagedEventsQuery();
+  const dataForCurrentTab = isManageTab ? manageData : normalData;
+  const paginationInfo = dataForCurrentTab?.pagination;
+  const tabCounts = dataForCurrentTab?.counters;
 
-  // Chuẩn hóa dữ liệu trả về từ API để luôn có cấu trúc phân trang
+  const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
+  const error = isManageTab ? errorManage : errorNormal;
+
   const normalizePageData = (data) => {
     if (!data) return undefined;
     if (Array.isArray(data)) {
@@ -73,7 +77,6 @@ const DashboardUser = () => {
       };
     }
     if (typeof data === "object" && data !== null) {
-      // Nếu backend trả về trực tiếp object sự kiện (không có content)
       if (!("content" in data) && "id" in data) {
         return {
           content: [data],
@@ -88,29 +91,7 @@ const DashboardUser = () => {
     return undefined;
   };
 
-  const currentData = normalizePageData(
-    isManageTab ? manageData : paginatedData,
-  );
-  const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
-  const error = isManageTab ? errorManage : errorNormal;
-
-  const tabCounts = useMemo(() => {
-    if (!allEvents && !allManagedEvents) return {};
-
-    const counts = {};
-    tabs.forEach((tab) => {
-      if (tab.id === "MANAGE") {
-        counts[tab.id] =
-          allManagedEvents?.totalElements ||
-          allManagedEvents?.content?.length ||
-          (Array.isArray(allManagedEvents) ? allManagedEvents.length : 0);
-      } else {
-        counts[tab.id] =
-          allEvents?.filter((event) => event.status === tab.id).length || 0;
-      }
-    });
-    return counts;
-  }, [allEvents, allManagedEvents, tabs]);
+  const currentData = normalizePageData(paginationInfo);
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -147,8 +128,8 @@ const DashboardUser = () => {
   }
 
   return (
-    <div className="my-5 rounded-2xl bg-white p-7 shadow">
-      <h2 className="text-secondary mb-2 text-2xl font-bold md:text-3xl">
+    <div className="my-5 rounded-2xl bg-white p-4 shadow md:p-7">
+      <h2 className="text-secondary mb-2 text-xl font-bold md:text-3xl">
         Chào mừng, {user?.name || "Người dùng"}! 👋
       </h2>
       <p className="mb-8 text-gray-600">
@@ -157,11 +138,11 @@ const DashboardUser = () => {
           : "Khám phá và tham gia các sự kiện thú vị của chúng tôi"}
       </p>
 
-      <nav className="mb-8 flex overflow-hidden rounded-xl shadow-md">
+      <nav className="mb-8 flex overflow-x-auto rounded-xl shadow-md">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            className={`group relative flex-1 cursor-pointer overflow-hidden px-4 py-4 text-sm font-medium transition-all duration-300 md:text-base ${
+            className={`group relative flex-shrink-0 cursor-pointer overflow-hidden px-5 py-4 text-sm font-medium transition-all duration-300 md:px-6 md:text-base ${
               activeTab === tab.id
                 ? "-translate-y-1 border-b-2 border-red-600 bg-white text-red-600 shadow-lg"
                 : "bg-white text-gray-700 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-md"
@@ -171,24 +152,26 @@ const DashboardUser = () => {
             <div className="absolute top-0 -left-full h-full w-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-all duration-500 group-hover:left-full"></div>
             <span className="relative z-10 flex items-center justify-center gap-2">
               {tab.label}
-              {tabCounts[tab.id] > 0 && (
-                <span
-                  className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${
-                    activeTab === tab.id
-                      ? "bg-red-100 text-red-600"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {tabCounts[tab.id]}
-                </span>
-              )}
+              {tabCounts &&
+                tabCounts[tab.id] !== undefined &&
+                tabCounts[tab.id] > 0 && (
+                  <span
+                    className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${
+                      activeTab === tab.id
+                        ? "bg-red-100 text-red-600"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {tabCounts[tab.id]}
+                  </span>
+                )}
             </span>
           </button>
         ))}
       </nav>
 
       <div className="min-h-[400px]">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-gray-600">
             Tìm thấy{" "}
             <span className="font-semibold text-gray-900">
@@ -197,7 +180,7 @@ const DashboardUser = () => {
             {isManageTab ? "sự kiện quản lý" : "sự kiện"}
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end md:self-auto">
             <span className="text-sm text-gray-500">Sắp xếp theo:</span>
             <select
               className="rounded border border-gray-300 px-2 py-1 text-sm focus:border-red-500 focus:outline-none"
@@ -241,7 +224,7 @@ const DashboardUser = () => {
 
       {currentData && currentData.totalPages > 1 && (
         <div className="mt-8 flex justify-center">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             <button
               className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
               disabled={currentData.first}

@@ -1,10 +1,10 @@
 import { useGetEventByIdQuery } from "@api/eventApi";
 import { useGetPollStatByEventIdQuery } from "@api/pollApi";
-import AdditionalPoll from "@components/poll/AdditionalPoll";
-import EventBanner from "@components/poll/EventBanner";
-import PollDashboard from "@components/poll/PollDashboard";
-import QuestionSelectorPopUp from "@components/poll/QuestionSelector";
-import StatisticsOverview from "@components/poll/StatisticsOverview";
+import AdditionalPoll from "@/components/features/poll/AdditionalPoll";
+import EventBanner from "@/components/features/poll/EventBanner";
+import PollDashboard from "@/components/features/poll/PollDashboard";
+import QuestionSelectorPopUp from "@/components/features/poll/QuestionSelector";
+import StatisticsOverview from "@/components/features/poll/StatisticsOverview";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -15,7 +15,7 @@ const PollAnalystic = () => {
   const { data: eventData = [] } = useGetEventByIdQuery(eventId);
   const { data: pollsData = [] } = useGetPollStatByEventIdQuery(eventId);
   // console.log(pollsData);
-  console.log(selectedPoll)
+  console.log(selectedPoll);
 
   return (
     <div className="px-0 py-7">

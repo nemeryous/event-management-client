@@ -1,14 +1,30 @@
+import { clearToken, setToken, setUser } from "@store/slices/authSlice";
 import { rootApi } from "./rootApi";
 
 export const authApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     register: builder.mutation({
-      query: ({ name, email, password, confirm_password, phone_number }) => ({
+      query: ({
+        name,
+        email,
+        password,
+        confirm_password,
+        phone_number,
+        unit_id,
+      }) => ({
         url: "/auth/register",
 
-        body: { name, email, password, confirm_password, phone_number },
+        body: {
+          name,
+          email,
+          password,
+          confirm_password,
+          phone_number,
+          unit_id,
+        },
         method: "POST",
       }),
+      invalidatesTags: ["Auth"],
     }),
     login: builder.mutation({
       query: ({ email, password }) => ({
@@ -16,68 +32,61 @@ export const authApi = rootApi.injectEndpoints({
         body: { email, password },
         method: "POST",
       }),
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setToken(data));
+          dispatch(
+            authApi.util.getAuthUser.initiate(undefined, {
+              forceRefetch: true,
+            }),
+          );
+        } catch {
+          //
+        }
+      },
+      invalidatesTags: ["Auth"],
     }),
     getAuthUser: builder.query({
       query: () => "/auth/auth-user",
       providesTags: ["Auth"],
-    }),
-    refreshToken: builder.mutation({
-      query: () => ({
-        url: "/auth/refresh-token",
-        method: "POST",
-      }),
-      invalidatesTags: ["Auth"],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setUser(data));
+        } catch {
+          //
+        }
+      },
     }),
     logout: builder.mutation({
       query: () => ({
         url: "/auth/logout",
         method: "POST",
       }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+        } finally {
+          dispatch(clearToken());
+          dispatch(rootApi.util.resetApiState());
+        }
+      },
+      invalidatesTags: ["Auth"],
     }),
     enableUser: builder.mutation({
       query: (id) => ({
-        url: `/users/enable-user/${id}`,
+        url: `/users/${id}/enable`,
         method: "POST",
       }),
       invalidatesTags: ["UserList"],
     }),
     deleteUser: builder.mutation({
       query: (id) => ({
-        url: `/users/delete/${id}`,
+        url: `/users/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["UserList"],
-    }),
-    getUserName: builder.query({
-      query: (userId) => {
-        console.log("getUserName API call - userId:", userId);
-        return {
-          url: `/users/${userId}/name`,
-          responseHandler: (response) => response.text(), // nhận kiểu text
-        };
-      },
-      providesTags: (result, error, userId) => [
-        { type: "UserName", id: userId },
-      ],
-      transformResponse: (response) => {
-        console.log("getUserName API response:", response);
-        // Nếu backend trả về chuỗi tên, trả về luôn
-        if (typeof response === "string") return response;
-        // Nếu backend trả về object JSON
-        if (response && typeof response === "object") {
-          return (
-            response.name ||
-            response.userName ||
-            response.displayName ||
-            JSON.stringify(response)
-          );
-        }
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.log("getUserName API error:", error);
-        return error;
-      },
     }),
     getAllUsers: builder.query({
       query: () => ({
@@ -85,6 +94,17 @@ export const authApi = rootApi.injectEndpoints({
         method: "GET",
       }),
       providesTags: ["UserList"],
+    }),
+    changePassword: builder.mutation({
+      query: ({ oldPassword, newPassword, confirmPassword }) => ({
+        url: "/auth/change-password",
+        method: "POST",
+        body: {
+          old_password: oldPassword,
+          new_password: newPassword,
+          confirm_new_password: confirmPassword,
+        },
+      }),
     }),
   }),
   overrideExisting: false,
@@ -94,10 +114,9 @@ export const {
   useRegisterMutation,
   useLoginMutation,
   useGetAuthUserQuery,
-  useRefreshTokenMutation,
   useLogoutMutation,
-  useGetUserNameQuery,
   useGetAllUsersQuery,
   useEnableUserMutation,
   useDeleteUserMutation,
+  useChangePasswordMutation,
 } = authApi;

@@ -3,8 +3,8 @@ import { closeSnackbar } from "@store/slices/snackbarSlice";
 import React, { Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
-import HeaderUser from "@components/user/HeaderUser";
-import FooterUser from "@components/user/FooterUser";
+import HeaderUser from "@/components/features/user/HeaderUser";
+import FooterUser from "@/components/features/user/FooterUser";
 
 const MainLayout = () => {
   const dispatch = useDispatch();
