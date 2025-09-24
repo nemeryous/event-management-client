@@ -13,12 +13,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import StatCard from '@/components/features/admin/StatCard';
-import LoadingState from '@/components/ui/LoadingState';
 import StatusBadge from '@/components/features/admin/StatusBadge';
 import ChangeRoleModal from '@/components/features/admin/userManage/ChangeRoleModal';
 import ChangeUnitModal from '@/components/features/admin/userManage/ChangeUnitModal';
 import { Menu, MenuItem, IconButton } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Loading from '@/components/ui/Loading';
 
 const getRoleDisplayName = (roleName) => {
   if (!roleName) return '';
@@ -33,7 +33,7 @@ export default function UserManagement() {
   const [enableUser] = useEnableUserMutation();
   const [disableUser] = useDisableUserMutation();
   const [updateUserRole] = useUpdateUserRoleMutation();
-  const [updateUserUnit, { isLoading: isUpdatingUnit }] = useUpdateUserUnitByAdminMutation();
+  const [updateUserUnit] = useUpdateUserUnitByAdminMutation();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -153,7 +153,7 @@ export default function UserManagement() {
     }
   };
 
-  if (isLoading) return <LoadingState message="Đang tải danh sách người dùng..." />;
+  if (isLoading) return <Loading message="Đang tải danh sách người dùng..." />;
   if (error) return <div className="p-8 text-center text-red-500">Lỗi: {error.message}</div>;
 
   return (
@@ -245,7 +245,7 @@ export default function UserManagement() {
         </motion.div>
 
         {isLoading ? (
-          <LoadingState message="Đang tải danh sách người dùng..." />
+          <Loading message="Đang tải danh sách người dùng..." />
         ) : error ? (
           <div className="text-center text-red-500">Lỗi: {error.message}</div>
         ) : (

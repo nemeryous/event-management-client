@@ -1,103 +1,58 @@
-import React, { useEffect, useRef, useState } from "react";
-import styles from './NotFound.module.css';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHome, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 
-const suggestions = [
-  { label: "Trang chủ", to: "/" },
-  { label: "Sản phẩm", to: "/products" },
-  { label: "Dịch vụ", to: "/services" },
-  { label: "Liên hệ", to: "/contact" },
-  { label: "Hỗ trợ", to: "/support" },
-];
+const NotFound = () => {
+  const navigate = useNavigate();
 
-export default function NotFound() {
-  const [currentTime, setCurrentTime] = useState("");
-  const errorCodeRef = useRef(null);
-
-  useEffect(() => {
-    function updateTime() {
-      const now = new Date();
-      const timeString = now.toLocaleString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-      setCurrentTime(timeString);
-    }
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleBack = () => {
-    window.history.back();
-  };
-
-  const handleSuggestion = (to) => {
-    window.location.href = to;
-  };
-
-  const handleSearch = (e) => {
-    if (e.key === "Enter") {
-      const searchTerm = e.target.value.trim();
-      if (searchTerm) {
-        alert(`Tìm kiếm: "${searchTerm}"`);
-      }
-    }
-  };
-
-  const handleErrorCodeClick = () => {
-    if (errorCodeRef.current) {
-      errorCodeRef.current.style.transform = "rotate(360deg)";
-      errorCodeRef.current.style.transition = "transform 0.5s ease";
-      setTimeout(() => {
-        if (errorCodeRef.current) errorCodeRef.current.style.transform = "rotate(0deg)";
-      }, 500);
+  const handleGoBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/', { replace: true });
     }
   };
 
   return (
-    <div className={styles.notFoundRoot}>
-      <div className={styles.floatingShapes}>
-        <div className={styles.shape}></div>
-        <div className={styles.shape}></div>
-        <div className={styles.shape}></div>
-      </div>
-      <div className={styles.errorContainer}>
-        <div className={styles.errorCode} ref={errorCodeRef} onClick={handleErrorCodeClick}>404</div>
-        <div className={styles.divider}></div>
-        <h1 className={styles.errorTitle}>Trang không tìm thấy</h1>
-        <p className={styles.errorDescription}>
-          Xin lỗi, trang bạn đang tìm kiếm không tồn tại hoặc<br />
-          đã bị di chuyển. Vui lòng kiểm tra lại đường dẫn<br />
-          hoặc quay về trang chủ.
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-red-50 to-blue-50 p-4">
+      <motion.div
+        className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-2xl"
+        initial={{ opacity: 0, y: -30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        <div className="mb-4">
+          <span className="bg-gradient-to-r from-red-500 to-blue-600 bg-clip-text text-8xl font-extrabold text-transparent">
+            404
+          </span>
+        </div>
+        <h1 className="mb-2 text-3xl font-bold text-gray-800">Ối! Trang không tồn tại</h1>
+        <p className="mb-8 text-gray-600">
+          Có vẻ như bạn đã đi lạc hoặc trang bạn đang tìm kiếm đã được di chuyển. Đừng lo, chúng tôi
+          sẽ giúp bạn quay lại đúng đường.
         </p>
-        <div className={styles.actionButtons}>
-          <button className={styles.btn} onClick={handleBack}>
-            ← Về trang trước
+        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <button
+            onClick={handleGoBack}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:w-auto"
+          >
+            <FontAwesomeIcon icon={faArrowLeft} />
+            Quay lại
           </button>
-          <button className={styles.btn} onClick={() => handleSuggestion("/contact")}>📞 Liên hệ hỗ trợ</button>
+          <Link
+            to="/"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3 font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-red-700 hover:shadow-lg sm:w-auto"
+          >
+            <FontAwesomeIcon icon={faHome} />
+            Về trang chủ
+          </Link>
         </div>
-        <div className={styles.searchContainer}>
-          <input type="text" className={styles.searchInput} placeholder="Tìm kiếm" onKeyPress={handleSearch} />
-          <span className={styles.searchIcon}>🔍</span>
-        </div>
-        <div className={styles.suggestions}>
-          <h3 className={styles.suggestionsTitle}>Có thể bạn đang tìm:</h3>
-          <div className={styles.suggestionsList}>
-            {suggestions.map((s) => (
-              <div className={styles.suggestionItem} key={s.to} onClick={() => handleSuggestion(s.to)}>
-                {s.label}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className={styles.errorInfo}>
-          <p>Mã lỗi: 404 | Thời gian: <span>{currentTime}</span></p>
-        </div>
-      </div>
+      </motion.div>
     </div>
   );
-} 
+};
+
+export default NotFound;

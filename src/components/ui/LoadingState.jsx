@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-export default function LoadingState({ message = "Đang tải dữ liệu..." }) {
+export default function LoadingState({ message = 'Đang tải dữ liệu...' }) {
   return (
     <div className="loading-state">
       <h3>🔄 {message}</h3>

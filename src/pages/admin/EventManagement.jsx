@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -14,12 +15,12 @@ import {
 import { useDeleteEventMutation, useGetEventsQuery } from '@/api/eventApi';
 import EventStats from '@/components/features/admin/EventStats';
 import PaginationControls from '@/components/features/admin/PaginationControls';
-import LoadingState from '@/components/ui/LoadingState';
 import EventModal from './EventModal';
 
 import { STATUS_FILTERS } from '@/const/STATUS_FILTERS';
 import EventList from '@/components/features/admin/EventList';
 import { openSnackbar } from '@/store/slices/snackbarSlice';
+import Loading from '@/components/ui/Loading';
 
 const PAGE_SIZE = 12;
 
@@ -34,19 +35,16 @@ export default function EventManagement() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Reset page khi filter/search thay đổi
   useEffect(() => {
     setPage(0);
   }, [debouncedSearch, statusFilter]);
 
-  // Fetch events từ RTK Query
-  const { data, isLoading, error, refetch } = useGetEventsQuery(
+  const { data, isLoading, refetch } = useGetEventsQuery(
     {
       page,
       size: PAGE_SIZE,
@@ -216,7 +214,7 @@ export default function EventManagement() {
 
         {/* Events Grid */}
         {isLoading ? (
-          <LoadingState message="Đang tải dữ liệu sự kiện..." />
+          <Loading message="Đang tải dữ liệu sự kiện..." />
         ) : events.length > 0 ? (
           <>
             <EventList
