@@ -175,10 +175,10 @@ export const eventApi = rootApi.injectEndpoints({
       ],
     }),
     assignEventManager: builder.mutation({
-      query: ({ user_id, event_id, roleType }) => ({
+      query: ({ user_id, event_id, role_type }) => ({
         url: "event-manager/assign-manager",
         method: "POST",
-        body: { user_id, event_id, roleType },
+        body: { user_id, event_id, role_type },
       }),
       invalidatesTags: (result, error, { event_id }) => [
         { type: "EventManagers", id: event_id },
@@ -242,7 +242,6 @@ export const {
   useGetEventByIdQuery,
   useDeleteEventMutation,
   useUpdateEventMutation,
-  useDeleteEventMutation,
   useAssignEventManagerMutation,
   useRemoveEventManagerMutation,
   useGetEventManagersByEventIdQuery,

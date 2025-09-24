@@ -2,8 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   accessToken: "",
-  refreshToken: "Bearer",
-  tokenType: "",
+  refreshToken: "",
+  tokenType: "Bearer",
   user: null,
   loading: false,
   error: null,
@@ -15,11 +15,15 @@ export const counterSlice = createSlice({
   reducers: {
     setToken: (state, action) => {
       state.accessToken = action.payload.access_token;
-      state.tokenType = action.payload.token_type;
+      state.tokenType = action.payload.token_type || "Bearer";
+      if (action.payload.refresh_token) {
+        state.refreshToken = action.payload.refresh_token;
+      }
     },
     clearToken: (state) => {
       state.accessToken = "";
-      state.tokenType = "";
+      state.refreshToken = "";
+      state.tokenType = "Bearer";
       state.user = null;
       state.loading = false;
       state.error = null;

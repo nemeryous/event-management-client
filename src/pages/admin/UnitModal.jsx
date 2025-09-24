@@ -1,14 +1,15 @@
 import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import EventForm from "./EventForm";
+import UnitForm from "./UnitForm";
 
-const EventModal = ({
+const UnitModal = ({
   open,
   onClose,
   onUpdated,
   initialData,
   isEdit = false,
   onSubmit,
+  availableParents = [],
 }) => {
   // Prevent background scroll when modal open
   useEffect(() => {
@@ -38,7 +39,7 @@ const EventModal = ({
           className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="modalTitle"
+          aria-labelledby="unitModalTitle"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -55,7 +56,7 @@ const EventModal = ({
 
           {/* Modal Panel */}
           <motion.div
-            className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl bg-white/95 shadow-2xl ring-1 ring-black/5 backdrop-blur-xl"
+            className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white/95 shadow-2xl ring-1 ring-black/5 backdrop-blur-xl"
             initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
@@ -64,13 +65,13 @@ const EventModal = ({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 px-6 py-4">
               <div>
-                <h2 id="modalTitle" className="text-2xl font-bold text-gray-800">
-                  {isEdit ? "🔧 Cập nhật sự kiện" : "✨ Tạo sự kiện mới"}
+                <h2 id="unitModalTitle" className="text-2xl font-bold text-gray-800">
+                  {isEdit ? "🔧 Cập nhật đơn vị" : "🏢 Tạo đơn vị mới"}
                 </h2>
                 <p className="mt-1 text-sm text-gray-600">
                   {isEdit
-                    ? "Chỉnh sửa thông tin và lưu thay đổi"
-                    : "Điền thông tin sự kiện mới"}
+                    ? "Chỉnh sửa thông tin đơn vị và lưu thay đổi"
+                    : "Điền thông tin đơn vị mới trong tổ chức"}
                 </p>
               </div>
               <motion.button
@@ -98,7 +99,7 @@ const EventModal = ({
 
             {/* Body */}
             <div className="max-h-[75vh] overflow-y-auto px-6 py-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
-              <EventForm
+              <UnitForm
                 initialData={initialData}
                 onSuccess={async () => {
                   await onUpdated?.();
@@ -108,6 +109,7 @@ const EventModal = ({
                 onError={() => {}}
                 isEdit={isEdit}
                 onSubmit={onSubmit}
+                availableParents={availableParents}
               />
             </div>
           </motion.div>
@@ -117,4 +119,4 @@ const EventModal = ({
   );
 };
 
-export default EventModal;
+export default UnitModal;

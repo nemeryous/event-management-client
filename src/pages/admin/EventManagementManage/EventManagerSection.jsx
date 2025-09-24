@@ -82,7 +82,7 @@ const EventManagerSection = ({ eventId }) => {
       await assignEventManager({
         user_id: pickedUser.id,
         event_id: eventId,
-        roleType: "MANAGE",
+        role_type: "MANAGE",
         assigned_by: currentUserId ?? "",
       }).unwrap();
 
