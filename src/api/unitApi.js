@@ -20,12 +20,10 @@ export const unitApi = rootApi.injectEndpoints({
             ]
           : [{ type: "Units", id: "LIST" }],
     }),
-
     getUnitById: builder.query({
       query: (id) => ({ url: `/units/${id}`, method: "GET" }),
       providesTags: (result, _err, id) => [{ type: "Units", id }],
     }),
-
     createUnit: builder.mutation({
       query: (payload) => ({
         url: "/units",
@@ -34,7 +32,6 @@ export const unitApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: "Units", id: "LIST" }],
     }),
-
     updateUnit: builder.mutation({
       query: ({ id, ...payload }) => ({
         url: `/units/${id}`,
@@ -46,13 +43,16 @@ export const unitApi = rootApi.injectEndpoints({
         { type: "Units", id: "LIST" },
       ],
     }),
-
     deleteUnit: builder.mutation({
       query: (id) => ({ url: `/units/${id}`, method: "DELETE" }),
       invalidatesTags: (_res, _err, id) => [
         { type: "Units", id },
         { type: "Units", id: "LIST" },
       ],
+    }),
+    getAllUnits: builder.query({
+      query: () => "/units/all",
+      providesTags: ["Units"],
     }),
   }),
   overrideExisting: false,
@@ -64,4 +64,5 @@ export const {
   useCreateUnitMutation,
   useUpdateUnitMutation,
   useDeleteUnitMutation,
+  useGetAllUnitsQuery,
 } = unitApi;

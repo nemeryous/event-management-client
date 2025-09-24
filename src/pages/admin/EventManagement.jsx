@@ -1,34 +1,33 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { motion, AnimatePresence } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendarAlt,
-  faDownload,
   faFilter,
   faPlus,
   faSearch,
   faSync,
-} from "@fortawesome/free-solid-svg-icons";
+} from '@fortawesome/free-solid-svg-icons';
 
-import { useDeleteEventMutation, useGetEventsQuery } from "@/api/eventApi";
-import EventStats from "@/components/features/admin/EventStats";
-import PaginationControls from "@/components/features/admin/PaginationControls";
-import LoadingState from "@/components/ui/LoadingState";
-import EventModal from "./EventModal";
+import { useDeleteEventMutation, useGetEventsQuery } from '@/api/eventApi';
+import EventStats from '@/components/features/admin/EventStats';
+import PaginationControls from '@/components/features/admin/PaginationControls';
+import LoadingState from '@/components/ui/LoadingState';
+import EventModal from './EventModal';
 
-import { STATUS_FILTERS } from "@/const/STATUS_FILTERS";
-import EventList from "@/components/features/admin/EventList";
-import { openSnackbar } from "@/store/slices/snackbarSlice";
+import { STATUS_FILTERS } from '@/const/STATUS_FILTERS';
+import EventList from '@/components/features/admin/EventList';
+import { openSnackbar } from '@/store/slices/snackbarSlice';
 
 const PAGE_SIZE = 12;
 
 export default function EventManagement() {
   const [page, setPage] = useState(0);
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
   const [modalErrors, setModalErrors] = useState([]);
@@ -52,7 +51,7 @@ export default function EventManagement() {
       page,
       size: PAGE_SIZE,
       search: debouncedSearch || null,
-      status: statusFilter === "all" ? null : statusFilter,
+      status: statusFilter === 'all' ? null : statusFilter,
     },
     { refetchOnMountOrArgChange: true },
   );
@@ -107,31 +106,19 @@ export default function EventManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa sự kiện này?")) {
+    if (window.confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) {
       try {
         await deleteEvent(id).unwrap();
-        dispatch(openSnackbar({ message: "Đã xóa sự kiện thành công!" }));
+        dispatch(openSnackbar({ message: 'Đã xóa sự kiện thành công!' }));
       } catch (err) {
         dispatch(
           openSnackbar({
-            message: err?.data?.message || "Xóa sự kiện thất bại!",
-            type: "error",
+            message: err?.data?.message || 'Xóa sự kiện thất bại!',
+            type: 'error',
           }),
         );
       }
     }
-  };
-
-  // Xuất dữ liệu
-  const handleExport = () => {
-    const dataStr = JSON.stringify(events, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-    const exportFileDefaultName = "events-export.json";
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
   };
 
   // Pagination
@@ -155,9 +142,7 @@ export default function EventManagement() {
           <h1 className="mb-4 flex items-center justify-center gap-3 text-4xl font-bold text-gray-800">
             🎉 Quản Lý Sự Kiện
           </h1>
-          <p className="mb-4 text-lg text-gray-600">
-            Hệ thống quản lý sự kiện chuyên nghiệp
-          </p>
+          <p className="mb-4 text-lg text-gray-600">Hệ thống quản lý sự kiện chuyên nghiệp</p>
           <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 px-6 py-2 font-semibold text-white shadow-lg">
             👑 ADMIN DASHBOARD
           </div>
@@ -220,16 +205,6 @@ export default function EventManagement() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleExport}
-                className="flex items-center gap-2 rounded-lg bg-green-500 px-6 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-green-600"
-              >
-                <FontAwesomeIcon icon={faDownload} />
-                Xuất file
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={refetch}
                 className="rounded-lg bg-gray-500 px-4 py-3 font-semibold text-white shadow-lg transition-colors hover:bg-gray-600"
               >
@@ -251,11 +226,7 @@ export default function EventManagement() {
               onView={handleView}
             />
 
-            <PaginationControls
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
+            <PaginationControls currentPage={page} totalPages={totalPages} onPageChange={setPage} />
           </>
         ) : (
           <motion.div
@@ -264,16 +235,9 @@ export default function EventManagement() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <FontAwesomeIcon
-              icon={faCalendarAlt}
-              className="mb-4 text-6xl text-gray-300"
-            />
-            <h3 className="mb-2 text-xl font-semibold text-gray-600">
-              Không tìm thấy sự kiện nào
-            </h3>
-            <p className="text-gray-500">
-              Hãy thử tìm kiếm với từ khóa khác hoặc tạo sự kiện mới
-            </p>
+            <FontAwesomeIcon icon={faCalendarAlt} className="mb-4 text-6xl text-gray-300" />
+            <h3 className="mb-2 text-xl font-semibold text-gray-600">Không tìm thấy sự kiện nào</h3>
+            <p className="text-gray-500">Hãy thử tìm kiếm với từ khóa khác hoặc tạo sự kiện mới</p>
           </motion.div>
         )}
 
@@ -291,7 +255,7 @@ export default function EventManagement() {
 
         {/* Modal tạo/sửa sự kiện */}
         <EventModal
-          key={editEvent ? editEvent.id : "new"}
+          key={editEvent ? editEvent.id : 'new'}
           open={modalOpen}
           onClose={handleModalClose}
           onUpdated={async () => await refetch()}
