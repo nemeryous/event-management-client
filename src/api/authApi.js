@@ -74,10 +74,10 @@ export const authApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'Users', id: 'LIST' }],
     }),
-    deleteUser: builder.mutation({
+    disableUser: builder.mutation({
       query: (id) => ({
-        url: `/users/${id}`,
-        method: 'DELETE',
+        url: `/users/${id}/disable`,
+        method: 'POST',
       }),
       invalidatesTags: [{ type: 'Users', id: 'LIST' }],
     }),
@@ -139,6 +139,20 @@ export const authApi = rootApi.injectEndpoints({
         { type: 'Users', id },
       ],
     }),
+    forgotPassword: builder.mutation({
+      query: (email) => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body: { email },
+      }),
+    }),
+    resetPassword: builder.mutation({
+      query: ({ token, newPassword }) => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        body: { token, new_password: newPassword },
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -150,10 +164,12 @@ export const {
   useLogoutMutation,
   useGetAllUsersQuery,
   useEnableUserMutation,
-  useDeleteUserMutation,
+  useDisableUserMutation,
   useChangePasswordMutation,
   useGetAllRolesQuery,
   useUpdateUserRoleMutation,
   useUpdateUserMutation,
   useUpdateUserUnitByAdminMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = authApi;

@@ -24,6 +24,8 @@ import PollAnalystic from '@pages/poll/PollAnalystic';
 import AdminRoute from './AdminRoute';
 import RoleLanding from './RoleLanding';
 import ChangePassword from '@/pages/auth/ChangePassword';
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 
 const router = createBrowserRouter([
   {
@@ -36,6 +38,14 @@ const router = createBrowserRouter([
       {
         path: '/register',
         element: <Register />,
+      },
+      {
+        path: '/forgot-password',
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: '/reset-password',
+        element: <ResetPasswordPage />,
       },
     ],
   },

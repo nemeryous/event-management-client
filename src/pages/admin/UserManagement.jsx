@@ -2,15 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   useGetAllUsersQuery,
   useEnableUserMutation,
-  useDeleteUserMutation,
+  useDisableUserMutation,
   useUpdateUserRoleMutation,
-  useUpdateUserMutation,
   useUpdateUserUnitByAdminMutation,
 } from '@api/authApi';
 import { useDispatch } from 'react-redux';
 import { openSnackbar } from '@/store/slices/snackbarSlice';
 import { faSearch, faUserCheck, faUsers, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import StatCard from '@/components/features/admin/StatCard';
 import LoadingState from '@/components/ui/LoadingState';
@@ -31,7 +31,7 @@ const getRoleDisplayName = (roleName) => {
 export default function UserManagement() {
   const { data: usersResponse, isLoading, error, refetch } = useGetAllUsersQuery();
   const [enableUser] = useEnableUserMutation();
-  const [deleteUser] = useDeleteUserMutation();
+  const [disableUser] = useDisableUserMutation();
   const [updateUserRole] = useUpdateUserRoleMutation();
   const [updateUserUnit, { isLoading: isUpdatingUnit }] = useUpdateUserUnitByAdminMutation();
 
@@ -107,7 +107,7 @@ export default function UserManagement() {
 
     try {
       if (user.enabled) {
-        await deleteUser(user.id).unwrap();
+        await disableUser(user.id).unwrap();
       } else {
         await enableUser(user.id).unwrap();
       }
