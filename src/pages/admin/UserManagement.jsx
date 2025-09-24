@@ -1,47 +1,59 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   useGetAllUsersQuery,
   useEnableUserMutation,
-  useDeleteUserMutation,
-} from "../../api/authApi";
-import { useDispatch } from "react-redux";
-import { openSnackbar } from "@/store/slices/snackbarSlice";
-import {
-  faSearch,
-  faUserCheck,
-  faUsers,
-  faUserSlash,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { motion } from "framer-motion";
-import StatCard from "@/components/features/admin/StatCard";
-import LoadingState from "@/components/ui/LoadingState";
-import StatusBadge from "@/components/features/admin/StatusBadge";
+  useDisableUserMutation,
+  useUpdateUserRoleMutation,
+  useUpdateUserUnitByAdminMutation,
+} from '@api/authApi';
+import { useDispatch } from 'react-redux';
+import { openSnackbar } from '@/store/slices/snackbarSlice';
+import { faSearch, faUserCheck, faUsers, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
+import StatCard from '@/components/features/admin/StatCard';
+import StatusBadge from '@/components/features/admin/StatusBadge';
+import ChangeRoleModal from '@/components/features/admin/userManage/ChangeRoleModal';
+import ChangeUnitModal from '@/components/features/admin/userManage/ChangeUnitModal';
+import { Menu, MenuItem, IconButton } from '@mui/material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Loading from '@/components/ui/Loading';
 
 const getRoleDisplayName = (roleName) => {
-  if (!roleName) return "";
-  const raw = roleName.replace(/^ROLE_/, "");
-  if (raw === "ADMIN") return "Quản trị viên";
-  if (raw === "USER") return "Người dùng";
-  if (raw === "STAFF") return "Nhân viên";
+  if (!roleName) return '';
+  const raw = roleName.replace(/^ROLE_/, '');
+  if (raw === 'ADMIN') return 'Quản trị viên';
+  if (raw === 'USER') return 'Người dùng';
   return raw.charAt(0) + raw.slice(1).toLowerCase();
 };
 
 export default function UserManagement() {
-  const {
-    data: usersResponse,
-    isLoading,
-    error,
-    refetch,
-  } = useGetAllUsersQuery();
+  const { data: usersResponse, isLoading, error, refetch } = useGetAllUsersQuery();
   const [enableUser] = useEnableUserMutation();
-  const [deleteUser] = useDeleteUserMutation();
+  const [disableUser] = useDisableUserMutation();
+  const [updateUserRole] = useUpdateUserRoleMutation();
+  const [updateUserUnit] = useUpdateUserUnitByAdminMutation();
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [modalState, setModalState] = useState({ type: null, user: null });
 
   const dispatch = useDispatch();
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const handleMenuClick = (event, user) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedUser(user);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedUser(null);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
@@ -49,28 +61,23 @@ export default function UserManagement() {
   }, [searchInput]);
 
   const allUsers = useMemo(
-    () =>
-      Array.isArray(usersResponse)
-        ? usersResponse
-        : usersResponse?.content || [],
+    () => (Array.isArray(usersResponse) ? usersResponse : usersResponse?.content || []),
     [usersResponse],
   );
 
   const filteredUsers = useMemo(() => {
     return allUsers.filter((u) => {
       const searchLower = debouncedSearch.toLowerCase();
-      const roleName = u.roles?.[0]?.roleName;
+      const roleName = u.roles?.[0]?.role_name;
 
       const matchesSearch = debouncedSearch
-        ? `${u.name} ${u.email} ${u.phone_number}`
-            .toLowerCase()
-            .includes(searchLower)
+        ? `${u.name} ${u.email} ${u.phone_number}`.toLowerCase().includes(searchLower)
         : true;
-      const matchesRole = roleFilter === "all" || roleName === roleFilter;
+      const matchesRole = roleFilter === 'all' || roleName === roleFilter;
       const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && u.enabled) ||
-        (statusFilter === "inactive" && !u.enabled);
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && u.enabled) ||
+        (statusFilter === 'inactive' && !u.enabled);
 
       return matchesSearch && matchesRole && matchesStatus;
     });
@@ -78,12 +85,8 @@ export default function UserManagement() {
 
   const roles = useMemo(
     () => [
-      "all",
-      ...Array.from(
-        new Set(
-          allUsers.flatMap((u) => (u.roles || []).map((r) => r.roleName)),
-        ),
-      ),
+      'all',
+      ...Array.from(new Set(allUsers.flatMap((u) => (u.roles || []).map((r) => r.role_name)))),
     ],
     [allUsers],
   );
@@ -99,17 +102,12 @@ export default function UserManagement() {
   }, [allUsers]);
 
   const handleToggleUserStatus = async (user) => {
-    const action = user.enabled ? "Khóa" : "Mở khóa";
-    if (
-      !window.confirm(
-        `Bạn có chắc muốn ${action.toLowerCase()} tài khoản ${user.name}?`,
-      )
-    )
-      return;
+    const action = user.enabled ? 'Khóa' : 'Mở khóa';
+    if (!window.confirm(`Bạn có chắc muốn ${action.toLowerCase()} tài khoản ${user.name}?`)) return;
 
     try {
       if (user.enabled) {
-        await deleteUser(user.id).unwrap();
+        await disableUser(user.id).unwrap();
       } else {
         await enableUser(user.id).unwrap();
       }
@@ -118,14 +116,45 @@ export default function UserManagement() {
     } catch (err) {
       dispatch(
         openSnackbar({
-          message:
-            err?.data?.message ||
-            `Có lỗi xảy ra khi ${action.toLowerCase()} tài khoản`,
-          type: "error",
+          message: err?.data?.message || `Có lỗi xảy ra khi ${action.toLowerCase()} tài khoản`,
+          type: 'error',
         }),
       );
     }
   };
+
+  const handleRoleChangeSubmit = async (userId, roleId) => {
+    try {
+      await updateUserRole({ userId, roleId }).unwrap();
+      setModalState({ type: null, user: null });
+      dispatch(openSnackbar({ message: 'Cập nhật vai trò thành công!' }));
+    } catch (err) {
+      dispatch(
+        openSnackbar({
+          message: err?.data?.message || 'Cập nhật vai trò thất bại!',
+          type: 'error',
+        }),
+      );
+    }
+  };
+
+  const handleUnitSubmit = async (userId, newUnitId) => {
+    try {
+      await updateUserUnit({ id: userId, unitId: newUnitId }).unwrap();
+      setModalState({ type: null, user: null });
+      dispatch(openSnackbar({ message: 'Cập nhật đơn vị thành công!' }));
+    } catch (error) {
+      dispatch(
+        openSnackbar({
+          message: error?.data?.message || 'Lỗi khi cập nhật đơn vị!',
+          type: 'error',
+        }),
+      );
+    }
+  };
+
+  if (isLoading) return <Loading message="Đang tải danh sách người dùng..." />;
+  if (error) return <div className="p-8 text-center text-red-500">Lỗi: {error.message}</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -152,19 +181,19 @@ export default function UserManagement() {
             icon={faUsers}
             label="Tổng số tài khoản"
             value={stats.total}
-            color={{ border: "border-blue-500", text: "text-blue-600" }}
+            color={{ border: 'border-blue-500', text: 'text-blue-600' }}
           />
           <StatCard
             icon={faUserCheck}
             label="Đang hoạt động"
             value={stats.active}
-            color={{ border: "border-green-500", text: "text-green-600" }}
+            color={{ border: 'border-green-500', text: 'text-green-600' }}
           />
           <StatCard
             icon={faUserSlash}
             label="Đã khóa"
             value={stats.inactive}
-            color={{ border: "border-gray-500", text: "text-gray-600" }}
+            color={{ border: 'border-gray-500', text: 'text-gray-600' }}
           />
         </motion.div>
 
@@ -195,7 +224,7 @@ export default function UserManagement() {
               >
                 <option value="all">Tất cả vai trò</option>
                 {roles
-                  .filter((r) => r !== "all")
+                  .filter((r) => r !== 'all')
                   .map((role) => (
                     <option key={role} value={role}>
                       {getRoleDisplayName(role)}
@@ -216,14 +245,11 @@ export default function UserManagement() {
         </motion.div>
 
         {isLoading ? (
-          <LoadingState message="Đang tải danh sách người dùng..." />
+          <Loading message="Đang tải danh sách người dùng..." />
         ) : error ? (
           <div className="text-center text-red-500">Lỗi: {error.message}</div>
         ) : (
-          <motion.div
-            className="overflow-hidden rounded-xl bg-white shadow-lg"
-            layout
-          >
+          <motion.div className="overflow-hidden rounded-xl bg-white shadow-lg" layout>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -250,54 +276,66 @@ export default function UserManagement() {
                     filteredUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
-                          <div className="font-semibold text-gray-900">
-                            {user.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {user.email}
-                          </div>
+                          <div className="font-semibold text-gray-900">{user.name}</div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {user.tenDonVi || user.unit?.unit_name || "Chưa có"}
+                          {user.unitName || user.unit?.unit_name || 'Chưa có'}
                         </td>
                         <td className="px-6 py-4">
                           <StatusBadge enabled={user.enabled} />
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {(user.roles || [])
-                            .map((r) => getRoleDisplayName(r.roleName))
-                            .join(", ")}
+                            .map((r) => getRoleDisplayName(r.role_name))
+                            .join(', ')}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => handleToggleUserStatus(user)}
-                            className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
-                              user.enabled
-                                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                : "bg-red-100 text-red-700 hover:bg-red-200"
-                            }`}
+                          <IconButton onClick={(event) => handleMenuClick(event, user)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedUser?.id === user.id}
+                            onClose={handleMenuClose}
                           >
-                            {user.enabled ? "Khóa" : "Mở khóa"}
-                          </button>
+                            <MenuItem
+                              onClick={() => {
+                                setModalState({ type: 'changeRole', user });
+                                handleMenuClose();
+                              }}
+                            >
+                              Thay đổi vai trò
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setModalState({ type: 'changeUnit', user });
+                                handleMenuClose();
+                              }}
+                            >
+                              Thay đổi đơn vị
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                handleToggleUserStatus(user);
+                                handleMenuClose();
+                              }}
+                              sx={{
+                                color: user.enabled ? 'error.main' : 'success.main',
+                              }}
+                            >
+                              {user.enabled ? 'Khóa tài khoản' : 'Mở khóa'}
+                            </MenuItem>
+                          </Menu>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan="5"
-                        className="py-12 text-center text-gray-500"
-                      >
-                        <FontAwesomeIcon
-                          icon={faSearch}
-                          className="mb-2 text-4xl text-gray-300"
-                        />
-                        <p className="font-semibold">
-                          Không tìm thấy người dùng
-                        </p>
-                        <p className="text-sm">
-                          Hãy thử thay đổi bộ lọc của bạn.
-                        </p>
+                      <td colSpan="5" className="py-12 text-center text-gray-500">
+                        <FontAwesomeIcon icon={faSearch} className="mb-2 text-4xl text-gray-300" />
+                        <p className="font-semibold">Không tìm thấy người dùng</p>
+                        <p className="text-sm">Hãy thử thay đổi bộ lọc của bạn.</p>
                       </td>
                     </tr>
                   )}
@@ -307,6 +345,18 @@ export default function UserManagement() {
           </motion.div>
         )}
       </div>
+      <ChangeRoleModal
+        isOpen={modalState.type === 'changeRole'}
+        user={modalState.user}
+        onClose={() => setModalState({ type: null, user: null })}
+        onSubmit={handleRoleChangeSubmit}
+      />
+      <ChangeUnitModal
+        isOpen={modalState.type === 'changeUnit'}
+        user={modalState.user}
+        onClose={() => setModalState({ type: null, user: null })}
+        onSubmit={handleUnitSubmit}
+      />
     </div>
   );
 }
