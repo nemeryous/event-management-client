@@ -9,6 +9,49 @@ export function formatDate(dateString) {
   });
 }
 
+// Helper function để parse description từ JSON format thành HTML
+export function parseDescriptionFromJSON(jsonString) {
+  if (!jsonString) return "";
+  
+  try {
+    // Nếu không phải JSON, trả về text thuần
+    if (!jsonString.startsWith('{')) return jsonString;
+    
+    const parsed = JSON.parse(jsonString);
+    
+    if (!parsed.text || !Array.isArray(parsed.images)) {
+      return jsonString; // Fallback to original
+    }
+    
+    let htmlContent = parsed.text;
+    
+    // Thay thế các placeholder bằng ảnh base64
+    parsed.images.forEach((base64Image, index) => {
+      const placeholder = `{{IMAGE_${index}}}`;
+      htmlContent = htmlContent.replace(placeholder, base64Image);
+    });
+    
+    return htmlContent;
+    
+  } catch (error) {
+    console.error('Error parsing description JSON:', error);
+    return jsonString; // Fallback to original
+  }
+}
+
+// Helper function để render HTML description an toàn
+export function renderDescriptionHTML(description, maxLength) {
+  if (!description) return "";
+  
+  const parsedDescription = parseDescriptionFromJSON(description);
+  
+  if (maxLength && parsedDescription.length > maxLength) {
+    return parsedDescription.substring(0, maxLength) + "...";
+  }
+  
+  return parsedDescription;
+}
+
 export function getStatusText(status) {
   const statusMap = {
     upcoming: "Sắp diễn ra",
@@ -41,8 +84,15 @@ export function mapFrontendStatusToBackend(frontendStatus) {
 
 export function truncateDescription(description, maxLength = 400) {
   if (!description) return "";
-  if (description.length <= maxLength) return description;
-  return description.substring(0, maxLength) + "...";
+  
+  // Parse description if it's in JSON format
+  const parsedDescription = parseDescriptionFromJSON(description);
+  
+  // Remove HTML tags for plain text truncation
+  const plainText = parsedDescription.replace(/<[^>]*>/g, '');
+  
+  if (plainText.length <= maxLength) return plainText;
+  return plainText.substring(0, maxLength) + "...";
 }
 
 export function truncateTitle(title, maxLength = 50) {

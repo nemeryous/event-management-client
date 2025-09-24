@@ -49,16 +49,17 @@ const SunEditorEditor = forwardRef(function SunEditorEditor(
       return content.replace(
         /<img([^>]+)src="([^"]+)"([^>]*>)/g,
         (match, beforeSrc, src, afterSrc) => {
-          if (src.startsWith("data:")) {
+          if (src.startsWith("data:image/")) {
+            // Giữ nguyên base64 images
             return match;
           }
-
-          if (baseUrl && src.startsWith(baseUrl)) {
-            const relativePath = src.substring(baseUrl.length);
-            return `<img${beforeSrc}src="${relativePath}"${afterSrc}`;
+          if (src.startsWith("http://") || src.startsWith("https://")) {
+            return match;
           }
-
-          return match;
+          if (src.startsWith("/")) {
+            return `<img${beforeSrc}src="${baseUrl}${src}"${afterSrc}`;
+          }
+          return `<img${beforeSrc}src="${baseUrl}/${src}"${afterSrc}`;
         },
       );
     },
