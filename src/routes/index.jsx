@@ -1,40 +1,40 @@
-import AuthLayout from "@layouts/AuthLayout";
-import MainLayout from "@layouts/MainLayout";
+import AuthLayout from '@layouts/AuthLayout';
+import MainLayout from '@layouts/MainLayout';
 
-import Login from "@pages/auth/Login";
-import Register from "@pages/auth/Register";
-import PollPageUser from "@pages/user/PollPageUser";
-import DashboardUser from "@pages/user/DashboardUser";
-import { createBrowserRouter } from "react-router-dom";
+import Login from '@pages/auth/Login';
+import Register from '@pages/auth/Register';
+import PollPageUser from '@pages/user/PollPageUser';
+import DashboardUser from '@pages/user/DashboardUser';
+import { createBrowserRouter } from 'react-router-dom';
 
-import ProtectedRoute from "./ProtectedRoute";
-import AdminLayout from "@layouts/AdminLayout";
-import EventManagement from "@pages/admin/EventManagement";
-import EventCreate from "@pages/admin/EventCreate";
-import EventDetail from "@pages/admin/EventDetail";
-import UserManagement from "@pages/admin/UserManagement";
-import NotFound from "@pages/NotFound";
+import ProtectedRoute from './ProtectedRoute';
+import AdminLayout from '@layouts/AdminLayout';
+import EventManagement from '@pages/admin/EventManagement';
+import EventCreate from '@pages/admin/EventCreate';
+import EventDetail from '@pages/admin/EventDetail';
+import UserManagement from '@pages/admin/UserManagement';
+import NotFound from '@pages/NotFound';
 
-import EventDetailUser from "@pages/user/EventDetailUser";
-import EventManagementManage from "@pages/user/EventManagementManage";
-import CheckinResultPage from "@pages/user/CheckinResultPage";
-import HomePageUser from "@pages/user/HomePageUser";
-import CreatePoll from "@/components/features/poll/CreatePoll";
-import PollAnalystic from "@pages/poll/PollAnalystic";
-import AdminRoute from "./AdminRoute";
-import RoleLanding from "./RoleLanding";
-import ChangePassword from "@pages/user/ChangePassword";
+import EventDetailUser from '@pages/user/EventDetailUser';
+import EventManagementManage from '@pages/user/EventManagementManage';
+import CheckinResultPage from '@pages/user/CheckinResultPage';
+import HomePageUser from '@pages/user/HomePageUser';
+import CreatePoll from '@/components/features/poll/CreatePoll';
+import PollAnalystic from '@pages/poll/PollAnalystic';
+import AdminRoute from './AdminRoute';
+import RoleLanding from './RoleLanding';
+import ChangePassword from '@/pages/auth/ChangePassword';
 
 const router = createBrowserRouter([
   {
     element: <AuthLayout />,
     children: [
       {
-        path: "/login",
+        path: '/login',
         element: <Login />,
       },
       {
-        path: "/register",
+        path: '/register',
         element: <Register />,
       },
     ],
@@ -50,39 +50,39 @@ const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           {
-            path: "/home",
+            path: '/home',
             element: <HomePageUser />,
           },
           {
-            path: "/dashboard",
+            path: '/dashboard',
             element: <DashboardUser />,
           },
           {
-            path: "/events/:eventId",
+            path: '/events/:eventId',
             element: <EventDetailUser />,
           },
           {
-            path: "/events/:eventId/manage",
+            path: '/events/:eventId/manage',
             element: <EventManagementManage />,
           },
           {
-            path: "/poll-analytics/:eventId",
+            path: '/poll-analytics/:eventId',
             element: <PollAnalystic />,
           },
           {
-            path: "/poll/:pollId",
+            path: '/poll/:pollId',
             element: <PollPageUser />,
           },
           {
-            path: "/create-poll/:id",
+            path: '/create-poll/:id',
             element: <CreatePoll />,
           },
           {
-            path: "/events/check-in/:eventToken",
+            path: '/events/check-in/:eventToken',
             element: <CheckinResultPage />,
           },
           {
-            path: "change-password",
+            path: '/change-password',
             element: <ChangePassword />,
           },
         ],
@@ -94,19 +94,19 @@ const router = createBrowserRouter([
             element: <AdminLayout />,
             children: [
               {
-                path: "/admin/events",
+                path: '/admin/events',
                 element: <EventManagement />,
               },
               {
-                path: "/admin/events/create",
+                path: '/admin/events/create',
                 element: <EventCreate />,
               },
               {
-                path: "/admin/events/:id",
+                path: '/admin/events/:id',
                 element: <EventDetail />,
               },
               {
-                path: "/admin/users",
+                path: '/admin/users',
                 element: <UserManagement />,
               },
               // {
@@ -115,7 +115,7 @@ const router = createBrowserRouter([
               // },
 
               {
-                path: "/manage-event",
+                path: '/manage-event',
                 element: <EventManagement />,
               },
             ],
@@ -125,7 +125,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "*",
+    path: '*',
     element: <NotFound />,
   },
 ]);

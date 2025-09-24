@@ -1,27 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  faUser,
-  faSignOutAlt,
-  faBars,
-  faTimes,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { NavLink, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { clearToken } from "@store/slices/authSlice"; // Assuming same Redux slice
-import { useLogoutMutation } from "@api/authApi"; // Assuming same API slice
-import { rootApi } from "@api/rootApi";
+import React, { useState, useEffect, useRef } from 'react';
+import { faUser, faSignOutAlt, faBars, faTimes, faKey } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { clearToken } from '@store/slices/authSlice';
+import { useLogoutMutation } from '@api/authApi';
+import { rootApi } from '@api/rootApi';
 
-function MobileMenu({ open, onClose, email, handleLogout }) {
+function MobileMenu({ open, onClose, email, handleLogout, handleChangePassword }) {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-        aria-label="Đóng menu"
-      />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-label="Đóng menu" />
       <div
         className="animate-slideInRight absolute top-0 right-0 h-full w-64 bg-white p-6 shadow-xl"
         role="dialog"
@@ -40,12 +31,8 @@ function MobileMenu({ open, onClose, email, handleLogout }) {
             <FontAwesomeIcon icon={faUser} className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-800">
-              Tài khoản của tôi
-            </p>
-            <p className="max-w-[160px] truncate text-xs text-gray-500">
-              {email}
-            </p>
+            <p className="text-sm font-medium text-gray-800">Tài khoản của tôi</p>
+            <p className="max-w-[160px] truncate text-xs text-gray-500">{email}</p>
           </div>
         </div>
 
@@ -55,8 +42,8 @@ function MobileMenu({ open, onClose, email, handleLogout }) {
             className={({ isActive }) =>
               `rounded-lg px-4 py-2 font-semibold transition ${
                 isActive
-                  ? "bg-[#223b73] text-white"
-                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+                  ? 'bg-[#223b73] text-white'
+                  : 'text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]'
               }`
             }
             onClick={onClose}
@@ -69,8 +56,8 @@ function MobileMenu({ open, onClose, email, handleLogout }) {
             className={({ isActive }) =>
               `rounded-lg px-4 py-2 font-semibold transition ${
                 isActive
-                  ? "bg-[#ffd012] text-[#223b73]"
-                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+                  ? 'bg-[#ffd012] text-[#223b73]'
+                  : 'text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]'
               }`
             }
             onClick={onClose}
@@ -78,20 +65,27 @@ function MobileMenu({ open, onClose, email, handleLogout }) {
             Quản lý người dùng
           </NavLink>
 
-          {/* New link to DonVi management (mobile) */}
           <NavLink
             to="/admin/donvi"
             className={({ isActive }) =>
               `rounded-lg px-4 py-2 font-semibold transition ${
                 isActive
-                  ? "bg-[#223b73] text-white"
-                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+                  ? 'bg-[#223b73] text-white'
+                  : 'text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]'
               }`
             }
             onClick={onClose}
           >
             Quản lý tên đơn vị
           </NavLink>
+
+          <button
+            onClick={handleChangePassword}
+            className="inline-flex w-full items-center gap-3 rounded-lg px-4 py-2 text-left text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100"
+          >
+            <FontAwesomeIcon icon={faKey} className="h-4 w-4 text-gray-500" />
+            Đổi mật khẩu
+          </button>
 
           <button
             onClick={handleLogout}
@@ -110,7 +104,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const userMenuRef = useRef(null); // ref cho dropdown người dùng
+  const userMenuRef = useRef(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [logout] = useLogoutMutation();
@@ -118,31 +112,27 @@ export default function Header() {
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     const onDocClick = (e) => {
-      if (
-        showAdminMenu &&
-        userMenuRef.current &&
-        !userMenuRef.current.contains(e.target)
-      ) {
+      if (showAdminMenu && userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setShowAdminMenu(false);
       }
     };
-    document.addEventListener("click", onDocClick);
-    return () => document.removeEventListener("click", onDocClick);
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
   }, [showAdminMenu]);
 
   useEffect(() => {
     if (menuOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
-    return () => (document.body.style.overflow = "");
+    return () => (document.body.style.overflow = '');
   }, [menuOpen]);
 
   const handleLogout = async () => {
@@ -153,7 +143,13 @@ export default function Header() {
     }
     dispatch(rootApi.util.resetApiState());
     dispatch(clearToken());
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
+    setShowAdminMenu(false);
+    setMenuOpen(false);
+  };
+
+  const handleChangePassword = () => {
+    navigate('/change-password');
     setShowAdminMenu(false);
     setMenuOpen(false);
   };
@@ -161,9 +157,9 @@ export default function Header() {
   return (
     <header
       className={`sticky top-0 z-40 bg-white transition-all duration-300 ${
-        isScrolled ? "bg-white/95 shadow-lg backdrop-blur-sm" : "shadow"
+        isScrolled ? 'bg-white/95 shadow-lg backdrop-blur-sm' : 'shadow'
       }`}
-      style={{ padding: "12px 0" }}
+      style={{ padding: '12px 0' }}
     >
       <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4">
         <div className="text-lg font-bold text-[#223b73]">🎉 Event Admin</div>
@@ -174,8 +170,8 @@ export default function Header() {
             className={({ isActive }) =>
               `rounded-lg px-4 py-2 font-semibold transition ${
                 isActive
-                  ? "bg-[#223b73] text-white"
-                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+                  ? 'bg-[#223b73] text-white'
+                  : 'text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]'
               }`
             }
           >
@@ -187,8 +183,8 @@ export default function Header() {
             className={({ isActive }) =>
               `rounded-lg px-4 py-2 font-semibold transition ${
                 isActive
-                  ? "bg-[#ffd012] text-[#223b73]"
-                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+                  ? 'bg-[#ffd012] text-[#223b73]'
+                  : 'text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]'
               }`
             }
           >
@@ -201,8 +197,8 @@ export default function Header() {
             className={({ isActive }) =>
               `rounded-lg px-4 py-2 font-semibold transition ${
                 isActive
-                  ? "bg-[#ffd012] text-[#223b73]"
-                  : "text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]"
+                  ? 'bg-[#ffd012] text-[#223b73]'
+                  : 'text-[#223b73] hover:bg-[#ffd012] hover:text-[#223b73]'
               }`
             }
           >
@@ -229,11 +225,17 @@ export default function Header() {
                 role="menu"
               >
                 <div className="border-b border-gray-100 px-4 py-2">
-                  <p className="text-sm font-medium text-gray-800">
-                    Tài khoản của tôi
-                  </p>
+                  <p className="text-sm font-medium text-gray-800">Tài khoản của tôi</p>
                   <p className="truncate text-xs text-gray-500">{email}</p>
                 </div>
+                <button
+                  onClick={handleChangePassword}
+                  className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                  role="menuitem"
+                >
+                  <FontAwesomeIcon icon={faKey} className="h-4 w-4 text-gray-500" />
+                  Đổi mật khẩu
+                </button>
                 <button
                   onClick={handleLogout}
                   className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
@@ -251,12 +253,9 @@ export default function Header() {
         <button
           className="inline-flex h-10 w-10 items-center justify-center rounded-md md:hidden"
           onClick={() => setMenuOpen((o) => !o)}
-          aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
+          aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
         >
-          <FontAwesomeIcon
-            icon={menuOpen ? faTimes : faBars}
-            className="h-5 w-5 text-gray-700"
-          />
+          <FontAwesomeIcon icon={menuOpen ? faTimes : faBars} className="h-5 w-5 text-gray-700" />
         </button>
       </div>
 
@@ -266,6 +265,7 @@ export default function Header() {
         onClose={() => setMenuOpen(false)}
         email={email}
         handleLogout={handleLogout}
+        handleChangePassword={handleChangePassword}
       />
     </header>
   );
