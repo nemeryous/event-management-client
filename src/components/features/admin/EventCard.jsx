@@ -1,5 +1,5 @@
-import { STATUS_CONFIG } from "@/const/STATUS_CONFIG";
-import { formatDate, truncateText } from "@/utils/eventHelpers";
+import { STATUS_CONFIG } from '@/const/STATUS_CONFIG';
+import { formatDate, truncateText } from '@/utils/eventHelpers';
 import {
   faCalendarAlt,
   faEdit,
@@ -7,10 +7,11 @@ import {
   faMapMarkerAlt,
   faTrash,
   faUsers,
-} from "@fortawesome/free-solid-svg-icons";
-import React from "react";
-import { motion } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+} from '@fortawesome/free-solid-svg-icons';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { stripImagesDescription } from '@/utils/helpers';
 
 const EventCard = ({ event, onEdit, onDelete, onView }) => {
   const statusConfig = STATUS_CONFIG[event.status] || STATUS_CONFIG.UPCOMING;
@@ -33,10 +34,7 @@ const EventCard = ({ event, onEdit, onDelete, onView }) => {
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <FontAwesomeIcon
-              icon={faCalendarAlt}
-              className="text-4xl text-white opacity-50"
-            />
+            <FontAwesomeIcon icon={faCalendarAlt} className="text-4xl text-white opacity-50" />
           </div>
         )}
 
@@ -49,13 +47,13 @@ const EventCard = ({ event, onEdit, onDelete, onView }) => {
       </div>
 
       <div className="p-6">
-        <h3 className="mb-3 line-clamp-2 text-xl font-bold text-gray-800">
-          {event.title}
-        </h3>
-
-        <p className="mb-4 line-clamp-2 text-gray-600">
-          {truncateText(event.description, 100)}
-        </p>
+        <h3 className="mb-3 line-clamp-2 text-xl font-bold text-gray-800">{event.title}</h3>
+        <div
+          className={`line-clamp-2' } leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold`}
+          dangerouslySetInnerHTML={{
+            __html: stripImagesDescription(event.description || ''),
+          }}
+        ></div>
 
         <div className="mb-4 space-y-2">
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -71,8 +69,7 @@ const EventCard = ({ event, onEdit, onDelete, onView }) => {
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <FontAwesomeIcon icon={faUsers} className="text-green-500" />
             <span>
-              {event.current_participants}/{event.max_participants} người tham
-              gia
+              {event.current_participants}/{event.max_participants} người tham gia
             </span>
           </div>
         </div>
@@ -80,17 +77,13 @@ const EventCard = ({ event, onEdit, onDelete, onView }) => {
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-50 p-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500">
             <span className="text-sm font-semibold text-white">
-              {event.created_by_name?.charAt(0) || "A"}
+              {event.created_by_name?.charAt(0) || 'A'}
             </span>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-800">
-              Tạo bởi: {event.created_by_name}
-            </p>
+            <p className="text-sm font-medium text-gray-800">Tạo bởi: {event.created_by_name}</p>
             {event.manager_name && (
-              <p className="text-xs text-gray-600">
-                Quản lý: {event.manager_name}
-              </p>
+              <p className="text-xs text-gray-600">Quản lý: {event.manager_name}</p>
             )}
           </div>
         </div>
