@@ -1,5 +1,4 @@
 import { STATUS_CONFIG } from '@/const/STATUS_CONFIG';
-import { formatDate, truncateText } from '@/utils/eventHelpers';
 import {
   faCalendarAlt,
   faEdit,
@@ -11,7 +10,7 @@ import {
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { stripImagesDescription } from '@/utils/helpers';
+import { formatDateTime, stripImagesDescription } from '@/utils/helpers';
 
 const EventCard = ({ event, onEdit, onDelete, onView }) => {
   const statusConfig = STATUS_CONFIG[event.status] || STATUS_CONFIG.UPCOMING;
@@ -49,7 +48,7 @@ const EventCard = ({ event, onEdit, onDelete, onView }) => {
       <div className="p-6">
         <h3 className="mb-3 line-clamp-2 text-xl font-bold text-gray-800">{event.title}</h3>
         <div
-          className={`line-clamp-2' } leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold`}
+          className={`line-clamp-2 leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold`}
           dangerouslySetInnerHTML={{
             __html: stripImagesDescription(event.description || ''),
           }}
@@ -58,7 +57,7 @@ const EventCard = ({ event, onEdit, onDelete, onView }) => {
         <div className="mb-4 space-y-2">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <FontAwesomeIcon icon={faCalendarAlt} className="text-blue-500" />
-            <span>{formatDate(event.start_time)}</span>
+            <span>{formatDateTime(event.start_time)}</span>
           </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-600">

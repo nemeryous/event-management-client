@@ -1,16 +1,8 @@
-import React, {
-  forwardRef,
-  useEffect,
-  useRef,
-  useImperativeHandle,
-} from "react";
-import SunEditor from "suneditor-react";
-import "suneditor/dist/css/suneditor.min.css";
+import React, { forwardRef, useEffect, useRef, useImperativeHandle } from 'react';
+import SunEditor from 'suneditor-react';
+import 'suneditor/dist/css/suneditor.min.css';
 
-const SunEditorEditor = forwardRef(function SunEditorEditor(
-  { value, onChange, placeholder },
-  ref,
-) {
+const SunEditorEditor = forwardRef(function SunEditorEditor({ value, onChange, placeholder }, ref) {
   const editorRef = useRef(null);
   const base64ToFileMapRef = useRef(new Map());
 
@@ -22,17 +14,13 @@ const SunEditorEditor = forwardRef(function SunEditorEditor(
 
       const content = editor.getContents(true);
       const base64Images = new Map();
-      const base64Regex =
-        /<img[^>]+src="(data:image\/[^;]+;base64,[^"]+)"[^>]*>/g;
+      const base64Regex = /<img[^>]+src="(data:image\/[^;]+;base64,[^"]+)"[^>]*>/g;
 
       let match;
       while ((match = base64Regex.exec(content)) !== null) {
         const base64Src = match[1];
         if (base64ToFileMapRef.current.has(base64Src)) {
-          base64Images.set(
-            base64Src,
-            base64ToFileMapRef.current.get(base64Src),
-          );
+          base64Images.set(base64Src, base64ToFileMapRef.current.get(base64Src));
         }
       }
 
@@ -40,16 +28,15 @@ const SunEditorEditor = forwardRef(function SunEditorEditor(
     },
     getContentWithRelativeUrls: () => {
       const editor = editorRef.current;
-      if (!editor) return "";
+      if (!editor) return '';
 
       const content = editor.getContents(true);
-      const baseUrl =
-        import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") || "";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
 
       return content.replace(
         /<img([^>]+)src="([^"]+)"([^>]*>)/g,
         (match, beforeSrc, src, afterSrc) => {
-          if (src.startsWith("data:")) {
+          if (src.startsWith('data:')) {
             return match;
           }
 
@@ -103,7 +90,7 @@ const SunEditorEditor = forwardRef(function SunEditorEditor(
 
       return false;
     } catch (error) {
-      console.error("Error converting file to base64:", error);
+      console.error('Error converting file to base64:', error);
       return false;
     }
   };
@@ -111,7 +98,7 @@ const SunEditorEditor = forwardRef(function SunEditorEditor(
   useEffect(() => {
     const editor = editorRef.current;
     if (editor && value !== editor.getContents(true)) {
-      editor.setContents(value || "");
+      editor.setContents(value || '');
     }
   }, [value]);
 
@@ -129,15 +116,15 @@ const SunEditorEditor = forwardRef(function SunEditorEditor(
         onImageUploadBefore={handleImageUploadBefore}
         setDefaultStyle="font-family: 'Poppins', sans-serif; font-size: 15px; line-height: 1.8;"
         setOptions={{
-          minHeight: "400px",
-          placeholder: placeholder || "Nhập mô tả sự kiện...",
+          minHeight: '400px',
+          placeholder: placeholder || 'Nhập mô tả sự kiện...',
           buttonList: [
-            ["undo", "redo"],
-            ["formatBlock"],
-            ["bold", "italic", "underline", "removeFormat"],
-            ["align", "list", "outdent", "indent"],
-            ["link", "image", "table"],
-            ["fullScreen", "codeView", "preview"],
+            ['undo', 'redo'],
+            ['formatBlock'],
+            ['bold', 'italic', 'underline', 'removeFormat'],
+            ['align', 'list', 'outdent', 'indent'],
+            ['link', 'image', 'table'],
+            ['fullScreen', 'codeView', 'preview'],
           ],
         }}
       />
