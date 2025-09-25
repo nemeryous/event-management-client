@@ -1,52 +1,133 @@
-# Copilot Instructions for Event Management Client
+# Hướng dẫn & Quy tắc cho Copilot - Dự án ReactJS
 
-## Project Overview
-- **Architecture:** React 19 + Redux Toolkit + RTK Query. Modular structure: `src/api` (API logic), `src/pages/admin` (admin UI), `src/components` (UI widgets), `src/utils` (helpers/mapping), `src/store` (Redux config).
-- **Data Flow:** API endpoints defined in `src/api/eventApi.js` and `src/api/rootApi.js`. State managed via Redux slices. UI triggers API mutations/queries, updates Redux state, and re-renders.
-- **Rich Text:** Event descriptions use HTML via a custom `RichTextEditor` (see `components/common/RichTextEditor.jsx`).
-
-## Key Patterns & Conventions
-- **Status Mapping:** Always use `mapBackendStatusToFrontend` and `mapFrontendStatusToBackend` (in `src/utils/eventHelpers.js`) to convert event status between backend (UPPERCASE) and frontend (lowercase) values.
-- **Truncation:** Use `truncateTitle` and `truncateDescription` (in `eventHelpers.js`) for all title/description display. List views: 40/300 chars. Forms: 50/300 chars.
-- **API Integration:** Use RTK Query endpoints. For event CRUD, see `eventApi.js`. Always send status as backend enum (UPPERCASE).
-- **Rich Text Editor:** Use the provided `RichTextEditor` component for event descriptions. It outputs HTML. Toolbar: bold, italic, underline, list, link, clear format. Keyboard shortcuts supported.
-- **No QR Token in List:** Do not display `qrJoinToken` in event lists.
-- **Single Line Display:** Titles/descriptions in lists must be single-line (CSS enforced).
-
-## Developer Workflows
-- **Install:** `npm install`
-- **Run Dev Server:** `npm run dev`
-- **API Base URL:** Set `VITE_BASE_URL` in `.env` (default: `http://localhost:8080/api`).
-- **Debugging:** Use `console.log` for API payloads, status mapping, and truncation checks. See README for debug snippets.
-- **Hot Reload:** Vite dev server supports HMR.
-- **Manual Refresh:** Use the `refetch` method from RTK Query hooks to refresh event data. (See `EventManagement.jsx`.)
-- **Auto Refresh:** For real-time UX, use `useEffect` with `setInterval` to call `refetch` every 60s in event management pages.
-
-## Integration Points
-- **Backend:** Expects ISO datetime (no timezone/seconds required). Status as enum string. Description as HTML.
-- **Frontend:** All API calls via RTK Query. State via Redux. UI via React components.
-
-## Examples
-- **Status Mapping:**
-  ```js
-  const displayStatus = mapBackendStatusToFrontend(event.status);
-  const backendStatus = mapFrontendStatusToBackend(form.status);
-  ```
-- **Truncation:**
-  ```js
-  const shortTitle = truncateTitle(event.title, 40);
-  const shortDesc = truncateDescription(event.description, 300);
-  ```
-- **Rich Text Editor:**
-  ```js
-  <RichTextEditor value={description} onChange={setDescription} />
-  ```
-
-## File References
-- `src/api/eventApi.js`, `src/api/rootApi.js`: API logic
-- `src/pages/admin/EventManagement.jsx`, `src/pages/admin/EventModal.jsx`: Admin UI
-- `src/components/common/RichTextEditor.jsx`: Rich text editor
-- `src/utils/eventHelpers.js`: Status/truncation helpers
+Tài liệu này đặt ra các quy tắc và tiêu chuẩn mà Copilot phải tuân thủ nghiêm ngặt khi tạo hoặc sửa đổi mã nguồn cho dự án này.  
+Mục tiêu: **Đảm bảo mã nguồn nhất quán, hiệu suất cao và dễ bảo trì.**
 
 ---
-For more, see `README.md`. Please follow these conventions for all code generation and refactoring in this project.
+
+## 1. Nguyên tắc cốt lõi & Tiêu chuẩn Code
+
+Ưu tiên hàng đầu là tuân thủ **SOLID**, **DRY** và **KISS**.
+
+### SOLID Principles
+
+- **S - Single Responsibility Principle**:  
+  Mỗi thành phần chỉ có một trách nhiệm duy nhất.
+  - **Component**: chỉ hiển thị UI, xử lý sự kiện cơ bản. Logic phức tạp → tách ra custom hook hoặc Redux slice.
+  - **Custom Hook**: đóng gói một logic tái sử dụng duy nhất.
+  - **Redux Slice**: chỉ quản lý một phần state toàn cục (auth, cart...).
+
+- **DRY (Don't Repeat Yourself)**:
+  - JSX lặp lại → tách thành component con.
+  - Logic lặp lại → tách thành custom hook hoặc hàm trong `src/lib`.
+
+- **Composition over Inheritance**: Ưu tiên kết hợp nhiều component nhỏ.
+
+- **Immutability**: State trong React/Redux là bất biến. Redux Toolkit + Immer đã hỗ trợ.
+
+---
+
+## 2. Cấu trúc Thư mục (Feature-Sliced)
+
+```bash
+/src
+|-- /app                # Redux store, RTK Query API
+|   |-- store.js
+|   |-- api.js
+|
+|-- /components         # UI components tái sử dụng
+|   |-- /ui             # Atomic: Button.jsx, Input.jsx, Card.jsx
+|   |-- /layout         # Layout: Header.jsx, Sidebar.jsx, Footer.jsx
+|
+|-- /features           # Logic + UI cho từng tính năng
+|   |-- /auth
+|   |   |-- authSlice.js
+|   |   |-- authApi.js
+|   |   |-- Login.jsx
+|   |   |-- Register.jsx
+|   |
+|   |-- /products
+|       |-- productSlice.js
+|       |-- productApi.js
+|       |-- ProductList.jsx
+|       |-- ProductDetails.jsx
+|
+|-- /hooks              # Custom hooks toàn cục
+|   |-- useDebounce.js
+|
+|-- /lib                # Utils & constants
+|   |-- utils.js
+|   |-- constants.js
+|
+|-- /pages              # Route-level components
+|   |-- HomePage.jsx
+|   |-- LoginPage.jsx
+|   |-- ProductDetailPage.jsx
+|
+|-- /routes             # React Router config
+|   |-- index.jsx
+|
+|-- index.css           # Global Tailwind styles
+|-- main.jsx            # Entry point
+```
+
+---
+
+## 3. Quy tắc Đặt tên
+
+- **Components & Pages**: PascalCase.jsx (VD: UserProfile.jsx, HomePage.jsx)
+- **Custom Hooks**: useCamelCase.js (VD: useAuthStatus.js)
+- **Redux Slices**: featureSlice.js (VD: authSlice.js)
+- **RTK Query APIs**: featureApi.js (VD: productApi.js)
+- **Hàm Utility**: camelCase.js trong lib
+
+---
+
+## 4. Quản lý State & Lấy Dữ liệu
+
+- **Redux Toolkit = Single Source of Truth.**
+- **RTK Query = DUY NHẤT để fetching/caching server state.**
+- **TUYỆT ĐỐI KHÔNG dùng useEffect + fetch/axios.**
+- **API endpoint → định nghĩa trong ...Api.js bằng createApi.**
+- **Luôn xử lý isLoading, isError, isSuccess.**
+- **UI State (modal, input…) → quản lý bằng useState hoặc useReducer trong component, không đưa vào Redux.**
+
+---
+
+## 5. Styling & Animation
+
+- Tailwind CSS v4 là công cụ DUY NHẤT cho styling.
+- KHÔNG viết CSS/SCSS riêng.
+- KHÔNG dùng Styled Components hoặc CSS-in-JS.
+- Viết utility class trực tiếp trong JSX.
+- Theme global cấu hình qua src/index.css.
+
+---
+
+## 6. Animation:
+
+- Framer Motion là thư viện DUY NHẤT.
+- Dùng <motion.div> với initial, animate, exit, variants.
+- Dùng AnimatePresence cho animation khi component bị xóa.
+
+---
+
+## 7. Routing
+
+- React Router DOM quản lý routing.
+- Cấu hình route tập trung ở src/routes/index.jsx với createBrowserRouter.
+- Dùng các hooks (useNavigate, useParams, useLocation).
+- Nested routes → <Outlet />.
+
+---
+
+## 8. Icons
+
+- Font Awesome là thư viện icon chính thức.
+- Luôn dùng <FontAwesomeIcon icon={...} />.
+- Chỉ import icon cần thiết để giảm bundle size.
+
+## 9. Xử lý Lỗi (Error Handling)
+
+- **API Errors**: dùng isError và error từ RTK Query để hiển thị thông báo thân thiện.
+- **Render Errors**: dùng Error Boundary (bọc quanh <Outlet /> hoặc vùng có nguy cơ crash).

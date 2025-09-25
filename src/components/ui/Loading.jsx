@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const Loading = ({ message = 'Đang tải dữ liệu, vui lòng chờ...' }) => {
   return (

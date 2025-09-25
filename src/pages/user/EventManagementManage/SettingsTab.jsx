@@ -1,31 +1,33 @@
-import {
-  useUpdateEventMutation,
-  useUploadEditorImageMutation,
-} from "@api/eventApi";
-import FormField from "@components/common/FormField";
-import SunEditorEditor from "@components/common/SunEditorEditor";
-import TextInput from "@components/common/TextInput";
-import BannerUpload from "@/components/features/user/BannerUpload";
-import { openSnackbar } from "@store/slices/snackbarSlice";
-import {
-  prependApiUrlToImages,
-  stripApiUrlFromImages,
-} from "@utils/htmlProcessor";
-import React, { useEffect, useMemo, useRef } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useUpdateEventMutation, useUploadEditorImageMutation } from '@api/eventApi';
+import FormField from '@components/common/FormField';
+import SunEditorEditor from '@components/common/SunEditorEditor';
+import TextInput from '@components/common/TextInput';
+import BannerUpload from '@/components/features/user/BannerUpload';
+import { openSnackbar } from '@store/slices/snackbarSlice';
+import { prependApiUrlToImages, stripApiUrlFromImages } from '@utils/htmlProcessor';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 
-const toDateInput = (v) => {
-  if (!v) return "";
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return String(v).slice(0, 16);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const toDateInput = (timestampInSeconds) => {
+  if (!timestampInSeconds) return '';
+
+  const date = dayjs(timestampInSeconds * 1000);
+  if (!date.isValid()) {
+    const fallbackDate = dayjs(timestampInSeconds);
+    if (fallbackDate.isValid()) {
+      return fallbackDate.format('YYYY-MM-DDTHH:mm');
+    }
+    return '';
+  }
+
+  return date.format('YYYY-MM-DDTHH:mm');
 };
 
-const base64ToFile = (base64String, filename = "image.png") => {
-  const arr = base64String.split(",");
+const base64ToFile = (base64String, filename = 'image.png') => {
+  const arr = base64String.split(',');
   const mime = arr[0].match(/:(.*?);/)[1];
   const bstr = atob(arr[1]);
   let n = bstr.length;
@@ -41,26 +43,21 @@ const SettingsTab = ({ eventData }) => {
   const navigate = useNavigate();
   const editorRef = useRef(null);
 
-  const [uploadImage, { isLoading: isUploadingImage }] =
-    useUploadEditorImageMutation();
-  const [
-    updateEvent,
-    { isLoading: isUpdating, isError, error: updateError, isSuccess },
-  ] = useUpdateEventMutation();
+  const [uploadImage, { isLoading: isUploadingImage }] = useUploadEditorImageMutation();
+  const [updateEvent, { isLoading: isUpdating, isError, error: updateError, isSuccess }] =
+    useUpdateEventMutation();
 
   const defaultValues = useMemo(() => {
-    const processedDescription = prependApiUrlToImages(
-      eventData?.description || "",
-    );
+    const processedDescription = prependApiUrlToImages(eventData?.description || '');
 
     return {
-      title: eventData?.title || "",
+      title: eventData?.title || '',
       description: processedDescription,
       start_time: toDateInput(eventData?.start_time),
       end_time: toDateInput(eventData?.end_time),
-      location: eventData?.location || "",
-      max_participants: eventData?.max_participants ?? "",
-      url_docs: eventData?.url_docs || "",
+      location: eventData?.location || '',
+      max_participants: eventData?.max_participants ?? '',
+      url_docs: eventData?.url_docs || '',
     };
   }, [eventData]);
 
@@ -83,17 +80,15 @@ const SettingsTab = ({ eventData }) => {
     ) {
       dispatch(
         openSnackbar({
-          message: "Thời gian kết thúc phải sau thời gian bắt đầu",
-          type: "error",
+          message: 'Thời gian kết thúc phải sau thời gian bắt đầu',
+          type: 'error',
         }),
       );
       return;
     }
 
     let finalHtmlContent =
-      editorRef.current?.getContentWithRelativeUrls() ||
-      formData.description ||
-      "";
+      editorRef.current?.getContentWithRelativeUrls() || formData.description || '';
 
     const base64Images = editorRef.current?.getAllBase64ImagesInContent();
 
@@ -107,7 +102,7 @@ const SettingsTab = ({ eventData }) => {
         const promise = uploadImage(imageFile)
           .unwrap()
           .then((response) => {
-            let returned = String(response?.url || "");
+            let returned = String(response?.url || '');
 
             // if (!returned.startsWith("/")) {
             //   returned = returned.startsWith("images/")
@@ -115,7 +110,7 @@ const SettingsTab = ({ eventData }) => {
             //     : `/images/${returned}`;
             // }
 
-            const relativeUrl = "/" + returned;
+            const relativeUrl = '/' + returned;
             base64ToUrlMap.set(base64String, relativeUrl);
           });
         uploadPromises.push(promise);
@@ -125,21 +120,18 @@ const SettingsTab = ({ eventData }) => {
         await Promise.all(uploadPromises);
 
         base64ToUrlMap.forEach((relativeUrl, base64String) => {
-          const safeBase64 = base64String.replace(
-            /[.*+?^${}()|[\]\\]/g,
-            "\\$&",
-          );
+          const safeBase64 = base64String.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           finalHtmlContent = finalHtmlContent.replace(
-            new RegExp(`src="${safeBase64}"`, "g"),
+            new RegExp(`src="${safeBase64}"`, 'g'),
             `src="${relativeUrl}"`,
           );
         });
       } catch (uploadError) {
-        console.error("Lỗi khi upload ảnh:", uploadError);
+        console.error('Lỗi khi upload ảnh:', uploadError);
         dispatch(
           openSnackbar({
-            message: "Upload một hoặc nhiều ảnh thất bại!",
-            type: "error",
+            message: 'Upload một hoặc nhiều ảnh thất bại!',
+            type: 'error',
           }),
         );
         return;
@@ -151,28 +143,22 @@ const SettingsTab = ({ eventData }) => {
     const payload = {
       title: formData.title,
       description: relativePathHtml,
-      start_time: formData.start_time
-        ? new Date(formData.start_time).toISOString()
-        : null,
-      end_time: formData.end_time
-        ? new Date(formData.end_time).toISOString()
-        : null,
+      start_time: formData.start_time ? new Date(formData.start_time).toISOString() : null,
+      end_time: formData.end_time ? new Date(formData.end_time).toISOString() : null,
       location: formData.location,
-      max_participants: formData.max_participants
-        ? Number(formData.max_participants)
-        : null,
+      max_participants: formData.max_participants ? Number(formData.max_participants) : null,
       url_docs: formData.url_docs || null,
     };
 
     try {
       await updateEvent({ eventId: eventData.id, ...payload }).unwrap();
-      dispatch(openSnackbar({ message: "Cập nhật sự kiện thành công" }));
+      dispatch(openSnackbar({ message: 'Cập nhật sự kiện thành công' }));
       navigate(`/events/${eventData.id}`);
     } catch (updateError) {
       dispatch(
         openSnackbar({
-          message: updateError?.data?.message || "Cập nhật thất bại",
-          type: "error",
+          message: updateError?.data?.message || 'Cập nhật thất bại',
+          type: 'error',
         }),
       );
     }
@@ -184,23 +170,14 @@ const SettingsTab = ({ eventData }) => {
 
   useEffect(() => {
     if (isSuccess) {
-      dispatch(openSnackbar({ message: "Cập nhật sự kiện thành công" }));
+      dispatch(openSnackbar({ message: 'Cập nhật sự kiện thành công' }));
       navigate(`/events/${eventData.id}`);
     }
 
     if (isError) {
-      dispatch(
-        openSnackbar({ message: updateError?.data?.message, type: "error" }),
-      );
+      dispatch(openSnackbar({ message: updateError?.data?.message, type: 'error' }));
     }
-  }, [
-    dispatch,
-    updateError?.data?.message,
-    eventData.id,
-    isError,
-    isSuccess,
-    navigate,
-  ]);
+  }, [dispatch, updateError?.data?.message, eventData.id, isError, isSuccess, navigate]);
 
   return (
     <div className="space-y-6">
@@ -217,18 +194,12 @@ const SettingsTab = ({ eventData }) => {
             error={errors.title}
           />
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Mô tả
-            </label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Mô tả</label>
             <Controller
               name="description"
               control={control}
               render={({ field }) => (
-                <SunEditorEditor
-                  ref={editorRef}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                <SunEditorEditor ref={editorRef} value={field.value} onChange={field.onChange} />
               )}
             />
           </div>
@@ -279,16 +250,10 @@ const SettingsTab = ({ eventData }) => {
             </button>
             <button
               type="submit"
-              disabled={
-                isUploadingImage || isUpdating || isSubmitting || !isDirty
-              }
+              disabled={isUploadingImage || isUpdating || isSubmitting || !isDirty}
               className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
             >
-              {isUploadingImage
-                ? "Đang tải ảnh..."
-                : isUpdating
-                  ? "Đang lưu..."
-                  : "Lưu thay đổi"}
+              {isUploadingImage ? 'Đang tải ảnh...' : isUpdating ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </div>
         </form>
