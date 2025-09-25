@@ -13,7 +13,7 @@ import EventManagement from '@pages/admin/EventManagement';
 import EventCreate from '@pages/admin/EventCreate';
 import EventDetail from '@pages/admin/EventDetail';
 import UserManagement from '@pages/admin/UserManagement';
-import UnitManagement from "@pages/admin/UnitManagement";
+import UnitManagement from '@/pages/admin/UnitManagement';
 import NotFound from '@pages/NotFound';
 
 import EventDetailUser from '@pages/user/EventDetailUser';
@@ -121,7 +121,7 @@ const router = createBrowserRouter([
                 element: <UserManagement />,
               },
               {
-                path: "/admin/donvi",
+                path: '/admin/donvi',
                 element: <UnitManagement />,
               },
               // {
