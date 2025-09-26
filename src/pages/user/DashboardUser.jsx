@@ -1,21 +1,21 @@
-import { useGetEventsQuery, useGetManagedEventsQuery } from "@api/eventApi";
+import { useGetEventsQuery, useGetManagedEventsQuery } from '@api/eventApi';
 
-import EventCard from "@/components/features/user/EventCard/index.jsx";
-import { EVENT_STATUS } from "@utils/constants";
-import React, { useMemo, useState } from "react";
-import { useSelector } from "react-redux";
+import EventCard from '@/components/features/user/EventCard/index.jsx';
+import { EVENT_STATUS } from '@utils/constants';
+import React, { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 const DashboardUser = () => {
   const user = useSelector((state) => state.auth.user);
-  const [activeTab, setActiveTab] = useState("ONGOING");
+  const [activeTab, setActiveTab] = useState('ONGOING');
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortBy, setSortBy] = useState("date");
-  const sortDir = "desc";
+  const [sortBy, setSortBy] = useState('date');
+  const sortDir = 'asc';
 
   const tabs = useMemo(
     () =>
       Object.entries(EVENT_STATUS)
-        .filter(([id]) => id !== "CANCELLED")
+        .filter(([id]) => id !== 'CANCELLED')
         .map(([id, label]) => ({
           id,
           label,
@@ -23,7 +23,7 @@ const DashboardUser = () => {
     [],
   );
 
-  const isManageTab = activeTab === "MANAGE";
+  const isManageTab = activeTab === 'MANAGE';
 
   const {
     data: normalData,
@@ -33,8 +33,8 @@ const DashboardUser = () => {
     {
       page: currentPage,
       size: 6,
-      sortBy: sortBy === "date" ? "startTime" : "title",
-      sortDir,
+      sortBy: sortBy === 'date' ? 'startTime' : 'title',
+      sortDir: activeTab === 'UPCOMING' ? 'asc' : 'desc',
       status: activeTab,
     },
     {
@@ -50,7 +50,7 @@ const DashboardUser = () => {
     {
       page: currentPage,
       size: 6,
-      sortBy: sortBy === "date" ? "startTime" : "title",
+      sortBy: sortBy === 'date' ? 'startTime' : 'title',
       sortDir,
     },
     {
@@ -58,40 +58,11 @@ const DashboardUser = () => {
     },
   );
 
-  const dataForCurrentTab = isManageTab ? manageData : normalData;
-  const paginationInfo = dataForCurrentTab?.pagination;
-  const tabCounts = dataForCurrentTab?.counters;
-
   const isLoading = isManageTab ? isLoadingManage : isLoadingNormal;
   const error = isManageTab ? errorManage : errorNormal;
 
-  const normalizePageData = (data) => {
-    if (!data) return undefined;
-    if (Array.isArray(data)) {
-      return {
-        content: data,
-        totalElements: data.length || 0,
-        totalPages: 1,
-        first: true,
-        last: true,
-      };
-    }
-    if (typeof data === "object" && data !== null) {
-      if (!("content" in data) && "id" in data) {
-        return {
-          content: [data],
-          totalElements: 1,
-          totalPages: 1,
-          first: true,
-          last: true,
-        };
-      }
-      return data;
-    }
-    return undefined;
-  };
-
-  const currentData = normalizePageData(paginationInfo);
+  const currentData = isManageTab ? manageData?.pagination : normalData?.pagination;
+  const tabCounts = isManageTab ? manageData?.counters : normalData?.counters;
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -130,12 +101,12 @@ const DashboardUser = () => {
   return (
     <div className="my-5 rounded-2xl bg-white p-4 shadow md:p-7">
       <h2 className="text-secondary mb-2 text-xl font-bold md:text-3xl">
-        Chào mừng, {user?.name || "Người dùng"}! 👋
+        Chào mừng, {user?.name || 'Người dùng'}! 👋
       </h2>
       <p className="mb-8 text-gray-600">
         {isManageTab
-          ? "Quản lý các sự kiện của bạn"
-          : "Khám phá và tham gia các sự kiện thú vị của chúng tôi"}
+          ? 'Quản lý các sự kiện của bạn'
+          : 'Khám phá và tham gia các sự kiện thú vị của chúng tôi'}
       </p>
 
       <nav className="mb-8 flex overflow-x-auto rounded-xl shadow-md">
@@ -144,27 +115,23 @@ const DashboardUser = () => {
             key={tab.id}
             className={`group relative flex-shrink-0 cursor-pointer overflow-hidden px-5 py-4 text-sm font-medium transition-all duration-300 md:px-6 md:text-base ${
               activeTab === tab.id
-                ? "-translate-y-1 border-b-2 border-red-600 bg-white text-red-600 shadow-lg"
-                : "bg-white text-gray-700 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-md"
+                ? '-translate-y-1 border-b-2 border-red-600 bg-white text-red-600 shadow-lg'
+                : 'bg-white text-gray-700 hover:-translate-y-1 hover:bg-gray-50 hover:shadow-md'
             }`}
             onClick={() => handleTabChange(tab.id)}
           >
             <div className="absolute top-0 -left-full h-full w-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-all duration-500 group-hover:left-full"></div>
             <span className="relative z-10 flex items-center justify-center gap-2">
               {tab.label}
-              {tabCounts &&
-                tabCounts[tab.id] !== undefined &&
-                tabCounts[tab.id] > 0 && (
-                  <span
-                    className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${
-                      activeTab === tab.id
-                        ? "bg-red-100 text-red-600"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {tabCounts[tab.id]}
-                  </span>
-                )}
+              {tabCounts && tabCounts[tab.id] !== undefined && tabCounts[tab.id] > 0 && (
+                <span
+                  className={`inline-flex min-w-[20px] items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${
+                    activeTab === tab.id ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {tabCounts[tab.id]}
+                </span>
+              )}
             </span>
           </button>
         ))}
@@ -173,11 +140,9 @@ const DashboardUser = () => {
       <div className="min-h-[400px]">
         <div className="mb-6 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-gray-600">
-            Tìm thấy{" "}
-            <span className="font-semibold text-gray-900">
-              {currentData?.totalElements || 0}
-            </span>{" "}
-            {isManageTab ? "sự kiện quản lý" : "sự kiện"}
+            Tìm thấy{' '}
+            <span className="font-semibold text-gray-900">{currentData?.totalElements || 0}</span>{' '}
+            {isManageTab ? 'sự kiện quản lý' : 'sự kiện'}
           </p>
 
           <div className="flex items-center gap-2 self-end md:self-auto">
@@ -207,22 +172,20 @@ const DashboardUser = () => {
 
         {currentData?.content?.length === 0 && (
           <div className="py-12 text-center text-gray-500">
-            <div className="mb-4 text-6xl">{isManageTab ? "🛠️" : "📅"}</div>
+            <div className="mb-4 text-6xl">{isManageTab ? '🛠️' : '📅'}</div>
             <p className="text-lg font-medium">
-              {isManageTab
-                ? "Bạn chưa có sự kiện nào để quản lý"
-                : "Không có sự kiện nào"}
+              {isManageTab ? 'Bạn chưa có sự kiện nào để quản lý' : 'Không có sự kiện nào'}
             </p>
             <p className="text-sm">
               {isManageTab
-                ? "Vui lòng liên hệ với quản trị viên để tạo sự kiện"
-                : "Hãy quay lại sau để xem các sự kiện mới"}
+                ? 'Vui lòng liên hệ với quản trị viên để tạo sự kiện'
+                : 'Hãy quay lại sau để xem các sự kiện mới'}
             </p>
           </div>
         )}
       </div>
 
-      {currentData && currentData.totalPages > 1 && (
+      {currentData && currentData.total_pages > 1 && (
         <div className="mt-8 flex justify-center">
           <div className="flex flex-wrap justify-center gap-2">
             <button
@@ -234,35 +197,32 @@ const DashboardUser = () => {
             </button>
 
             <div className="flex items-center gap-1">
-              {Array.from(
-                { length: Math.min(5, currentData.totalPages) },
-                (_, i) => {
-                  let pageNum;
-                  if (currentData.totalPages <= 5) {
-                    pageNum = i;
-                  } else if (currentPage < 3) {
-                    pageNum = i;
-                  } else if (currentPage > currentData.totalPages - 4) {
-                    pageNum = currentData.totalPages - 5 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
+              {Array.from({ length: Math.min(5, currentData.total_pages) }, (_, i) => {
+                let pageNum;
+                if (currentData.total_pages <= 5) {
+                  pageNum = i;
+                } else if (currentPage < 3) {
+                  pageNum = i;
+                } else if (currentPage > currentData.total_pages - 4) {
+                  pageNum = currentData.total_pages - 5 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
 
-                  return (
-                    <button
-                      key={pageNum}
-                      className={`cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors ${
-                        currentPage === pageNum
-                          ? "bg-red-600 text-white"
-                          : "border border-gray-300 hover:bg-gray-50"
-                      }`}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum + 1}
-                    </button>
-                  );
-                },
-              )}
+                return (
+                  <button
+                    key={pageNum}
+                    className={`cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors ${
+                      currentPage === pageNum
+                        ? 'bg-red-600 text-white'
+                        : 'border border-gray-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => handlePageChange(pageNum)}
+                  >
+                    {pageNum + 1}
+                  </button>
+                );
+              })}
             </div>
 
             <button

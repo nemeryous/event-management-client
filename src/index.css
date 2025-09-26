@@ -1,46 +1,49 @@
+@import 'slick-carousel/slick/slick.css';
+@import 'slick-carousel/slick/slick-theme.css';
+
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-ExtraLight.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-ExtraLight.woff2') format('woff2');
   font-weight: 200;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Light.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Light.woff2') format('woff2');
   font-weight: 300;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Regular.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Regular.woff2') format('woff2');
   font-weight: 400;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Medium.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Medium.woff2') format('woff2');
   font-weight: 500;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-SemiBold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-SemiBold.woff2') format('woff2');
   font-weight: 600;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Bold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Bold.woff2') format('woff2');
   font-weight: 700;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-ExtraBold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-ExtraBold.woff2') format('woff2');
   font-weight: 800;
 }
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-primary: #e53935;
@@ -87,49 +90,49 @@
 @layer base {
   body {
     @apply font-poppins;
-    font-family: "Poppins";
-    src: url("/fonts/Poppins-ExtraLight.woff2") format("woff2");
+    font-family: 'Poppins';
+    src: url('/fonts/Poppins-ExtraLight.woff2') format('woff2');
     font-weight: 200;
   }
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Light.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Light.woff2') format('woff2');
   font-weight: 300;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Regular.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Regular.woff2') format('woff2');
   font-weight: 400;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Medium.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Medium.woff2') format('woff2');
   font-weight: 500;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-SemiBold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-SemiBold.woff2') format('woff2');
   font-weight: 600;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Bold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Bold.woff2') format('woff2');
   font-weight: 700;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-ExtraBold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-ExtraBold.woff2') format('woff2');
   font-weight: 800;
 }
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-primary: #e53935;
@@ -156,48 +159,48 @@
   }
 }
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-ExtraLight.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-ExtraLight.woff2') format('woff2');
   font-weight: 200;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Light.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Light.woff2') format('woff2');
   font-weight: 300;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Regular.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Regular.woff2') format('woff2');
   font-weight: 400;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Medium.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Medium.woff2') format('woff2');
   font-weight: 500;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-SemiBold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-SemiBold.woff2') format('woff2');
   font-weight: 600;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Bold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-Bold.woff2') format('woff2');
   font-weight: 700;
 }
 
 @font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-ExtraBold.woff2") format("woff2");
+  font-family: 'Poppins';
+  src: url('/fonts/Poppins-ExtraBold.woff2') format('woff2');
   font-weight: 800;
 }
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-primary: #e53935;
@@ -241,19 +244,19 @@
 .editor-scope .sun-editor,
 .editor-scope .sun-editor * {
   font-family:
-    "Poppins",
+    'Poppins',
     ui-sans-serif,
     system-ui,
     -apple-system,
-    "Segoe UI",
+    'Segoe UI',
     Roboto,
-    "Helvetica Neue",
+    'Helvetica Neue',
     Arial,
-    "Noto Sans",
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    "Noto Color Emoji" !important;
+    'Noto Sans',
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji' !important;
 }
 
 .editor-scope .sun-editor-editable {

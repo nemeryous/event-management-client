@@ -1,31 +1,31 @@
-import FormField from "@components/common/FormField";
-import TextInput from "@components/common/TextInput";
-import React from "react";
-import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { useDispatch } from "react-redux";
-import { openSnackbar } from "@store/slices/snackbarSlice";
-import { setToken } from "@store/slices/authSlice";
-import ErrorMessage from "@/components/ui/ErrorMessage";
-import { CircularProgress } from "@mui/material";
-import { useLoginMutation } from "@api/authApi";
+import FormField from '@components/common/FormField';
+import TextInput from '@components/common/TextInput';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useDispatch } from 'react-redux';
+import { openSnackbar } from '@store/slices/snackbarSlice';
+import { setToken } from '@store/slices/authSlice';
+import ErrorMessage from '@/components/ui/ErrorMessage';
+import { CircularProgress } from '@mui/material';
+import { useLoginMutation } from '@api/authApi';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [login, { isLoading, error, isError }] = useLoginMutation();
 
+  const from = location.state?.from || '/';
+
   const formSchema = yup.object().shape({
-    email: yup
-      .string()
-      .email("Định dạng email không hợp lệ")
-      .required("Email là bắt buộc"),
+    email: yup.string().email('Định dạng email không hợp lệ').required('Email là bắt buộc'),
     password: yup
       .string()
-      .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
-      .required("Mật khẩu là bắt buộc"),
+      .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+      .required('Mật khẩu là bắt buộc'),
   });
 
   const {
@@ -33,10 +33,10 @@ const Login = () => {
     handleSubmit,
     formState: { errors, touchedFields },
   } = useForm({
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
     resolver: yupResolver(formSchema),
   });
@@ -50,13 +50,14 @@ const Login = () => {
       const loginData = await login(formData).unwrap();
 
       dispatch(setToken(loginData));
-      dispatch(openSnackbar({ message: "Đăng nhập thành công" }));
-      navigate("/", { replace: true });
+      dispatch(openSnackbar({ message: 'Đăng nhập thành công' }));
+
+      navigate(from, { replace: true });
     } catch (err) {
       dispatch(
         openSnackbar({
-          message: err.data?.message || "Đăng nhập thất bại",
-          type: "error",
+          message: err.data?.message || 'Đăng nhập thất bại',
+          type: 'error',
         }),
       );
     }
@@ -65,11 +66,7 @@ const Login = () => {
   return (
     <div className="flex w-full items-center justify-center px-8 py-12 lg:w-1/2">
       <div className="w-full max-w-md">
-        <img
-          src="/vku-text-logo.svg"
-          alt="VKU Logo"
-          className="mb-8 block lg:hidden"
-        />
+        <img src="/vku-text-logo.svg" alt="VKU Logo" className="mb-8 block lg:hidden" />
         <div className="rounded-2xl bg-white p-8 shadow-lg">
           <div className="mb-8 text-center">
             <h2 className="mb-2 text-2xl font-bold text-gray-900">Đăng nhập</h2>
@@ -84,8 +81,8 @@ const Login = () => {
               name="email"
               type="email"
               Component={TextInput}
-              error={errors["email"]}
-              isValid={isFieldValid("email")}
+              error={errors['email']}
+              isValid={isFieldValid('email')}
             />
             <FormField
               control={control}
@@ -93,8 +90,8 @@ const Login = () => {
               name="password"
               type="password"
               Component={TextInput}
-              error={errors["password"]}
-              isValid={isFieldValid("password")}
+              error={errors['password']}
+              isValid={isFieldValid('password')}
             />
             <div className="flex items-center justify-between">
               <Link
@@ -115,11 +112,8 @@ const Login = () => {
           </form>
           <div className="mt-8 text-center">
             <p className="text-gray-600">
-              Chưa có tài khoản?{" "}
-              <Link
-                to="/register"
-                className="text-secondary font-medium hover:underline"
-              >
+              Chưa có tài khoản?{' '}
+              <Link to="/register" className="text-secondary font-medium hover:underline">
                 Đăng ký ngay
               </Link>
             </p>

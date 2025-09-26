@@ -124,11 +124,6 @@ const router = createBrowserRouter([
                 path: '/admin/donvi',
                 element: <UnitManagement />,
               },
-              // {
-              //   path: "/admin/donvi",
-              //   element: <DonViTenDonViManagement />,
-              // },
-
               {
                 path: '/manage-event',
                 element: <EventManagement />,
