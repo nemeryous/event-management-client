@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 export const FallbackImage = ({ showProgress = true }) => {
   const [imageState, setImageState] = useState({
@@ -31,9 +31,7 @@ export const FallbackImage = ({ showProgress = true }) => {
           <div className="h-16 w-16 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
           {showProgress && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-bold">
-                {Math.round(imageState.progress)}%
-              </span>
+              <span className="text-xs font-bold">{Math.round(imageState.progress)}%</span>
             </div>
           )}
         </div>

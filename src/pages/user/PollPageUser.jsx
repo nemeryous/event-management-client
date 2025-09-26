@@ -1,20 +1,12 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import {
-  useGetPollQuery,
-  useVotePollMutation,
-  useGetMyVotedOptionsQuery,
-} from "@api/pollApi";
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useGetPollQuery, useVotePollMutation, useGetMyVotedOptionsQuery } from '@api/pollApi';
 
 const PollPageUser = ({ pollId: propPollId, onClose }) => {
   const params = useParams();
   const pollId = propPollId || params.pollId;
   const navigate = useNavigate();
-  const {
-    data: poll,
-    isLoading,
-    refetch: refetchPoll,
-  } = useGetPollQuery(pollId);
+  const { data: poll, isLoading, refetch: refetchPoll } = useGetPollQuery(pollId);
   const {
     data: myVotedOptions,
     isLoading: isLoadingMyOptions,
@@ -22,7 +14,7 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
   } = useGetMyVotedOptionsQuery(pollId, { skip: !pollId });
   const [votePoll, { isLoading: isVoting }] = useVotePollMutation();
   const [selectedOptions, setSelectedOptions] = useState([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
@@ -34,13 +26,11 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
   if (isLoading || isLoadingMyOptions) return <div>Đang tải poll...</div>;
   if (!poll) return <div>Không tìm thấy poll</div>;
 
-  const isMultiple = poll.poll_type === "MULTIPLE_CHOICE";
+  const isMultiple = poll.poll_type === 'MULTIPLE_CHOICE';
   const handleOptionChange = (optionId) => {
     if (isMultiple) {
       setSelectedOptions((prev) =>
-        prev.includes(optionId)
-          ? prev.filter((id) => id !== optionId)
-          : [...prev, optionId],
+        prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId],
       );
     } else {
       setSelectedOptions([optionId]);
@@ -49,9 +39,9 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setMessage('');
     if (selectedOptions.length === 0) {
-      setMessage("Vui lòng chọn ít nhất một đáp án!");
+      setMessage('Vui lòng chọn ít nhất một đáp án!');
       return;
     }
     try {
@@ -59,16 +49,12 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
         pollId,
         optionIds: selectedOptions,
       }).unwrap();
-      if (
-        typeof response === "object" &&
-        response !== null &&
-        response.message
-      ) {
+      if (typeof response === 'object' && response !== null && response.message) {
         setMessage(response.message);
-      } else if (typeof response === "string") {
+      } else if (typeof response === 'string') {
         setMessage(response);
       } else {
-        setMessage("Vote thành công!");
+        setMessage('Vote thành công!');
       }
       setSuccess(true);
       refetchPoll();
@@ -78,12 +64,12 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
         if (onClose) onClose();
       }, 1800);
     } catch (err) {
-      let errorMsg = "";
+      let errorMsg = '';
       if (err && err.data && err.data.message) {
         errorMsg += ` (${err.data.message})`;
       } else if (err && err.message) {
         errorMsg += ` (${err.message})`;
-      } else if (typeof err === "string") {
+      } else if (typeof err === 'string') {
         errorMsg += ` (${err})`;
       }
       setMessage(errorMsg);
@@ -95,13 +81,11 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
     <div>
       <h2 className="mb-4 text-xl font-bold">{poll.title}</h2>
       {isMultiple && (
-        <div className="mb-2 text-sm text-blue-600">
-          (Bạn có thể chọn nhiều đáp án)
-        </div>
+        <div className="mb-2 text-sm text-blue-600">(Bạn có thể chọn nhiều đáp án)</div>
       )}
       {message && (
         <div
-          className={`mb-4 text-center text-base font-medium ${success ? "text-green-600" : "text-red-600"}`}
+          className={`mb-4 text-center text-base font-medium ${success ? 'text-green-600' : 'text-red-600'}`}
         >
           {message}
         </div>
@@ -109,12 +93,9 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
       <form onSubmit={handleSubmit}>
         <div className="mb-6 space-y-3">
           {poll.options.map((option) => (
-            <label
-              key={option.id}
-              className="flex cursor-pointer items-center gap-2"
-            >
+            <label key={option.id} className="flex cursor-pointer items-center gap-2">
               <input
-                type={isMultiple ? "checkbox" : "radio"}
+                type={isMultiple ? 'checkbox' : 'radio'}
                 name="option"
                 value={option.id}
                 checked={selectedOptions.includes(option.id)}
@@ -130,11 +111,7 @@ const PollPageUser = ({ pollId: propPollId, onClose }) => {
           className="rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
           disabled={isVoting}
         >
-          {isVoting
-            ? "Đang gửi..."
-            : poll.hasVoted
-              ? "Cập nhật lựa chọn"
-              : "Gửi bình chọn"}
+          {isVoting ? 'Đang gửi...' : poll.hasVoted ? 'Cập nhật lựa chọn' : 'Gửi bình chọn'}
         </button>
       </form>
     </div>
@@ -161,10 +138,7 @@ const ParentComponent = () => {
             >
               ×
             </button>
-            <PollPageUser
-              pollId={selectedPollId}
-              onClose={() => setShowPollModal(false)}
-            />
+            <PollPageUser pollId={selectedPollId} onClose={() => setShowPollModal(false)} />
           </div>
         </div>
       )}

@@ -1,12 +1,12 @@
-import { useGetEventByIdQuery } from "@api/eventApi";
-import { useGetPollStatByEventIdQuery } from "@api/pollApi";
-import AdditionalPoll from "@/components/features/poll/AdditionalPoll";
-import EventBanner from "@/components/features/poll/EventBanner";
-import PollDashboard from "@/components/features/poll/PollDashboard";
-import QuestionSelectorPopUp from "@/components/features/poll/QuestionSelector";
-import StatisticsOverview from "@/components/features/poll/StatisticsOverview";
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useGetEventByIdQuery } from '@api/eventApi';
+import { useGetPollStatByEventIdQuery } from '@api/pollApi';
+import AdditionalPoll from '@/components/features/poll/AdditionalPoll';
+import EventBanner from '@/components/features/poll/EventBanner';
+import PollDashboard from '@/components/features/poll/PollDashboard';
+import QuestionSelectorPopUp from '@/components/features/poll/QuestionSelector';
+import StatisticsOverview from '@/components/features/poll/StatisticsOverview';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 const PollAnalystic = () => {
   const [isOpenPopup, setIsOpenPopup] = useState(false);
@@ -14,8 +14,6 @@ const PollAnalystic = () => {
   const eventId = useParams().eventId;
   const { data: eventData = [] } = useGetEventByIdQuery(eventId);
   const { data: pollsData = [] } = useGetPollStatByEventIdQuery(eventId);
-  // console.log(pollsData);
-  console.log(selectedPoll);
 
   return (
     <div className="px-0 py-7">
@@ -24,12 +22,9 @@ const PollAnalystic = () => {
           Thống kê bình chọn sự kiện
         </h1>
         <EventBanner eventData={eventData} />
-        <StatisticsOverview participantsNumber={eventData?.maxParticipants} />
+        <StatisticsOverview participantsNumber={eventData?.max_participants} />
         <PollDashboard pollsData={pollsData} />
-        <AdditionalPoll
-          openPopup={setIsOpenPopup}
-          selectedPoll={selectedPoll}
-        />
+        <AdditionalPoll openPopup={setIsOpenPopup} selectedPoll={selectedPoll} />
 
         {isOpenPopup && (
           <QuestionSelectorPopUp

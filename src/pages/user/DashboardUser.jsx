@@ -64,6 +64,8 @@ const DashboardUser = () => {
   const currentData = isManageTab ? manageData?.pagination : normalData?.pagination;
   const tabCounts = isManageTab ? manageData?.counters : normalData?.counters;
 
+  console.log(currentData);
+
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     setCurrentPage(0);

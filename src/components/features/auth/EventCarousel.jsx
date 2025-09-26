@@ -1,6 +1,6 @@
 import { useGetEventsQuery } from '@/api/eventApi';
 import Loading from '@/components/ui/Loading';
-import { faCalendar, faLocationDot, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import dayjs from 'dayjs';
 import React, { useMemo, useState } from 'react';
@@ -78,7 +78,11 @@ const EventCarousel = () => {
               className="group relative !flex h-100 w-full flex-col justify-end overflow-hidden rounded-2xl bg-gray-800 p-6 text-white shadow-lg"
             >
               <img
-                src={event.banner ? `${import.meta.env.VITE_BASE_URL}/uploads/${event.banner}` : ``}
+                src={
+                  event.banner
+                    ? `${import.meta.env.VITE_BASE_URL}/uploads/${event.banner}`
+                    : `https://placehold.co/1200x400/e2e8f0/a0aec0?text=Lỗi`
+                }
                 alt={event.title}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />

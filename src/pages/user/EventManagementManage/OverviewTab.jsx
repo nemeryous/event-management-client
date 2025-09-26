@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   faQrcode,
   faUserPlus,
@@ -9,9 +9,9 @@ import {
   faClock,
   faArrowUp,
   faArrowDown,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { formatDateTime } from "@utils/helpers";
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { formatDateTime } from '@utils/helpers';
 
 const OverviewTab = ({ eventData, stats }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
@@ -19,32 +19,32 @@ const OverviewTab = ({ eventData, stats }) => {
 
   const quickActions = [
     {
-      title: "QR Điểm danh",
-      description: "Tạo và quản lý QR code điểm danh",
+      title: 'QR Điểm danh',
+      description: 'Tạo và quản lý QR code điểm danh',
       icon: faQrcode,
-      color: "from-blue-500 to-blue-600",
-      action: () => console.log("Navigate to QR checkin"),
+      color: 'from-blue-500 to-blue-600',
+      action: () => console.log('Navigate to QR checkin'),
     },
     {
-      title: "Thêm người tham gia",
-      description: "Thêm người tham gia mới vào sự kiện",
+      title: 'Thêm người tham gia',
+      description: 'Thêm người tham gia mới vào sự kiện',
       icon: faUserPlus,
-      color: "from-green-500 to-green-600",
-      action: () => console.log("Navigate to add participant"),
+      color: 'from-green-500 to-green-600',
+      action: () => console.log('Navigate to add participant'),
     },
     {
-      title: "Xuất báo cáo",
-      description: "Xuất danh sách và thống kê",
+      title: 'Xuất báo cáo',
+      description: 'Xuất danh sách và thống kê',
       icon: faFileExport,
-      color: "from-purple-500 to-purple-600",
-      action: () => console.log("Export report"),
+      color: 'from-purple-500 to-purple-600',
+      action: () => console.log('Export report'),
     },
     {
-      title: "Chỉnh sửa sự kiện",
-      description: "Cập nhật thông tin sự kiện",
+      title: 'Chỉnh sửa sự kiện',
+      description: 'Cập nhật thông tin sự kiện',
       icon: faEdit,
-      color: "from-orange-500 to-orange-600",
-      action: () => console.log("Navigate to edit event"),
+      color: 'from-orange-500 to-orange-600',
+      action: () => console.log('Navigate to edit event'),
     },
   ];
 
@@ -58,7 +58,7 @@ const OverviewTab = ({ eventData, stats }) => {
                 src={
                   eventData?.banner
                     ? `${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`
-                    : "https://via.placeholder.com/800x300?text=Event+Banner"
+                    : 'https://placehold.co/1200x400/e2e8f0/a0aec0?text=Lỗi'
                 }
                 alt={eventData.title}
                 className="absolute inset-0 h-full w-full object-cover brightness-50"
@@ -82,9 +82,7 @@ const OverviewTab = ({ eventData, stats }) => {
               <div className="relative">
                 <div
                   className={`leading-[1.8] !font-normal whitespace-pre-wrap text-[#666] [&_*]:text-inherit [&_b]:!font-bold [&_strong]:!font-bold ${
-                    !isDescriptionExpanded && shouldShowExpandButton
-                      ? "line-clamp-4"
-                      : ""
+                    !isDescriptionExpanded && shouldShowExpandButton ? 'line-clamp-4' : ''
                   }`}
                   dangerouslySetInnerHTML={{
                     __html: eventData.description,
@@ -93,9 +91,7 @@ const OverviewTab = ({ eventData, stats }) => {
                 {shouldShowExpandButton && (
                   <div className="mt-4 text-center">
                     <button
-                      onClick={() =>
-                        setIsDescriptionExpanded(!isDescriptionExpanded)
-                      }
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                       className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-blue-600 shadow-sm transition-all hover:bg-blue-50 hover:text-blue-700 hover:shadow-md"
                     >
                       {isDescriptionExpanded ? (
@@ -135,9 +131,7 @@ const OverviewTab = ({ eventData, stats }) => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Đã check-in</span>
-                <span className="font-bold text-green-600">
-                  {stats.checkedIn}
-                </span>
+                <span className="font-bold text-green-600">{stats.checkedIn}</span>
               </div>
               <div className="mt-4 h-2 w-full rounded-full bg-gray-200">
                 <div
@@ -148,10 +142,8 @@ const OverviewTab = ({ eventData, stats }) => {
                 ></div>
               </div>
               <p className="text-center text-sm text-gray-500">
-                {Math.round(
-                  (stats.totalRegistered / eventData?.max_participants) * 100,
-                )}
-                % đã đăng ký
+                {Math.round((stats.totalRegistered / eventData?.max_participants) * 100)}% đã đăng
+                ký
               </p>
             </div>
           </div>

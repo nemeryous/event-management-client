@@ -1,15 +1,14 @@
-import { useUploadEventBannerMutation } from "@api/eventApi";
-import { openSnackbar } from "@store/slices/snackbarSlice";
-import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useUploadEventBannerMutation } from '@api/eventApi';
+import { openSnackbar } from '@store/slices/snackbarSlice';
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 const BannerUpload = ({ eventData }) => {
   const dispatch = useDispatch();
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const [uploadBanner, { isLoading, isSuccess, isError, error }] =
-    useUploadEventBannerMutation();
+  const [uploadBanner, { isLoading, isSuccess, isError, error }] = useUploadEventBannerMutation();
 
   // Early return if eventData is null (when creating new event)
   if (!eventData) {
@@ -56,7 +55,7 @@ const BannerUpload = ({ eventData }) => {
           bannerFile: selectedFile,
         });
       } catch (err) {
-        console.log("Banner upload error:", err);
+        console.log('Banner upload error:', err);
       }
     }
   };
@@ -64,21 +63,21 @@ const BannerUpload = ({ eventData }) => {
   const handleCancel = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
-    const input = document.getElementById("banner-upload-input");
-    if (input) input.value = "";
+    const input = document.getElementById('banner-upload-input');
+    if (input) input.value = '';
   };
 
   useEffect(() => {
     if (isSuccess) {
-      dispatch(openSnackbar({ message: "Cập nhật banner thành công" }));
+      dispatch(openSnackbar({ message: 'Cập nhật banner thành công' }));
       setSelectedFile(null);
       setPreviewUrl(null);
     }
     if (isError) {
       dispatch(
         openSnackbar({
-          message: error?.data?.message || "Có lỗi xảy ra",
-          type: "error",
+          message: error?.data?.message || 'Có lỗi xảy ra',
+          type: 'error',
         }),
       );
     }
@@ -86,7 +85,7 @@ const BannerUpload = ({ eventData }) => {
 
   const currentBannerUrl = eventData?.banner
     ? `${import.meta.env.VITE_BASE_URL}/uploads/${eventData.banner}`
-    : "https://placehold.co/1200x400/e2e8f0/a0aec0?text=No+Banner";
+    : 'https://placehold.co/1200x400/e2e8f0/a0aec0?text=Lỗi';
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-lg">
@@ -99,8 +98,7 @@ const BannerUpload = ({ eventData }) => {
           className="h-auto max-h-64 w-full rounded-lg border object-cover"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src =
-              "https://placehold.co/1200x400/e2e8f0/a0aec0?text=Image+Error";
+            e.target.src = 'https://placehold.co/1200x400/e2e8f0/a0aec0?text=Lỗi';
           }}
         />
       </div>
@@ -109,9 +107,7 @@ const BannerUpload = ({ eventData }) => {
           htmlFor="banner-upload-input"
           className="mb-2 block text-sm font-medium text-gray-700"
         >
-          {selectedFile
-            ? `Ảnh mới: ${selectedFile.name}`
-            : "Chọn ảnh mới để thay thế"}
+          {selectedFile ? `Ảnh mới: ${selectedFile.name}` : 'Chọn ảnh mới để thay thế'}
         </label>
         <input
           id="banner-upload-input"
@@ -135,7 +131,7 @@ const BannerUpload = ({ eventData }) => {
             disabled={isLoading || !eventData?.id}
             className="rounded-lg bg-green-600 px-6 py-2 text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
           >
-            {isLoading ? "Đang tải lên..." : "Lưu Banner"}
+            {isLoading ? 'Đang tải lên...' : 'Lưu Banner'}
           </button>
         </div>
       )}

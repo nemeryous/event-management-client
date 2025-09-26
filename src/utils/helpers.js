@@ -80,8 +80,8 @@ export const formatDateTime = (joinedAt) => {
 
 export const getPollState = (startTime, endTime) => {
   const now = new Date();
-  const start = new Date(startTime);
-  const end = new Date(endTime);
+  const start = new Date(startTime * 1000);
+  const end = new Date(endTime * 1000);
 
   if (now < start) {
     return 'UPCOMING';

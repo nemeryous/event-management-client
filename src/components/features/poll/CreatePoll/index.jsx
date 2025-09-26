@@ -3,7 +3,7 @@ import {
   useCreatePollMutation,
   useGetPollsByEventQuery,
   useUpdatePollMutation,
-} from "@api/pollApi";
+} from '@api/pollApi';
 import {
   faEdit,
   faPlus,
@@ -11,11 +11,18 @@ import {
   faSave,
   faTimesCircle,
   faTrash,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-/* eslint-disable no-unused-vars */
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+const toIsoUtc = (s) => {
+  if (!s) return null;
+  const normalized = s.length === 16 ? `${s}:00` : s;
+  const d = new Date(normalized);
+  return d.toISOString();
+};
+
 const CreatePoll = () => {
   const eventId = useParams().id;
   const navigate = useNavigate();
@@ -25,26 +32,26 @@ const CreatePoll = () => {
   const [editingPoll, setEditingPoll] = useState(null);
   const [newPoll, setNewPoll] = useState({
     event_id: parseInt(eventId),
-    title: "",
-    poll_type: "SINGLE_CHOICE",
+    title: '',
+    poll_type: 'SINGLE_CHOICE',
     options: [
-      { content: "", image_url: "" },
-      { content: "", image_url: "" },
+      { content: '', image_url: '' },
+      { content: '', image_url: '' },
     ],
-    start_time: "",
-    end_time: "",
+    start_time: '',
+    end_time: '',
   });
 
   const [editPoll, setEditPoll] = useState({
     event_id: parseInt(eventId),
-    title: "",
-    poll_type: "SINGLE_CHOICE",
+    title: '',
+    poll_type: 'SINGLE_CHOICE',
     options: [
-      { option_id: "", content: "", image_url: "" },
-      { option_id: "", content: "", image_url: "" },
+      { option_id: '', content: '', image_url: '' },
+      { option_id: '', content: '', image_url: '' },
     ],
-    start_time: "",
-    end_time: "",
+    start_time: '',
+    end_time: '',
   });
 
   const [createPoll, { data = {} }] = useCreatePollMutation();
@@ -59,8 +66,8 @@ const CreatePoll = () => {
         event_id: eventId,
         title: newPoll.title,
         poll_type: newPoll.poll_type,
-        start_time: newPoll.start_time,
-        end_time: newPoll.end_time,
+        start_time: toIsoUtc(newPoll.start_time),
+        end_time: toIsoUtc(newPoll.end_time),
         options: newPoll.options.map((opt) => ({
           content: opt.content,
           image_url: opt.image_url || null,
@@ -77,19 +84,19 @@ const CreatePoll = () => {
           image_url: opt.image_url || null,
           votes: 0,
         })),
-        status: "active",
+        status: 'active',
       };
       setPolls([...polls, poll]);
       setNewPoll({
         event_id: parseInt(eventId),
-        title: "",
-        poll_type: "SINGLE_CHOICE",
+        title: '',
+        poll_type: 'SINGLE_CHOICE',
         options: [
-          { content: "", image_url: "" },
-          { content: "", image_url: "" },
+          { content: '', image_url: '' },
+          { content: '', image_url: '' },
         ],
-        start_time: "",
-        end_time: "",
+        start_time: '',
+        end_time: '',
       });
       createPoll(pollDTO);
       setShowCreateForm(false);
@@ -106,10 +113,10 @@ const CreatePoll = () => {
       options: poll.options.map((opt) => ({
         option_id: opt.id,
         content: opt.content,
-        image_url: opt.image_url || "",
+        image_url: opt.image_url || '',
       })),
-      start_time: poll.start_time ? poll.start_time.slice(0, 16) : "",
-      end_time: poll.end_time ? poll.end_time.slice(0, 16) : "",
+      start_time: poll.start_time ? poll.start_time.slice(0, 16) : '',
+      end_time: poll.end_time ? poll.end_time.slice(0, 16) : '',
     });
     setEditingPoll(poll);
   };
@@ -118,7 +125,17 @@ const CreatePoll = () => {
     if (editPoll.title && editPoll.options.every((opt) => opt.content.trim())) {
       console.log(editPoll);
       console.log(editingPoll.id);
-      updatePoll({ pollId: parseInt(editingPoll.id), updatedPoll: editPoll });
+      const updatedDTO = {
+        ...editPoll,
+        start_time: toIsoUtc(editPoll.start_time),
+        end_time: toIsoUtc(editPoll.end_time),
+        options: editPoll.options.map((opt) => ({
+          option_id: opt.option_id,
+          content: opt.content,
+          image_url: opt.image_url || null,
+        })),
+      };
+      updatePoll({ pollId: parseInt(editingPoll.id), updatedPoll: updatedDTO });
       const updatedPolls = polls.map((poll) =>
         poll.id === editingPoll.id
           ? {
@@ -140,14 +157,11 @@ const CreatePoll = () => {
       setEditingPoll(null);
       setEditPoll({
         event_id: parseInt(eventId),
-        title: "",
-        poll_type: "SINGLE_CHOICE",
-        options: [
-          { option_id: "", content: "", image_url: "" },
-          { option_id: "", content: "", image_url: "" },
-        ],
-        start_time: "",
-        end_time: "",
+        title: '',
+        poll_type: 'SINGLE_CHOICE',
+        start_time: updatedDTO.start_time,
+        end_time: updatedDTO.end_time,
+        options: updatedDTO.options,
       });
     }
   };
@@ -155,7 +169,7 @@ const CreatePoll = () => {
   const addEditOption = () => {
     setEditPoll({
       ...editPoll,
-      options: [...editPoll.options, { content: "", image_url: "" }],
+      options: [...editPoll.options, { content: '', image_url: '' }],
     });
   };
 
@@ -177,14 +191,14 @@ const CreatePoll = () => {
       await closePoll(pollId).unwrap();
       setPolls(polls.filter((poll) => poll.id !== pollId));
     } catch (error) {
-      console.error("Failed to delete poll:", error);
+      console.error('Failed to delete poll:', error);
     }
   };
 
   const addOption = () => {
     setNewPoll({
       ...newPoll,
-      options: [...newPoll.options, { content: "", image_url: "" }],
+      options: [...newPoll.options, { content: '', image_url: '' }],
     });
   };
 
@@ -206,16 +220,12 @@ const CreatePoll = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Quản lý câu hỏi khảo sát
-          </h2>
-          <p className="text-gray-600">
-            Tạo và quản lý các câu hỏi khảo sát cho sự kiện
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900">Quản lý câu hỏi khảo sát</h2>
+          <p className="text-gray-600">Tạo và quản lý các câu hỏi khảo sát cho sự kiện</p>
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate("/poll-analytics/" + eventId)}
+            onClick={() => navigate('/poll-analytics/' + eventId)}
             className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
             <FontAwesomeIcon icon={faPoll} />
@@ -235,9 +245,7 @@ const CreatePoll = () => {
       {showCreateForm && (
         <div className="rounded-xl border-2 border-blue-100 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">
-              Tạo câu hỏi khảo sát mới
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900">Tạo câu hỏi khảo sát mới</h3>
             <button
               onClick={() => setShowCreateForm(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -248,9 +256,7 @@ const CreatePoll = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Event ID
-              </label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Event ID</label>
               <input
                 type="text"
                 value={newPoll.event_id}
@@ -267,9 +273,7 @@ const CreatePoll = () => {
               <input
                 type="text"
                 value={newPoll.title}
-                onChange={(e) =>
-                  setNewPoll({ ...newPoll, title: e.target.value })
-                }
+                onChange={(e) => setNewPoll({ ...newPoll, title: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                 placeholder="Nhập tiêu đề câu hỏi..."
               />
@@ -277,14 +281,10 @@ const CreatePoll = () => {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Loại câu hỏi
-                </label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">Loại câu hỏi</label>
                 <select
                   value={newPoll.poll_type}
-                  onChange={(e) =>
-                    setNewPoll({ ...newPoll, poll_type: e.target.value })
-                  }
+                  onChange={(e) => setNewPoll({ ...newPoll, poll_type: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                 >
                   <option value="SINGLE_CHOICE">Chọn một</option>
@@ -302,7 +302,7 @@ const CreatePoll = () => {
                   type="datetime-local"
                   value={newPoll.start_time}
                   onChange={(e) => {
-                    console.log("Start Time Input:", e.target.value);
+                    console.log('Start Time Input:', e.target.value);
                     setNewPoll({ ...newPoll, start_time: e.target.value });
                   }}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
@@ -316,7 +316,7 @@ const CreatePoll = () => {
                   type="datetime-local"
                   value={newPoll.end_time}
                   onChange={(e) => {
-                    console.log("End Time Input:", e.target.value);
+                    console.log('End Time Input:', e.target.value);
                     setNewPoll({ ...newPoll, end_time: e.target.value });
                   }}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
@@ -326,9 +326,7 @@ const CreatePoll = () => {
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Các lựa chọn *
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Các lựa chọn *</label>
                 <button
                   onClick={addOption}
                   className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
@@ -339,17 +337,12 @@ const CreatePoll = () => {
               </div>
               <div className="space-y-2">
                 {newPoll.options.map((option, index) => (
-                  <div
-                    key={index}
-                    className="space-y-2 rounded-lg border border-gray-200 p-3"
-                  >
+                  <div key={index} className="space-y-2 rounded-lg border border-gray-200 p-3">
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         value={option.content}
-                        onChange={(e) =>
-                          updateOption(index, "content", e.target.value)
-                        }
+                        onChange={(e) => updateOption(index, 'content', e.target.value)}
                         className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                         placeholder={`Lựa chọn ${index + 1}`}
                       />
@@ -366,9 +359,7 @@ const CreatePoll = () => {
                       <input
                         type="url"
                         value={option.image_url}
-                        onChange={(e) =>
-                          updateOption(index, "image_url", e.target.value)
-                        }
+                        onChange={(e) => updateOption(index, 'image_url', e.target.value)}
                         className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                         placeholder="URL hình ảnh (tuỳ chọn)"
                       />
@@ -401,9 +392,7 @@ const CreatePoll = () => {
       {editingPoll && (
         <div className="rounded-xl border-2 border-orange-100 bg-white p-6 shadow-lg">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">
-              Chỉnh sửa câu hỏi khảo sát
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900">Chỉnh sửa câu hỏi khảo sát</h3>
             <button
               onClick={() => setEditingPoll(null)}
               className="text-gray-400 hover:text-gray-600"
@@ -414,9 +403,7 @@ const CreatePoll = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Event ID
-              </label>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Event ID</label>
               <input
                 type="text"
                 value={editPoll.event_id}
@@ -433,9 +420,7 @@ const CreatePoll = () => {
               <input
                 type="text"
                 value={editPoll.title}
-                onChange={(e) =>
-                  setEditPoll({ ...editPoll, title: e.target.value })
-                }
+                onChange={(e) => setEditPoll({ ...editPoll, title: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
                 placeholder="Nhập tiêu đề câu hỏi..."
               />
@@ -443,14 +428,10 @@ const CreatePoll = () => {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Loại câu hỏi
-                </label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">Loại câu hỏi</label>
                 <select
                   value={editPoll.poll_type}
-                  onChange={(e) =>
-                    setEditPoll({ ...editPoll, poll_type: e.target.value })
-                  }
+                  onChange={(e) => setEditPoll({ ...editPoll, poll_type: e.target.value })}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
                 >
                   <option value="SINGLE_CHOICE">Chọn một</option>
@@ -490,9 +471,7 @@ const CreatePoll = () => {
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Các lựa chọn *
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Các lựa chọn *</label>
                 <button
                   onClick={addEditOption}
                   className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-800"
@@ -503,17 +482,12 @@ const CreatePoll = () => {
               </div>
               <div className="space-y-2">
                 {editPoll.options.map((option, index) => (
-                  <div
-                    key={index}
-                    className="space-y-2 rounded-lg border border-gray-200 p-3"
-                  >
+                  <div key={index} className="space-y-2 rounded-lg border border-gray-200 p-3">
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         value={option.content}
-                        onChange={(e) =>
-                          updateEditOption(index, "content", e.target.value)
-                        }
+                        onChange={(e) => updateEditOption(index, 'content', e.target.value)}
                         className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
                         placeholder={`Lựa chọn ${index + 1}`}
                       />
@@ -530,9 +504,7 @@ const CreatePoll = () => {
                       <input
                         type="url"
                         value={option.image_url}
-                        onChange={(e) =>
-                          updateEditOption(index, "image_url", e.target.value)
-                        }
+                        onChange={(e) => updateEditOption(index, 'image_url', e.target.value)}
                         className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
                         placeholder="URL hình ảnh (tuỳ chọn)"
                       />
@@ -570,30 +542,22 @@ const CreatePoll = () => {
           >
             <div className="mb-4 flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                  {poll.title}
-                </h3>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">{poll.title}</h3>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span
                     className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      poll.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
+                      poll.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {poll.status === "active"
-                      ? "Đang hoạt động"
-                      : "Đã kết thúc"}
+                    {poll.status === 'active' ? 'Đang hoạt động' : 'Đã kết thúc'}
                   </span>
                   <span>
-                    Loại:{" "}
-                    {poll.poll_type === "SINGLE_CHOICE"
-                      ? "Chọn một"
-                      : "Chọn nhiều"}
+                    Loại: {poll.poll_type === 'SINGLE_CHOICE' ? 'Chọn một' : 'Chọn nhiều'}
                   </span>
                   <span>
-                    Tổng phiếu:{" "}
-                    {poll.options.reduce((sum, opt) => sum + opt.votes, 0)}
+                    Tổng phiếu: {poll.options.reduce((sum, opt) => sum + opt.vote_count, 0)}
                   </span>
                 </div>
               </div>
@@ -615,21 +579,15 @@ const CreatePoll = () => {
 
             <div className="space-y-3">
               {poll.options.map((option) => {
-                const totalVotes = poll.options.reduce(
-                  (sum, opt) => sum + opt.votes,
-                  0,
-                );
-                const percentage =
-                  totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
+                const totalVotes = poll.options.reduce((sum, opt) => sum + opt.vote_count, 0);
+                const percentage = totalVotes > 0 ? (option.vote_count / totalVotes) * 100 : 0;
 
                 return (
                   <div key={option.id} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-gray-700">
-                        {option.content}
-                      </span>
+                      <span className="font-medium text-gray-700">{option.content}</span>
                       <span className="text-gray-500">
-                        {option.votes} phiếu ({percentage.toFixed(1)}%)
+                        {option.vote_count} phiếu ({percentage.toFixed(1)}%)
                       </span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
@@ -646,8 +604,8 @@ const CreatePoll = () => {
             {poll.start_time && poll.end_time && (
               <div className="mt-4 text-sm text-gray-500">
                 <span>
-                  Thời gian: {new Date(poll.start_time).toLocaleString("vi-VN")}{" "}
-                  - {new Date(poll.end_time).toLocaleString("vi-VN")}
+                  Thời gian: {new Date(poll.start_time * 1000).toLocaleString('vi-VN')} -{' '}
+                  {new Date(poll.end_time * 1000).toLocaleString('vi-VN')}
                 </span>
               </div>
             )}
@@ -657,13 +615,8 @@ const CreatePoll = () => {
 
       {polls.length === 0 && !showCreateForm && (
         <div className="py-12 text-center">
-          <FontAwesomeIcon
-            icon={faPoll}
-            className="mb-4 h-16 w-16 text-gray-300"
-          />
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">
-            Chưa có câu hỏi khảo sát
-          </h3>
+          <FontAwesomeIcon icon={faPoll} className="mb-4 h-16 w-16 text-gray-300" />
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">Chưa có câu hỏi khảo sát</h3>
           <p className="mb-4 text-gray-600">
             Tạo câu hỏi khảo sát đầu tiên để thu thập ý kiến từ người tham gia
           </p>

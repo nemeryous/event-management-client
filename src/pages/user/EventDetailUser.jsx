@@ -89,7 +89,7 @@ const EventDetailUser = () => {
   ] = useCancelMyRegistrationMutation();
 
   const currentParticipants = event?.participants?.length || 0;
-  const remainingSlots = (event?.maxParticipants || Infinity) - currentParticipants;
+  const remainingSlots = (event?.max_participants || Infinity) - currentParticipants;
   const isFull = remainingSlots <= 0;
   const canInteract = getDisplayStatus(event) === 'UPCOMING';
   const isLoadingAction = isJoining || isCancelling;
@@ -181,12 +181,12 @@ const EventDetailUser = () => {
             src={
               event?.banner
                 ? `${import.meta.env.VITE_BASE_URL}/uploads/${event.banner}`
-                : 'https://via.placeholder.com/800x300?text=Event+Banner'
+                : 'https://placehold.co/1200x400/e2e8f0/a0aec0?text=Lỗi'
             }
             alt="banner"
             className="h-full w-full object-cover"
             onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/800x300?text=Event+Banner';
+              e.target.src = 'https://placehold.co/1200x400/e2e8f0/a0aec0?text=Lỗi';
             }}
           />
           <div className="absolute top-5 right-5">
@@ -412,11 +412,11 @@ const EventDetailUser = () => {
                   className="flex items-center gap-4 rounded-[10px] bg-[#f8f9fa] p-4"
                 >
                   <div className="bg-secondary flex h-12 w-12 items-center justify-center rounded-full font-bold text-white">
-                    {secretary.userName.charAt(0).toUpperCase()}
+                    {secretary.user_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h4 className="mb-1 font-bold text-[#333]">{secretary.userName}</h4>
-                    <p className="text-sm text-[#666]">📧 {secretary.userEmail}</p>
+                    <h4 className="mb-1 font-bold text-[#333]">{secretary.user_name}</h4>
+                    <p className="text-sm text-[#666]">📧 {secretary.user_email}</p>
                   </div>
                 </div>
               ))}
